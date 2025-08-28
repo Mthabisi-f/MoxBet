@@ -1,0 +1,34 @@
+{% extends 'index.html' %}
+
+{% block content %}
+
+        
+<div id="live-page" class="row gx-2 my-1 d-flex justify-content-center">
+
+    <div id="games-display" class="col-12 col-md-8 col-xl-8 max-width-1000">
+        <div id="sports-row" class="row overflow-auto gx-4 mx-1 flex-nowrap hide-scrollbar my-2 text-whitesmoke">
+            <div data-sport="football" class="col-auto sport-button br-and-b-aqua">Football</div>
+            <div data-sport="basketball" class="col-auto sport-button">Basketball</div>
+            <div data-sport="tennis" class="col-auto sport-button">Tennis</div>
+            <div data-sport="cricket" class="col-auto sport-button">Cricket</div>
+            <div data-sport="volley-ball" class="col-auto sport-button">Volley ball</div>
+            <div data-sport="baseball" class="col-auto sport-button">Baseball</div>
+            <div data-sport="hands-ball" class="col-auto sport-button">Hands ball</div>
+            <div data-sport="netball" class="col-auto sport-button">Netball</div>
+            <div data-sport="hockey-icy" class="col-auto sport-button">Hockey icy</div>
+            <div data-sport="american-football" class="col-auto sport-button">American football</div>
+        </div>
+        <div id="odds-description" class=" row g-0 text-yellow"></div>
+
+    </div>
+
+    
+
+    <div class="d-none d-md-block col-md-4 col-xl-3">
+        {% include 'betslip.html' %}
+    </div>
+
+</div>
+
+{% endblock content%}
+

@@ -1,0 +1,51 @@
+{% extends 'index.html' %}
+
+{% block content %}
+
+<div class="row g-0 p-3 bg-light">
+    <div class="rounded-3 text-center py-2">
+        <div class="my-2">
+            <button type="button" class="btn btn-outline-primary py-1 px-4 border-2 rounded-0">COLD</button>
+            <button type="button" class="btn btn-outline-success py-1 px-4 border-2 rounded-0">HOT</button>
+            <button type="button" class="btn btn-outline-danger py-1 px-3 border-2 rounded-0">QUICK</button>
+        </div>
+        <p class="fw-bold my-1">MAIN NUMBERS</p>
+        <p class="text-center mb-1">Create up to 50 single entry combinations by adding more numbers</p>
+
+        <div class="text-center">
+            <button class="rounded-5 px-3 py-2 border-1 border-primary text-white bg-primary bg-opacity-50">1</button>
+            <button class="rounded-5 px-3 py-2 border-1 border-primary bg-white">2</button>
+            <button class="rounded-5 px-3 py-2 border-1 border-primary bg-white">3</button>
+            <button type="button" class="btn btn-outline-primary rounded-circle border-1 border-primary px-4 py-3">4</button>
+            <button class="rounded-5 px-3 py-2 border-1 border-primary bg-white">5</button>
+            <button class="rounded-5 px-3 py-2 border-1 border-primary bg-white">6</button>
+        </div>
+
+        <div class="text-center">
+            <button class="rounded-5 px-3 py-2 border-1 border-primary text-white bg-primary bg-opacity-50">7</button>
+            <button class="rounded-5 px-3 py-2 border-1 border-primary bg-white">8</button>
+            <button class="rounded-5 px-3 py-2 border-1 border-primary text-white bg-primary bg-opacity-50">9</button>
+            <button type="button" class="btn btn-outline-primary rounded-circle px-2 py-2 border-1 border-primary bg-white px-4 py-3">10</button>
+            <button class="rounded-5 px-2 py-2 border-1 border-primary bg-white">11</button>
+            <button class="rounded-5 px-2 py-2 border-1 border-primary bg-white">12</button>
+        </div>
+
+        <div class="fw-bold mt-2 mb-1">YOUR SELECTION</div>
+
+        <div class="text-center selected-btns mb-2">
+            <button type="button" class="btn btn-outline-primary">1</button>
+            <button class="rounded-5 px-3 py-2 border-1 border-primary bg-primary">7</button>
+            <button class="rounded-5 px-3 py-2 border-1 border-primary bg-primary">9</button>
+        </div>
+
+        <div class="text-center row g-0 d-flex justify-content-between">
+            <div class="col-12">
+                <button type="button" class="btn btn-outline-danger col-4 col-lg-2">CLEAR</button>
+                <button type="button" class="btn btn-outline-success col-4 col-lg-2">ADD</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock content %}

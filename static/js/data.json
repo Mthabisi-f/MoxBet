@@ -1,0 +1,2327 @@
+
+  [
+      {
+        "game_id": "G001",
+        "sport_name": "soccer",
+        "league_logo": "🤣",
+        "country": "England",
+        "league": "Premier League",
+        "match_type": "prematch",
+        "match_id": "3647",
+        "home_team": "Manchester United",
+        "away_team": "Liverpool",
+        "commence_datetime": "2025-02-04T00:00:00Z",
+        "time": "10:00",
+        "venue": "Old Trafford",
+        "status": "upcoming",
+        "odds": {
+          "1X2": {
+            "home": 2.13,
+            "draw": 3.48,
+            "away": 3.61
+          },
+          "first_half_1X2": {
+            "home": 2.51,
+            "draw": 4.78,
+            "away": 2.39
+          },
+          "second_half_1X2": {
+            "home": 1.41,
+            "draw": 2.05,
+            "away": 1.76
+          },
+          "over_under_1.5": {
+            "over": 1.25,
+            "under": 3.56
+          },
+          "highest_scoring_half": {
+            "first": 1.85,
+            "equal": 2.66,
+            "second": 1.78
+          },
+          "over_under_2.5": {
+            "over": 1.85,
+            "under": 2.0
+          },
+          "double_chance": {
+            "home_or_draw": 1.45,
+            "draw_or_away": 1.6,
+            "home_or_away": 1.3
+          },
+          "both_teams_to_score": {
+            "yes": 1.9,
+            "no": 1.95
+          },
+          "correct_score": {
+            "1-0": 7.0,
+            "2-1": 8.5,
+            "2-2": 11.0
+          },
+          "half_time_full_time": {
+            "home_home": 3.0,
+            "draw_home": 4.0,
+            "away_away": 5.5
+          },
+          "first_half_goals": {
+            "over_1.5": 2.4,
+            "under_1.5": 1.6
+          },
+          "asian_handicap": {
+            "home_-1": 3.0,
+            "away_+1": 1.6
+          },
+          "team_to_score_first": {
+            "home": 1.8,
+            "away": 2.2
+          },
+          "total_corners": {
+            "over_9.5": 2.0,
+            "under_9.5": 1.8
+          },
+          "total_cards": {
+            "over_3.5": 1.9,
+            "under_3.5": 2.0
+          },
+          "clean_sheet": {
+            "home": 2.5,
+            "away": 3.0
+          },
+          "total_goals_exact": {
+            "0": 10.0,
+            "1": 7.0,
+            "2": 4.5
+          },
+          "penalty_awarded": {
+            "yes": 3.2,
+            "no": 1.4
+          },
+          "extra_time_goals": {
+            "yes": 6.0,
+            "no": 1.15
+          }
+        }
+      },
+      {
+        "game_id": "G221",
+        "sport_name": "soccer",
+        "league_logo": "🤣",
+        "country": "Zimbabwe",
+        "league": "Premier League",
+        "match_type": "prematch",
+        "match_id": "3337",
+        "home_team": "Scotland United",
+        "away_team": "Chivayo",
+        "commence_datetime": "2025-02-04T00:00:00Z",
+        "time": "10:00",
+        "venue": "Old Trafford",
+        "status": "upcoming",
+        "odds": {
+          "1X2": {
+            "home": 2.13,
+            "draw": 3.48,
+            "away": 3.61
+          },
+          "first_half_1X2": {
+            "home": 2.51,
+            "draw": 4.78,
+            "away": 2.39
+          },
+          "second_half_1X2": {
+            "home": 1.41,
+            "draw": 2.05,
+            "away": 1.76
+          },
+          "over_under_1.5": {
+            "over": 1.25,
+            "under": 3.56
+          },
+          "highest_scoring_half": {
+            "first": 1.85,
+            "equal": 2.66,
+            "second": 1.78
+          },
+          "over_under_2.5": {
+            "over": 1.85,
+            "under": 2.0
+          },
+          "double_chance": {
+            "home_or_draw": 1.45,
+            "draw_or_away": 1.6,
+            "home_or_away": 1.3
+          },
+          "both_teams_to_score": {
+            "yes": 1.9,
+            "no": 1.95
+          },
+          "correct_score": {
+            "1-0": 7.0,
+            "2-1": 8.5,
+            "2-2": 11.0
+          },
+          "half_time_full_time": {
+            "home_home": 3.0,
+            "draw_home": 4.0,
+            "away_away": 5.5
+          },
+          "first_half_goals": {
+            "over_1.5": 2.4,
+            "under_1.5": 1.6
+          },
+          "asian_handicap": {
+            "home_-1": 3.0,
+            "away_+1": 1.6
+          },
+          "team_to_score_first": {
+            "home": 1.8,
+            "away": 2.2
+          },
+          "total_corners": {
+            "over_9.5": 2.0,
+            "under_9.5": 1.8
+          },
+          "total_cards": {
+            "over_3.5": 1.9,
+            "under_3.5": 2.0
+          },
+          "clean_sheet": {
+            "home": 2.5,
+            "away": 3.0
+          },
+          "total_goals_exact": {
+            "0": 10.0,
+            "1": 7.0,
+            "2": 4.5
+          },
+          "penalty_awarded": {
+            "yes": 3.2,
+            "no": 1.4
+          },
+          "extra_time_goals": {
+            "yes": 6.0,
+            "no": 1.15
+          }
+        }
+      },
+      {
+        "game_id": "G024",
+        "sport_name": "soccer",
+        "league_logo": "🤣",
+        "country": "Zimbabwe",
+        "league": "Premier League",
+        "match_type": "prematch",
+        "match_id": "3007",
+        "home_team": "Manchester United",
+        "away_team": "Liverpool",
+        "commence_datetime": "2025-02-04T15:30:00Z",
+        "time": "10:00",
+        "venue": "Barbar Fields",
+        "status": "upcoming",
+        "odds": {
+          "1X2": {
+            "home": 2.13,
+            "draw": 3.48,
+            "away": 3.61
+          },
+          "first_half_1X2": {
+            "home": 2.51,
+            "draw": 4.78,
+            "away": 2.39
+          },
+          "second_half_1X2": {
+            "home": 1.41,
+            "draw": 2.05,
+            "away": 1.76
+          },
+          "over_under_1.5": {
+            "over": 1.25,
+            "under": 3.56
+          },
+          "highest_scoring_half": {
+            "first": 1.85,
+            "equal": 2.66,
+            "second": 1.78
+          },
+          "over_under_2.5": {
+            "over": 1.85,
+            "under": 2.0
+          },
+          "double_chance": {
+            "home_or_draw": 1.45,
+            "draw_or_away": 1.6,
+            "home_or_away": 1.3
+          },
+          "both_teams_to_score": {
+            "yes": 1.9,
+            "no": 1.95
+          },
+          "correct_score": {
+            "1-0": 7.0,
+            "2-1": 8.5,
+            "2-2": 11.0
+          },
+          "half_time_full_time": {
+            "home_home": 3.0,
+            "draw_home": 4.0,
+            "away_away": 5.5
+          },
+          "first_half_goals": {
+            "over_1.5": 2.4,
+            "under_1.5": 1.6
+          },
+          "asian_handicap": {
+            "home_-1": 3.0,
+            "away_+1": 1.6
+          },
+          "team_to_score_first": {
+            "home": 1.8,
+            "away": 2.2
+          },
+          "total_corners": {
+            "over_9.5": 2.0,
+            "under_9.5": 1.8
+          },
+          "total_cards": {
+            "over_3.5": 1.9,
+            "under_3.5": 2.0
+          },
+          "clean_sheet": {
+            "home": 2.5,
+            "away": 3.0
+          },
+          "total_goals_exact": {
+            "0": 10.0,
+            "1": 7.0,
+            "2": 4.5
+          },
+          "penalty_awarded": {
+            "yes": 3.2,
+            "no": 1.4
+          },
+          "extra_time_goals": {
+            "yes": 6.0,
+            "no": 1.15
+          }
+        }
+      },
+      {
+        "game_id": "G002",
+        "sport_name": "soccer",
+        "league_logo": "Ⓜ",
+        "country": "Spain",
+        "league": "La Liga",
+        "match_type": "prematch",
+        "match_id": "2062",
+        "home_team": "Real Madrid",
+        "away_team": "Barcelona",
+        "commence_datetime": "2025-02-03T00:00:00Z",
+        "time": "20:00",
+        "venue": "Santiago Bernabéu",
+        "status": "upcoming",
+        "odds": {
+          "1X2": {
+            "home": 2.3,
+            "draw": 3.1,
+            "away": 2.9
+          },
+          "first_half_1X2": {
+            "home": 2.51,
+            "draw": 4.78,
+            "away": 2.39
+          },
+          "second_half_1X2": {
+            "home": 1.65,
+            "draw": 2.16,
+            "away": 1.77
+          },
+          "over_under_1.5": {
+            "over": 1.31,
+            "under": 3.67
+          },
+          "highest_scoring_half": {
+            "first": 1.58,
+            "equal": 1.76,
+            "second": 1.88
+          },
+          "over_under_2.5": {
+            "over": 1.95,
+            "under": 1.85
+          },
+          "double_chance": {
+            "home_or_draw": 1.5,
+            "draw_or_away": 1.55,
+            "home_or_away": 1.35
+          },
+          "both_teams_to_score": {
+            "yes": 1.75,
+            "no": 2.1
+          },
+          "correct_score": {
+            "1-1": 6.0,
+            "2-1": 9.5,
+            "1-2": 11.0
+          },
+          "half_time_full_time": {
+            "home_home": 3.2,
+            "draw_home": 4.5,
+            "away_away": 5.0
+          },
+          "first_half_goals": {
+            "over_1.5": 2.5,
+            "under_1.5": 1.5
+          },
+          "asian_handicap": {
+            "home_-0.5": 2.1,
+            "away_+0.5": 1.8
+          },
+          "team_to_score_first": {
+            "home": 1.7,
+            "away": 2.3
+          },
+          "total_corners": {
+            "over_10.5": 2.3,
+            "under_10.5": 1.6
+          },
+          "total_cards": {
+            "over_4.5": 1.8,
+            "under_4.5": 2.2
+          },
+          "clean_sheet": {
+            "home": 2.7,
+            "away": 3.1
+          },
+          "total_goals_exact": {
+            "2": 4.0,
+            "3": 5.0,
+            "4": 7.0
+          },
+          "penalty_awarded": {
+            "yes": 2.9,
+            "no": 1.45
+          },
+          "extra_time_goals": {
+            "yes": 5.5,
+            "no": 1.2
+          }
+        }
+      },
+      {
+        "game_id": "G003",
+        "sport_name": "soccer",
+        "league_logo": "🔴",
+        "country": "France",
+        "league": "League 1",
+        "match_type": "prematch",
+        "match_id": "3852",
+        "home_team": "Nice",
+        "away_team": "Lorient",
+        "commence_datetime": "2025-01-17T00:00:00Z",
+        "time": "18:45",
+        "venue": "Allianz Stadium",
+        "status": "upcoming",
+        "odds": {
+          "1X2": {
+            "home": 2.4,
+            "draw": 3.2,
+            "away": 3.0
+          },
+          "first_half_1X2": {
+            "home": 2.51,
+            "draw": 4.78,
+            "away": 2.39
+          },
+          "second_half_1X2": {
+            "home": 1.41,
+            "draw": 2.05,
+            "away": 1.76
+          },
+          "over_under_1.5": {
+            "over": 1.25,
+            "under": 3.56
+          },
+          "highest_scoring_half": {
+            "first": 1.85,
+            "equal": 2.66,
+            "second": 1.78
+          },
+          "over_under_2.5": {
+            "over": 2.0,
+            "under": 1.75
+          },
+          "double_chance": {
+            "home_or_draw": 1.6,
+            "draw_or_away": 1.55,
+            "home_or_away": 1.35
+          },
+          "both_teams_to_score": {
+            "yes": 1.85,
+            "no": 2.05
+          },
+          "correct_score": {
+            "1-0": 7.5,
+            "1-1": 6.5,
+            "2-1": 9.0
+          },
+          "half_time_full_time": {
+            "home_home": 3.1,
+            "draw_home": 4.2,
+            "away_away": 5.3
+          },
+          "first_half_goals": {
+            "over_1.5": 2.6,
+            "under_1.5": 1.45
+          },
+          "asian_handicap": {
+            "home_-0.5": 2.2,
+            "away_+0.5": 1.7
+          },
+          "team_to_score_first": {
+            "home": 1.6,
+            "away": 2.4
+          },
+          "total_corners": {
+            "over_8.5": 1.85,
+            "under_8.5": 2.0
+          },
+          "total_cards": {
+            "over_3.5": 1.75,
+            "under_3.5": 2.1
+          },
+          "clean_sheet": {
+            "home": 2.4,
+            "away": 3.3
+          },
+          "total_goals_exact": {
+            "1": 5.5,
+            "2": 4.2,
+            "3": 6.0
+          },
+          "penalty_awarded": {
+            "yes": 3.0,
+            "no": 1.5
+          },
+          "extra_time_goals": {
+            "yes": 5.7,
+            "no": 1.18
+          }
+        }
+      },
+      {
+        "game_id": "G004",
+        "sport_name": "soccer",
+        "league_logo": "🤣",
+        "country": "England",
+        "league": "Premier League",
+        "match_type": "prematch",
+        "match_id": "4956",
+        "home_team": "Westham United",
+        "away_team": "Arsenal",
+        "commence_datetime": "2025-02-14T00:00:00Z",
+        "time": "17:00",
+        "venue": "Arene",
+        "status": "upcoming",
+        "odds": {
+          "1X2": {
+            "home": 3.63,
+            "draw": 3.7,
+            "away": 1.84
+          },
+          "first_half_1X2": {
+            "home": 2.51,
+            "draw": 4.78,
+            "away": 2.39
+          },
+          "second_half_1X2": {
+            "home": 1.41,
+            "draw": 2.05,
+            "away": 1.76
+          },
+          "over_under_1.5": {
+            "over": 1.25,
+            "under": 3.56
+          },
+          "highest_scoring_half": {
+            "first": 1.85,
+            "equal": 2.66,
+            "second": 1.78
+          },
+          "over_under_2.5": {
+            "over": 1.65,
+            "under": 2.0
+          },
+          "double_chance": {
+            "home_or_draw": 1.65,
+            "draw_or_away": 1.45,
+            "home_or_away": 1.25
+          },
+          "both_teams_to_score": {
+            "yes": 1.9,
+            "no": 1.95
+          },
+          "correct_score": {
+            "1-0": 9.0,
+            "2-1": 11.34,
+            "2-2": 6.0
+          },
+          "half_time_full_time": {
+            "home_home": 3.0,
+            "draw_home": 4.0,
+            "away_away": 5.5
+          },
+          "first_half_goals": {
+            "over_1.5": 2.4,
+            "under_1.5": 1.6
+          },
+          "asian_handicap": {
+            "home_-1": 3.0,
+            "away_+1": 1.6
+          },
+          "team_to_score_first": {
+            "home": 1.8,
+            "away": 2.2
+          },
+          "total_corners": {
+            "over_9.5": 2.0,
+            "under_9.5": 1.8
+          },
+          "total_cards": {
+            "over_3.5": 1.9,
+            "under_3.5": 2.0
+          },
+          "clean_sheet": {
+            "home": 2.5,
+            "away": 3.0
+          },
+          "total_goals_exact": {
+            "0": 10.0,
+            "1": 7.0,
+            "2": 4.5
+          },
+          "penalty_awarded": {
+            "yes": 3.2,
+            "no": 1.4
+          },
+          "extra_time_goals": {
+            "yes": 6.0,
+            "no": 1.15
+          }
+        }
+      },
+      {
+        "game_id": "G005",
+        "sport_name": "soccer",
+        "league_logo": "Ⓜ",
+        "country": "Spain",
+        "league": "La Liga",
+        "match_type": "prematch",
+        "match_id": "5539",
+        "home_team": "Real Betis",
+        "away_team": "Espanyol Barcelona",
+        "commence_datetime": "2025-03-12T00:00:00Z",
+        "time": "21:00",
+        "venue": "Santiago",
+        "status": "Upcoming",
+        "odds": {
+          "1X2": {
+            "home": 2.3,
+            "draw": 3.1,
+            "away": 2.9
+          },
+          "first_half_1X2": {
+            "home": 2.51,
+            "draw": 4.78,
+            "away": 2.39
+          },
+          "second_half_1X2": {
+            "home": 1.41,
+            "draw": 2.05,
+            "away": 1.76
+          },
+          "over_under_1.5": {
+            "over": 1.25,
+            "under": 3.56
+          },
+          "highest_scoring_half": {
+            "first": 1.85,
+            "equal": 2.66,
+            "second": 1.78
+          },
+          "over_under_2.5": {
+            "over": 1.95,
+            "under": 1.85
+          },
+          "double_chance": {
+            "home_or_draw": 1.5,
+            "draw_or_away": 1.55,
+            "home_or_away": 1.35
+          },
+          "both_teams_to_score": {
+            "yes": 1.75,
+            "no": 2.1
+          },
+          "correct_score": {
+            "1-1": 6.0,
+            "2-1": 9.5,
+            "1-2": 11.0
+          },
+          "half_time_full_time": {
+            "home_home": 3.2,
+            "draw_home": 4.5,
+            "away_away": 5.0
+          },
+          "first_half_goals": {
+            "over_1.5": 2.5,
+            "under_1.5": 1.5
+          },
+          "asian_handicap": {
+            "home_-0.5": 2.1,
+            "away_+0.5": 1.8
+          },
+          "team_to_score_first": {
+            "home": 1.7,
+            "away": 2.3
+          },
+          "total_corners": {
+            "over_10.5": 2.3,
+            "under_10.5": 1.6
+          },
+          "total_cards": {
+            "over_4.5": 1.8,
+            "under_4.5": 2.2
+          },
+          "clean_sheet": {
+            "home": 2.7,
+            "away": 3.1
+          },
+          "total_goals_exact": {
+            "2": 4.0,
+            "3": 5.0,
+            "4": 7.0
+          },
+          "penalty_awarded": {
+            "yes": 2.9,
+            "no": 1.45
+          },
+          "extra_time_goals": {
+            "yes": 5.5,
+            "no": 1.2
+          }
+        }
+      },
+      {
+        "game_id": "G006",
+        "sport_name": "soccer",
+        "league_logo": "🔴",
+        "country": "France",
+        "league": "League 1",
+        "match_type": "prematch",
+        "match_id": "6096",
+        "home_team": "Paris Saint Germain",
+        "away_team": "Marceilis",
+        "commence_datetime": "2025-03-27T00:00:00Z",
+        "time": "20:45",
+        "venue": "Allianz",
+        "status": "upcoming",
+        "odds": {
+          "1X2": {
+            "home": 2.4,
+            "draw": 3.2,
+            "away": 3.0
+          },
+          "first_half_1X2": {
+            "home": 2.51,
+            "draw": 4.78,
+            "away": 2.39
+          },
+          "second_half_1X2": {
+            "home": 1.41,
+            "draw": 2.05,
+            "away": 1.76
+          },
+          "over_under_1.5": {
+            "over": 1.25,
+            "under": 3.56
+          },
+          "highest_scoring_half": {
+            "first": 1.85,
+            "equal": 2.66,
+            "second": 1.78
+          },
+          "over_under_2.5": {
+            "over": 2.0,
+            "under": 1.75
+          },
+          "double_chance": {
+            "home_or_draw": 1.6,
+            "draw_or_away": 1.55,
+            "home_or_away": 1.35
+          },
+          "both_teams_to_score": {
+            "yes": 1.85,
+            "no": 2.05
+          },
+          "correct_score": {
+            "1-0": 7.5,
+            "1-1": 6.5,
+            "2-1": 9.0
+          },
+          "half_time_full_time": {
+            "home_home": 3.1,
+            "draw_home": 4.2,
+            "away_away": 5.3
+          },
+          "first_half_goals": {
+            "over_1.5": 2.6,
+            "under_1.5": 1.45
+          },
+          "asian_handicap": {
+            "home_-0.5": 2.2,
+            "away_+0.5": 1.7
+          },
+          "team_to_score_first": {
+            "home": 1.6,
+            "away": 2.4
+          },
+          "total_corners": {
+            "over_8.5": 1.85,
+            "under_8.5": 2.0
+          },
+          "total_cards": {
+            "over_3.5": 1.75,
+            "under_3.5": 2.1
+          },
+          "clean_sheet": {
+            "home": 2.4,
+            "away": 3.3
+          },
+          "total_goals_exact": {
+            "1": 5.5,
+            "2": 4.2,
+            "3": 6.0
+          },
+          "penalty_awarded": {
+            "yes": 3.0,
+            "no": 1.5
+          },
+          "extra_time_goals": {
+            "yes": 5.7,
+            "no": 1.18
+          }
+        }
+      },
+      {
+        "game_id": "G007",
+        "sport_name": "soccer",
+        "league_logo": "🦠",
+        "country": "Netherlands",
+        "league": "Premier League",
+        "match_type": "prematch",
+        "match_id": "7496",
+        "home_team": "Ajax",
+        "away_team": "PSV Einveiden",
+        "commence_datetime": "2025-04-18T00:00:00Z",
+        "time": "13:00",
+        "venue": "Old",
+        "status": "Upcoming",
+        "odds": {
+          "1X2": {
+            "home": 2.1,
+            "draw": 3.4,
+            "away": 3.6
+          },
+          "first_half_1X2": {
+            "home": 2.51,
+            "draw": 4.78,
+            "away": 2.39
+          },
+          "second_half_1X2": {
+            "home": 1.41,
+            "draw": 2.05,
+            "away": 1.76
+          },
+          "over_under_1.5": {
+            "over": 1.25,
+            "under": 3.56
+          },
+          "highest_scoring_half": {
+            "first": 1.85,
+            "equal": 2.66,
+            "second": 1.78
+          },
+          "over_under_2.5": {
+            "over": 1.85,
+            "under": 2.0
+          },
+          "double_chance": {
+            "home_or_draw": 1.45,
+            "draw_or_away": 1.6,
+            "home_or_away": 1.3
+          },
+          "both_teams_to_score": {
+            "yes": 1.9,
+            "no": 1.95
+          },
+          "correct_score": {
+            "1-0": 7.0,
+            "2-1": 8.5,
+            "2-2": 11.0
+          },
+          "half_time_full_time": {
+            "home_home": 3.0,
+            "draw_home": 4.0,
+            "away_away": 5.5
+          },
+          "first_half_goals": {
+            "over_1.5": 2.4,
+            "under_1.5": 1.6
+          },
+          "asian_handicap": {
+            "home_-1": 3.0,
+            "away_+1": 1.6
+          },
+          "team_to_score_first": {
+            "home": 1.8,
+            "away": 2.2
+          },
+          "total_corners": {
+            "over_9.5": 2.0,
+            "under_9.5": 1.8
+          },
+          "total_cards": {
+            "over_3.5": 1.9,
+            "under_3.5": 2.0
+          },
+          "clean_sheet": {
+            "home": 2.5,
+            "away": 3.0
+          },
+          "total_goals_exact": {
+            "0": 10.0,
+            "1": 7.0,
+            "2": 4.5
+          },
+          "penalty_awarded": {
+            "yes": 3.2,
+            "no": 1.4
+          },
+          "extra_time_goals": {
+            "yes": 6.0,
+            "no": 1.15
+          }
+        }
+      },
+      {
+        "game_id": "G008",
+        "sport_name": "soccer",
+        "league_logo": "Ⓜ",
+        "country": "Spain",
+        "league": "La Liga",
+        "match_type": "prematch",
+        "match_id": "8805",
+        "home_team": "Villareal",
+        "away_team": "Sevilla",
+        "commence_datetime": "2025-04-19T00:00:00Z",
+        "time": "19:00",
+        "venue": "Santiago Bernabéu",
+        "status": "upcoming",
+        "odds": {
+          "1X2": {
+            "home": 2.3,
+            "draw": 3.1,
+            "away": 2.9
+          },
+          "first_half_1X2": {
+            "home": 2.51,
+            "draw": 4.78,
+            "away": 2.39
+          },
+          "second_half_1X2": {
+            "home": 1.41,
+            "draw": 2.05,
+            "away": 1.76
+          },
+          "over_under_1.5": {
+            "over": 1.25,
+            "under": 3.56
+          },
+          "highest_scoring_half": {
+            "first": 1.85,
+            "equal": 2.66,
+            "second": 1.78
+          },
+          "over_under_2.5": {
+            "over": 1.95,
+            "under": 1.85
+          },
+          "double_chance": {
+            "home_or_draw": 1.5,
+            "draw_or_away": 1.55,
+            "home_or_away": 1.35
+          },
+          "both_teams_to_score": {
+            "yes": 1.75,
+            "no": 2.1
+          },
+          "correct_score": {
+            "1-1": 6.0,
+            "2-1": 9.5,
+            "1-2": 11.0
+          },
+          "half_time_full_time": {
+            "home_home": 3.2,
+            "draw_home": 4.5,
+            "away_away": 5.0
+          },
+          "first_half_goals": {
+            "over_1.5": 2.5,
+            "under_1.5": 1.5
+          },
+          "asian_handicap": {
+            "home_-0.5": 2.1,
+            "away_+0.5": 1.8
+          },
+          "team_to_score_first": {
+            "home": 1.7,
+            "away": 2.3
+          },
+          "total_corners": {
+            "over_10.5": 2.3,
+            "under_10.5": 1.6
+          },
+          "total_cards": {
+            "over_4.5": 1.8,
+            "under_4.5": 2.2
+          },
+          "clean_sheet": {
+            "home": 2.7,
+            "away": 3.1
+          },
+          "total_goals_exact": {
+            "2": 4.0,
+            "3": 5.0,
+            "4": 7.0
+          },
+          "penalty_awarded": {
+            "yes": 2.9,
+            "no": 1.45
+          },
+          "extra_time_goals": {
+            "yes": 5.5,
+            "no": 1.2
+          }
+        }
+      },
+      {
+        "game_id": "G009",
+        "sport_name": "soccer",
+        "league_logo": "🟡",
+        "country": "Zimbabwe",
+        "league": "Premier Soccer League",
+        "match_type": "prematch",
+        "match_id": "9063",
+        "home_team": "Highlanders",
+        "away_team": "Dynamos",
+        "commence_datetime": "2015-02-14T00:00:00Z",
+        "time": "14:00",
+        "venue": "Mozes Mabida",
+        "status": "upcoming",
+        "odds": {
+          "1X2": {
+            "home": 2.4,
+            "draw": 3.2,
+            "away": 3.0
+          },
+          "first_half_1X2": {
+            "home": 2.51,
+            "draw": 4.78,
+            "away": 2.39
+          },
+          "second_half_1X2": {
+            "home": 1.41,
+            "draw": 2.05,
+            "away": 1.76
+          },
+          "over_under_1.5": {
+            "over": 1.25,
+            "under": 3.56
+          },
+          "highest_scoring_half": {
+            "first": 1.85,
+            "equal": 2.66,
+            "second": 1.78
+          },
+          "over_under_2.5": {
+            "over": 2.0,
+            "under": 1.75
+          },
+          "double_chance": {
+            "home_or_draw": 1.6,
+            "draw_or_away": 1.55,
+            "home_or_away": 1.35
+          },
+          "both_teams_to_score": {
+            "yes": 1.85,
+            "no": 2.05
+          },
+          "correct_score": {
+            "1-0": 7.5,
+            "1-1": 6.5,
+            "2-1": 9.0
+          },
+          "half_time_full_time": {
+            "home_home": 3.1,
+            "draw_home": 4.2,
+            "away_away": 5.3
+          },
+          "first_half_goals": {
+            "over_1.5": 2.6,
+            "under_1.5": 1.45
+          },
+          "asian_handicap": {
+            "home_-0.5": 2.2,
+            "away_+0.5": 1.7
+          },
+          "team_to_score_first": {
+            "home": 1.6,
+            "away": 2.4
+          },
+          "total_corners": {
+            "over_8.5": 1.85,
+            "under_8.5": 2.0
+          },
+          "total_cards": {
+            "over_3.5": 1.75,
+            "under_3.5": 2.1
+          },
+          "clean_sheet": {
+            "home": 2.4,
+            "away": 3.3
+          },
+          "total_goals_exact": {
+            "1": 5.5,
+            "2": 4.2,
+            "3": 6.0
+          },
+          "penalty_awarded": {
+            "yes": 3.0,
+            "no": 1.5
+          },
+          "extra_time_goals": {
+            "yes": 5.7,
+            "no": 1.18
+          }
+        }
+      },
+      {
+        "game_id": "G010",
+        "sport_name": "soccer",
+        "league_logo": "🤣",
+        "country": "England",
+        "league": "Premier League",
+        "match_type": "prematch",
+        "match_id": "1058",
+        "home_team": "Orlando Pirates",
+        "away_team": "Stellenbosch",
+        "commence_datetime": "2025-04-19T00:00:00Z",
+        "time": "15:00",
+        "venue": "Polokwane",
+        "status": "upcoming",
+        "odds": {
+          "1X2": {
+            "home": 2.1,
+            "draw": 3.4,
+            "away": 3.6
+          },
+          "first_half_1X2": {
+            "home": 2.51,
+            "draw": 4.78,
+            "away": 2.39
+          },
+          "second_half_1X2": {
+            "home": 1.41,
+            "draw": 2.05,
+            "away": 1.76
+          },
+          "over_under_1.5": {
+            "over": 1.25,
+            "under": 3.56
+          },
+          "highest_scoring_half": {
+            "first": 1.85,
+            "equal": 2.66,
+            "second": 1.78
+          },
+          "over_under_2.5": {
+            "over": 1.85,
+            "under": 2.0
+          },
+          "double_chance": {
+            "home_or_draw": 1.45,
+            "draw_or_away": 1.6,
+            "home_or_away": 1.3
+          },
+          "both_teams_to_score": {
+            "yes": 1.9,
+            "no": 1.95
+          },
+          "correct_score": {
+            "1-0": 7.0,
+            "2-1": 8.5,
+            "2-2": 11.0
+          },
+          "half_time_full_time": {
+            "home_home": 3.0,
+            "draw_home": 4.0,
+            "away_away": 5.5
+          },
+          "first_half_goals": {
+            "over_1.5": 2.4,
+            "under_1.5": 1.6
+          },
+          "asian_handicap": {
+            "home_-1": 3.0,
+            "away_+1": 1.6
+          },
+          "team_to_score_first": {
+            "home": 1.8,
+            "away": 2.2
+          },
+          "total_corners": {
+            "over_9.5": 2.0,
+            "under_9.5": 1.8
+          },
+          "total_cards": {
+            "over_3.5": 1.9,
+            "under_3.5": 2.0
+          },
+          "clean_sheet": {
+            "home": 2.5,
+            "away": 3.0
+          },
+          "total_goals_exact": {
+            "0": 10.0,
+            "1": 7.0,
+            "2": 4.5
+          },
+          "penalty_awarded": {
+            "yes": 3.2,
+            "no": 1.4
+          },
+          "extra_time_goals": {
+            "yes": 6.0,
+            "no": 1.15
+          }
+        }
+      },
+      {
+        "game_id": "G011",
+        "sport_name": "soccer",
+        "league_logo": "Ⓜ",
+        "country": "Spain",
+        "league": "La Liga",
+        "match_type": "prematch",
+        "match_id": "1120",
+        "home_team": "Girona",
+        "away_team": "Morllaco",
+        "commence_datetime": "2025-05-20T00:00:00Z",
+        "time": "19:00",
+        "venue": "Bernabéu",
+        "status": "Upcoming",
+        "odds": {
+          "1X2": {
+            "home": 2.3,
+            "draw": 3.1,
+            "away": 2.9
+          },
+          "first_half_1X2": {
+            "home": 2.51,
+            "draw": 4.78,
+            "away": 2.39
+          },
+          "second_half_1X2": {
+            "home": 1.41,
+            "draw": 2.05,
+            "away": 1.76
+          },
+          "over_under_1.5": {
+            "over": 1.25,
+            "under": 3.56
+          },
+          "highest_scoring_half": {
+            "first": 1.85,
+            "equal": 2.66,
+            "second": 1.78
+          },
+          "over_under_2.5": {
+            "over": 1.95,
+            "under": 1.85
+          },
+          "double_chance": {
+            "home_or_draw": 1.5,
+            "draw_or_away": 1.55,
+            "home_or_away": 1.35
+          },
+          "both_teams_to_score": {
+            "yes": 1.75,
+            "no": 2.1
+          },
+          "correct_score": {
+            "1-1": 6.0,
+            "2-1": 9.5,
+            "1-2": 11.0
+          },
+          "half_time_full_time": {
+            "home_home": 3.2,
+            "draw_home": 4.5,
+            "away_away": 5.0
+          },
+          "first_half_goals": {
+            "over_1.5": 2.5,
+            "under_1.5": 1.5
+          },
+          "asian_handicap": {
+            "home_-0.5": 2.1,
+            "away_+0.5": 1.8
+          },
+          "team_to_score_first": {
+            "home": 1.7,
+            "away": 2.3
+          },
+          "total_corners": {
+            "over_10.5": 2.3,
+            "under_10.5": 1.6
+          },
+          "total_cards": {
+            "over_4.5": 1.8,
+            "under_4.5": 2.2
+          },
+          "clean_sheet": {
+            "home": 2.7,
+            "away": 3.1
+          },
+          "total_goals_exact": {
+            "2": 4.0,
+            "3": 5.0,
+            "4": 7.0
+          },
+          "penalty_awarded": {
+            "yes": 2.9,
+            "no": 1.45
+          },
+          "extra_time_goals": {
+            "yes": 5.5,
+            "no": 1.2
+          }
+        }
+      },
+      {
+        "game_id": "G012",
+        "sport_name": "soccer",
+        "league_logo": "🟢",
+        "country": "Germany",
+        "league": "Bundesliga",
+        "match_type": "prematch",
+        "match_id": "1221",
+        "home_team": "Bayern Munich",
+        "away_team": "Burrusia Dortmund",
+        "commence_datetime": "2025-06-21T00:00:00Z",
+        "time": "16:45",
+        "venue": "Allianz Stadium",
+        "status": "upcoming",
+        "odds": {
+          "1X2": {
+            "home": 2.4,
+            "draw": 3.2,
+            "away": 3.0
+          },
+          "first_half_1X2": {
+            "home": 2.51,
+            "draw": 4.78,
+            "away": 2.39
+          },
+          "second_half_1X2": {
+            "home": 1.41,
+            "draw": 2.05,
+            "away": 1.76
+          },
+          "over_under_1.5": {
+            "over": 1.25,
+            "under": 3.56
+          },
+          "highest_scoring_half": {
+            "first": 1.85,
+            "equal": 2.66,
+            "second": 1.78
+          },
+          "over_under_2.5": {
+            "over": 2.0,
+            "under": 1.75
+          },
+          "double_chance": {
+            "home_or_draw": 1.6,
+            "draw_or_away": 1.55,
+            "home_or_away": 1.35
+          },
+          "both_teams_to_score": {
+            "yes": 1.85,
+            "no": 2.05
+          },
+          "correct_score": {
+            "1-0": 7.5,
+            "1-1": 6.5,
+            "2-1": 9.0
+          },
+          "half_time_full_time": {
+            "home_home": 3.1,
+            "draw_home": 4.2,
+            "away_away": 5.3
+          },
+          "first_half_goals": {
+            "over_1.5": 2.6,
+            "under_1.5": 1.45
+          },
+          "asian_handicap": {
+            "home_-0.5": 2.2,
+            "away_+0.5": 1.7
+          },
+          "team_to_score_first": {
+            "home": 1.6,
+            "away": 2.4
+          },
+          "total_corners": {
+            "over_8.5": 1.85,
+            "under_8.5": 2.0
+          },
+          "total_cards": {
+            "over_3.5": 1.75,
+            "under_3.5": 2.1
+          },
+          "clean_sheet": {
+            "home": 2.4,
+            "away": 3.3
+          },
+          "total_goals_exact": {
+            "1": 5.5,
+            "2": 4.2,
+            "3": 6.0
+          },
+          "penalty_awarded": {
+            "yes": 3.0,
+            "no": 1.5
+          },
+          "extra_time_goals": {
+            "yes": 5.7,
+            "no": 1.18
+          }
+        }
+      },
+      {
+        "game_id": "G013",
+        "sport_name": "soccer",
+        "league_logo": "🤣",
+        "country": "England",
+        "league": "Premier League",
+        "match_type": "prematch",
+        "match_id": "1313",
+        "home_team": "Manchester City",
+        "away_team": "Brentford",
+        "commence_datetime": "2025-03-13T00:00:00Z",
+        "time": "16:30",
+        "venue": "Ethaid",
+        "status": "upcoming",
+        "odds": {
+          "1X2": {
+            "home": 2.1,
+            "draw": 3.4,
+            "away": 3.6
+          },
+          "first_half_1X2": {
+            "home": 2.51,
+            "draw": 4.78,
+            "away": 2.39
+          },
+          "second_half_1X2": {
+            "home": 1.41,
+            "draw": 2.05,
+            "away": 1.76
+          },
+          "over_under_1.5": {
+            "over": 1.25,
+            "under": 3.56
+          },
+          "highest_scoring_half": {
+            "first": 1.85,
+            "equal": 2.66,
+            "second": 1.78
+          },
+          "over_under_2.5": {
+            "over": 1.85,
+            "under": 2.0
+          },
+          "double_chance": {
+            "home_or_draw": 1.45,
+            "draw_or_away": 1.6,
+            "home_or_away": 1.3
+          },
+          "both_teams_to_score": {
+            "yes": 1.9,
+            "no": 1.95
+          },
+          "correct_score": {
+            "1-0": 7.0,
+            "2-1": 8.5,
+            "2-2": 11.0
+          },
+          "half_time_full_time": {
+            "home_home": 3.0,
+            "draw_home": 4.0,
+            "away_away": 5.5
+          },
+          "first_half_goals": {
+            "over_1.5": 2.4,
+            "under_1.5": 1.6
+          },
+          "asian_handicap": {
+            "home_-1": 3.0,
+            "away_+1": 1.6
+          },
+          "team_to_score_first": {
+            "home": 1.8,
+            "away": 2.2
+          },
+          "total_corners": {
+            "over_9.5": 2.0,
+            "under_9.5": 1.8
+          },
+          "total_cards": {
+            "over_3.5": 1.9,
+            "under_3.5": 2.0
+          },
+          "clean_sheet": {
+            "home": 2.5,
+            "away": 3.0
+          },
+          "total_goals_exact": {
+            "0": 10.0,
+            "1": 7.0,
+            "2": 4.5
+          },
+          "penalty_awarded": {
+            "yes": 3.2,
+            "no": 1.4
+          },
+          "extra_time_goals": {
+            "yes": 6.0,
+            "no": 1.15
+          }
+        }
+      },
+      {
+        "game_id": "G014",
+        "sport_name": "soccer",
+        "league_logo": "Ⓜ",
+        "country": "Spain",
+        "league": "La Liga",
+        "match_type": "prematch",
+        "match_id": "1484",
+        "home_team": "Atletico Madrid",
+        "away_team": "Celta Vigo",
+        "commence_datetime": "2025-05-30T00:00:00Z",
+        "time": "17:00",
+        "venue": "Santiago Bernabéu",
+        "status": "upcoming",
+        "odds": {
+          "1X2": {
+            "home": 2.3,
+            "draw": 3.1,
+            "away": 2.9
+          },
+          "first_half_1X2": {
+            "home": 2.51,
+            "draw": 4.78,
+            "away": 2.39
+          },
+          "second_half_1X2": {
+            "home": 1.41,
+            "draw": 2.05,
+            "away": 1.76
+          },
+          "over_under_1.5": {
+            "over": 1.25,
+            "under": 3.56
+          },
+          "highest_scoring_half": {
+            "first": 1.85,
+            "equal": 2.66,
+            "second": 1.78
+          },
+          "over_under_2.5": {
+            "over": 1.95,
+            "under": 1.85
+          },
+          "double_chance": {
+            "home_or_draw": 1.5,
+            "draw_or_away": 1.55,
+            "home_or_away": 1.35
+          },
+          "both_teams_to_score": {
+            "yes": 1.75,
+            "no": 2.1
+          },
+          "correct_score": {
+            "1-1": 6.0,
+            "2-1": 9.5,
+            "1-2": 11.0
+          },
+          "half_time_full_time": {
+            "home_home": 3.2,
+            "draw_home": 4.5,
+            "away_away": 5.0
+          },
+          "first_half_goals": {
+            "over_1.5": 2.5,
+            "under_1.5": 1.5
+          },
+          "asian_handicap": {
+            "home_-0.5": 2.1,
+            "away_+0.5": 1.8
+          },
+          "team_to_score_first": {
+            "home": 1.7,
+            "away": 2.3
+          },
+          "total_corners": {
+            "over_10.5": 2.3,
+            "under_10.5": 1.6
+          },
+          "total_cards": {
+            "over_4.5": 1.8,
+            "under_4.5": 2.2
+          },
+          "clean_sheet": {
+            "home": 2.7,
+            "away": 3.1
+          },
+          "total_goals_exact": {
+            "2": 4.0,
+            "3": 5.0,
+            "4": 7.0
+          },
+          "penalty_awarded": {
+            "yes": 2.9,
+            "no": 1.45
+          },
+          "extra_time_goals": {
+            "yes": 5.5,
+            "no": 1.2
+          }
+        }
+      },
+      {
+        "game_id": "G015",
+        "sport_name": "soccer",
+        "league_logo": "🦠",
+        "country": "Netherlands",
+        "league": "Ereste Division",
+        "match_type": "prematch",
+        "match_id": "1594",
+        "home_team": "PSV Envoiden",
+        "away_team": "Ajax amsterdam",
+        "commence_datetime": "2025-02-12T00:00:00Z",
+        "time": "13:00",
+        "venue": "Allianz",
+        "status": "upcoming",
+        "odds": {
+          "1X2": {
+            "home": 2.4,
+            "draw": 3.2,
+            "away": 3.0
+          },
+          "first_half_1X2": {
+            "home": 2.51,
+            "draw": 4.78,
+            "away": 2.39
+          },
+          "second_half_1X2": {
+            "home": 1.41,
+            "draw": 2.05,
+            "away": 1.76
+          },
+          "over_under_1.5": {
+            "over": 1.25,
+            "under": 3.56
+          },
+          "highest_scoring_half": {
+            "first": 1.85,
+            "equal": 2.66,
+            "second": 1.78
+          },
+          "over_under_2.5": {
+            "over": 2.0,
+            "under": 1.75
+          },
+          "double_chance": {
+            "home_or_draw": 1.6,
+            "draw_or_away": 1.55,
+            "home_or_away": 1.35
+          },
+          "both_teams_to_score": {
+            "yes": 1.85,
+            "no": 2.05
+          },
+          "correct_score": {
+            "1-0": 7.5,
+            "1-1": 6.5,
+            "2-1": 9.0
+          },
+          "half_time_full_time": {
+            "home_home": 3.1,
+            "draw_home": 4.2,
+            "away_away": 5.3
+          },
+          "first_half_goals": {
+            "over_1.5": 2.6,
+            "under_1.5": 1.45
+          },
+          "asian_handicap": {
+            "home_-0.5": 2.2,
+            "away_+0.5": 1.7
+          },
+          "team_to_score_first": {
+            "home": 1.6,
+            "away": 2.4
+          },
+          "total_corners": {
+            "over_8.5": 1.85,
+            "under_8.5": 2.0
+          },
+          "total_cards": {
+            "over_3.5": 1.75,
+            "under_3.5": 2.1
+          },
+          "clean_sheet": {
+            "home": 2.4,
+            "away": 3.3
+          },
+          "total_goals_exact": {
+            "1": 5.5,
+            "2": 4.2,
+            "3": 6.0
+          },
+          "penalty_awarded": {
+            "yes": 3.0,
+            "no": 1.5
+          },
+          "extra_time_goals": {
+            "yes": 5.7,
+            "no": 1.18
+          }
+        }
+      },
+      {
+        "game_id": "G016",
+        "sport_name": "soccer",
+        "league_logo": "🤣",
+        "country": "England",
+        "league": "Premier League",
+        "match_type": "prematch",
+        "match_id": "1603",
+        "home_team": "Crystal Palace",
+        "away_team": "Liecester City",
+        "commence_datetime": "2025-02-28T00:00:00Z",
+        "time": "13:30",
+        "venue": "Old",
+        "status": "Upcoming",
+        "odds": {
+          "1X2": {
+            "home": 2.1,
+            "draw": 3.4,
+            "away": 3.6
+          },
+          "first_half_1X2": {
+            "home": 2.51,
+            "draw": 4.78,
+            "away": 2.39
+          },
+          "second_half_1X2": {
+            "home": 1.41,
+            "draw": 2.05,
+            "away": 1.76
+          },
+          "over_under_1.5": {
+            "over": 1.25,
+            "under": 3.56
+          },
+          "highest_scoring_half": {
+            "first": 1.85,
+            "equal": 2.66,
+            "second": 1.78
+          },
+          "over_under_2.5": {
+            "over": 1.85,
+            "under": 2.0
+          },
+          "double_chance": {
+            "home_or_draw": 1.45,
+            "draw_or_away": 1.6,
+            "home_or_away": 1.3
+          },
+          "both_teams_to_score": {
+            "yes": 1.9,
+            "no": 1.95
+          },
+          "correct_score": {
+            "1-0": 7.0,
+            "2-1": 8.5,
+            "2-2": 11.0
+          },
+          "half_time_full_time": {
+            "home_home": 3.0,
+            "draw_home": 4.0,
+            "away_away": 5.5
+          },
+          "first_half_goals": {
+            "over_1.5": 2.4,
+            "under_1.5": 1.6
+          },
+          "asian_handicap": {
+            "home_-1": 3.0,
+            "away_+1": 1.6
+          },
+          "team_to_score_first": {
+            "home": 1.8,
+            "away": 2.2
+          },
+          "total_corners": {
+            "over_9.5": 2.0,
+            "under_9.5": 1.8
+          },
+          "total_cards": {
+            "over_3.5": 1.9,
+            "under_3.5": 2.0
+          },
+          "clean_sheet": {
+            "home": 2.5,
+            "away": 3.0
+          },
+          "total_goals_exact": {
+            "0": 10.0,
+            "1": 7.0,
+            "2": 4.5
+          },
+          "penalty_awarded": {
+            "yes": 3.2,
+            "no": 1.4
+          },
+          "extra_time_goals": {
+            "yes": 6.0,
+            "no": 1.15
+          }
+        }
+      },
+      {
+        "game_id": "G017",
+        "sport_name": "soccer",
+        "league_logo": "Ⓜ",
+        "country": "Spain",
+        "league": "La Liga",
+        "match_type": "prematch",
+        "match_id": "1730",
+        "home_team": "LAS Palmas",
+        "away_team": "Osasuna",
+        "commence_datetime": "2025-02-11T19:00:00Z",
+        "time": "19:00",
+        "venue": "Santiago Bernabéu",
+        "status": "upcoming",
+        "odds": {
+          "1X2": {
+            "home": 2.3,
+            "draw": 3.1,
+            "away": 2.9
+          },
+          "first_half_1X2": {
+            "home": 2.51,
+            "draw": 4.78,
+            "away": 2.39
+          },
+          "second_half_1X2": {
+            "home": 1.41,
+            "draw": 2.05,
+            "away": 1.76
+          },
+          "over_under_1.5": {
+            "over": 1.25,
+            "under": 3.56
+          },
+          "highest_scoring_half": {
+            "first": 1.85,
+            "equal": 2.66,
+            "second": 1.78
+          },
+          "over_under_2.5": {
+            "over": 1.95,
+            "under": 1.85
+          },
+          "double_chance": {
+            "home_or_draw": 1.5,
+            "draw_or_away": 1.55,
+            "home_or_away": 1.35
+          },
+          "both_teams_to_score": {
+            "yes": 1.75,
+            "no": 2.1
+          },
+          "correct_score": {
+            "1-1": 6.0,
+            "2-1": 9.5,
+            "1-2": 11.0
+          },
+          "half_time_full_time": {
+            "home_home": 3.2,
+            "draw_home": 4.5,
+            "away_away": 5.0
+          },
+          "first_half_goals": {
+            "over_1.5": 2.5,
+            "under_1.5": 1.5
+          },
+          "asian_handicap": {
+            "home_-0.5": 2.1,
+            "away_+0.5": 1.8
+          },
+          "team_to_score_first": {
+            "home": 1.7,
+            "away": 2.3
+          },
+          "total_corners": {
+            "over_10.5": 2.3,
+            "under_10.5": 1.6
+          },
+          "total_cards": {
+            "over_4.5": 1.8,
+            "under_4.5": 2.2
+          },
+          "clean_sheet": {
+            "home": 2.7,
+            "away": 3.1
+          },
+          "total_goals_exact": {
+            "2": 4.0,
+            "3": 5.0,
+            "4": 7.0
+          },
+          "penalty_awarded": {
+            "yes": 2.9,
+            "no": 1.45
+          },
+          "extra_time_goals": {
+            "yes": 5.5,
+            "no": 1.2
+          }
+        }
+      },
+      {
+        "game_id": "G018",
+        "sport_name": "soccer",
+        "league_logo": "🟡",
+        "country": "Zimbabwe",
+        "league": "Premier Soccer League",
+        "match_type": "prematch",
+        "match_id": "1898",
+        "home_team": "FC Platnum",
+        "away_team": "Hwange Fc",
+        "commence_datetime": "2025-04-27T00:00:00Z",
+        "time": "15:00",
+        "venue": "Allianz",
+        "status": "upcoming",
+        "odds": {
+          "1X2": {
+            "home": 2.4,
+            "draw": 3.2,
+            "away": 3.0
+          },
+          "first_half_1X2": {
+            "home": 2.51,
+            "draw": 4.78,
+            "away": 2.39
+          },
+          "second_half_1X2": {
+            "home": 1.41,
+            "draw": 2.05,
+            "away": 1.76
+          },
+          "over_under_1.5": {
+            "over": 1.25,
+            "under": 3.56
+          },
+          "highest_scoring_half": {
+            "first": 1.85,
+            "equal": 2.66,
+            "second": 1.78
+          },
+          "over_under_2.5": {
+            "over": 2.0,
+            "under": 1.75
+          },
+          "double_chance": {
+            "home_or_draw": 1.6,
+            "draw_or_away": 1.55,
+            "home_or_away": 1.35
+          },
+          "both_teams_to_score": {
+            "yes": 1.85,
+            "no": 2.05
+          },
+          "correct_score": {
+            "1-0": 7.5,
+            "1-1": 6.5,
+            "2-1": 9.0
+          },
+          "half_time_full_time": {
+            "home_home": 3.1,
+            "draw_home": 4.2,
+            "away_away": 5.3
+          },
+          "first_half_goals": {
+            "over_1.5": 2.6,
+            "under_1.5": 1.45
+          },
+          "asian_handicap": {
+            "home_-0.5": 2.2,
+            "away_+0.5": 1.7
+          },
+          "team_to_score_first": {
+            "home": 1.6,
+            "away": 2.4
+          },
+          "total_corners": {
+            "over_8.5": 1.85,
+            "under_8.5": 2.0
+          },
+          "total_cards": {
+            "over_3.5": 1.75,
+            "under_3.5": 2.1
+          },
+          "clean_sheet": {
+            "home": 2.4,
+            "away": 3.3
+          },
+          "total_goals_exact": {
+            "1": 5.5,
+            "2": 4.2,
+            "3": 6.0
+          },
+          "penalty_awarded": {
+            "yes": 3.0,
+            "no": 1.5
+          },
+          "extra_time_goals": {
+            "yes": 5.7,
+            "no": 1.18
+          }
+        }
+      }, 
+      {
+        "game_id": "G019",
+        "sport_name": "soccer",
+        "league_logo": "🤣",
+        "country": "England",
+        "league": "Premier League",
+        "match_type": "prematch",
+        "match_id": "1957",
+        "home_team": "Bournmouth",
+        "away_team": "Southampthon",
+        "commence_datetime": "2025-02-11T17:00:00Z",
+        "time": "17:00",
+        "venue": "Old Trafford",
+        "status": "upcoming",
+        "odds": {
+          "1X2": {
+            "home": 2.1,
+            "draw": 3.4,
+            "away": 3.6
+          },
+          "first_half_1X2": {
+            "home": 2.51,
+            "draw": 4.78,
+            "away": 2.39
+          },
+          "second_half_1X2": {
+            "home": 1.41,
+            "draw": 2.05,
+            "away": 1.76
+          },
+          "over_under_1.5": {
+            "over": 1.25,
+            "under": 3.56
+          },
+          "highest_scoring_half": {
+            "first": 1.85,
+            "equal": 2.66,
+            "second": 1.78
+          },
+          "over_under_2.5": {
+            "over": 1.85,
+            "under": 2.0
+          },
+          "double_chance": {
+            "home_or_draw": 1.45,
+            "draw_or_away": 1.6,
+            "home_or_away": 1.3
+          },
+          "both_teams_to_score": {
+            "yes": 1.9,
+            "no": 1.95
+          },
+          "correct_score": {
+            "1-0": 7.0,
+            "2-1": 8.5,
+            "2-2": 11.0
+          },
+          "half_time_full_time": {
+            "home_home": 3.0,
+            "draw_home": 4.0,
+            "away_away": 5.5
+          },
+          "first_half_goals": {
+            "over_1.5": 2.4,
+            "under_1.5": 1.6
+          },
+          "asian_handicap": {
+            "home_-1": 3.0,
+            "away_+1": 1.6
+          },
+          "team_to_score_first": {
+            "home": 1.8,
+            "away": 2.2
+          },
+          "total_corners": {
+            "over_9.5": 2.0,
+            "under_9.5": 1.8
+          },
+          "total_cards": {
+            "over_3.5": 1.9,
+            "under_3.5": 2.0
+          },
+          "clean_sheet": {
+            "home": 2.5,
+            "away": 3.0
+          },
+          "total_goals_exact": {
+            "0": 10.0,
+            "1": 7.0,
+            "2": 4.5
+          },
+          "penalty_awarded": {
+            "yes": 3.2,
+            "no": 1.4
+          },
+          "extra_time_goals": {
+            "yes": 6.0,
+            "no": 1.15
+          }
+        }
+      },
+      {
+        "game_id": "G020",
+        "sport_name": "soccer",
+        "league_logo": "Ⓜ",
+        "country": "Spain",
+        "league": "La Liga",
+        "match_type": "prematch",
+        "match_id": "2087",
+        "home_team": "Real Sociedad fc",
+        "away_team": "Real Betis",
+        "commence_datetime": "2025-02-11T14:20:00Z",
+        "time": "14:20",
+        "venue": "Santiago Bernabéu",
+        "status": "prematch",
+        "odds": {
+          "1X2": {
+            "home": 2.3,
+            "draw": 3.1,
+            "away": 2.9
+          },
+          "first_half_1X2": {
+            "home": 2.51,
+            "draw": 4.78,
+            "away": 2.39
+          },
+          "second_half_1X2": {
+            "home": 1.41,
+            "draw": 2.05,
+            "away": 1.76
+          },
+          "over_under_1.5": {
+            "over": 1.25,
+            "under": 3.56
+          },
+          "highest_scoring_half": {
+            "first": 1.85,
+            "equal": 2.66,
+            "second": 1.78
+          },
+          "over_under_2.5": {
+            "over": 1.95,
+            "under": 1.85
+          },
+          "double_chance": {
+            "home_or_draw": 1.5,
+            "draw_or_away": 1.55,
+            "home_or_away": 1.35
+          },
+          "both_teams_to_score": {
+            "yes": 1.75,
+            "no": 2.1
+          },
+          "correct_score": {
+            "1-1": 6.0,
+            "2-1": 9.5,
+            "1-2": 11.0
+          },
+          "half_time_full_time": {
+            "home_home": 3.2,
+            "draw_home": 4.5,
+            "away_away": 5.0
+          },
+          "first_half_goals": {
+            "over_1.5": 2.5,
+            "under_1.5": 1.5
+          },
+          "asian_handicap": {
+            "home_-0.5": 2.1,
+            "away_+0.5": 1.8
+          },
+          "team_to_score_first": {
+            "home": 1.7,
+            "away": 2.3
+          },
+          "total_corners": {
+            "over_10.5": 2.3,
+            "under_10.5": 1.6
+          },
+          "total_cards": {
+            "over_4.5": 1.8,
+            "under_4.5": 2.2
+          },
+          "clean_sheet": {
+            "home": 2.7,
+            "away": 3.1
+          },
+          "total_goals_exact": {
+            "2": 4.0,
+            "3": 5.0,
+            "4": 7.0
+          },
+          "penalty_awarded": {
+            "yes": 2.9,
+            "no": 1.45
+          },
+          "extra_time_goals": {
+            "yes": 5.5,
+            "no": 1.2
+          }
+        }
+      },
+      {
+        "game_id": "G021",
+        "sport_name": "basketball",
+        "country": "Germany",
+        "league": "Bundesliga",
+        "match_type": "prematch",
+        "match_id": "2581",
+        "home_team": "Bayer 04 Leverkusen",
+        "away_team": "Mainz",
+        "commence_datetime": "2025-08-12T00:00:00Z",
+        "time": "14:30",
+        "venue": "Allianz Stadium",
+        "status": "upcoming",
+        "odds": {
+          "1X2": {
+            "home": 1.4,
+            "draw": 3.5,
+            "away": 3.57
+          },
+          "first_half_1X2": {
+            "home": 2.51,
+            "draw": 4.78,
+            "away": 2.39
+          },
+          "second_half_1X2": {
+            "home": 1.41,
+            "draw": 2.05,
+            "away": 1.76
+          },
+          "over_under_1.5": {
+            "over": 1.25,
+            "under": 3.56
+          },
+          "highest_scoring_half": {
+            "first": 1.85,
+            "equal": 2.66,
+            "second": 1.78
+          },
+          "over_under_2.5": {
+            "over": 2.0,
+            "under": 1.75
+          },
+          "double_chance": {
+            "home_or_draw": 1.6,
+            "draw_or_away": 1.55,
+            "home_or_away": 1.35
+          },
+          "both_teams_to_score": {
+            "yes": 1.85,
+            "no": 2.05
+          },
+          "correct_score": {
+            "1-0": 7.5,
+            "1-1": 6.5,
+            "2-1": 9.0
+          },
+          "half_time_full_time": {
+            "home_home": 3.1,
+            "draw_home": 4.2,
+            "away_away": 5.3
+          },
+          "first_half_goals": {
+            "over_1.5": 2.6,
+            "under_1.5": 1.45
+          },
+          "asian_handicap": {
+            "home_-0.5": 2.2,
+            "away_+0.5": 1.7
+          },
+          "team_to_score_first": {
+            "home": 1.6,
+            "away": 2.4
+          },
+          "total_corners": {
+            "over_8.5": 1.85,
+            "under_8.5": 2.0
+          },
+          "total_cards": {
+            "over_3.5": 1.75,
+            "under_3.5": 2.1
+          },
+          "clean_sheet": {
+            "home": 2.4,
+            "away": 3.3
+          },
+          "total_goals_exact": {
+            "1": 5.5,
+            "2": 4.2,
+            "3": 6.0
+          },
+          "penalty_awarded": {
+            "yes": 3.0,
+            "no": 1.5
+          },
+          "extra_time_goals": {
+            "yes": 5.7,
+            "no": 1.18
+          }
+        }
+      }
+  ]
+
+    

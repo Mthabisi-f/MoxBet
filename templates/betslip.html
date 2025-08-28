@@ -1,0 +1,265 @@
+<div class="betslip-container max-width-600 mb-5">
+    
+    <div>
+        <div id="betslip-no-games-selected">
+
+            <div class="container-fluid">
+                <div class="text-center text-yellow">Bookings</div>
+            </div>
+                
+            <form id="get-booking" action="{% url 'get_booking' %}" method="POST" class="form-group text-center">
+                {% csrf_token %}
+                <div class="row justify-content-center">
+                    <div class="col">
+                        <div class="">
+                            <div class="input-group">
+                                <span class="input-group-text fw-bold px-1">B</span>
+                                <input type="number" step="1" min="1" name="Bcode" placeholder="Enter booking code here" aria-label="Bcode" aria-describedby="Bcode" class="form-control">
+                                <button class="btn btn-yellow px-3 text-small" type="submit" id="Bcode"><i class="bi bi-search"></i>Load</button>
+                            </div>
+                        </div>
+                    </div>
+            </form>
+            
+        </div>
+    </div>
+
+    <div id="betslip-some-games-selected">
+        <div class="row container-fluid my-2">
+            <div class="col-6 text-center">
+                <span class="position-relative text-yellow">
+                    Betslip<span class="badge bg-yellow position-absolute start-100 ms-1 top-0 border border-light rounded-pill text-black" id="numberOfSelectedGames">0</span>
+                </span>
+            </div>
+            {% if user.is_authenticated %}
+            <a href="{% url 'mybets' %}" class="col-6 text-center text-decoration-none text-yellow bg-sky-blue rounded-1">My bets</a>
+            {% endif %}
+        </div>
+
+        <div class="border-aqua" style="border-radius: 0.4rem;">
+            <div id="remove-all-selections"  class="row g-0 bb-aqua px-2">
+                <div style="margin-top: 5px;" class="col-8 text-truncate">Remove All Selections</div>
+                <div class="col-4 text-end py-2"><i class="fa-regular fa-trash-can ms-1"></i></div>
+            </div>
+
+            <ul id="games-in-a-ticket-list" class="list-unstyled mb-0 games-in-a-ticket-list"></ul>
+            <div id="offers-wrapper" class="row g-0 mb-1 bb-aqua" >
+                <div id="money-back" class="col-4 offers text-center text-small">money back</div>
+                <div id="Win-boost" class="col-4 offers text-center offer-wrapper-div-active text-small" style="border-left: 1px solid aqua;">win boost</div>
+                <div id="free-bet" class="col-4 offers text-center text-small" style="border-left: 1px solid aqua;">free bet</div>
+            </div>
+            <div id="offers-wrapper-content" class="text-extra-sm px-2 bb-aqua mb-2 overflow-auto">
+                <div id="money-back" class="offers-content row g-0">
+                    <div class="text-center">With 6 or more selections at your betslip, we'll refund up to 10X your stake if 1 of your selections lets you down</div>
+                    <div class="col-4 text-center">
+                        <div class="fw-bold bg-secondary">Selections</div>
+                        <div>6-10</div><hr class="my-1">
+                        <div>11-15</div><hr class="my-1">
+                        <div>16-20</div><hr class="my-1">
+                        <div>21+</div>
+                    </div>
+                    <div class="col-4 text-center">
+                        <div class="fw-bold bg-secondary">Minimum odds</div>
+                        <div>1.5 per selection</div><hr class="my-1">
+                        <div>1.3 per selection</div><hr class="my-1">
+                        <div>1.3 per selection</div><hr class="my-1">
+                        <div>1.3 per selection</div>
+                    </div>
+                    <div class="col-4 text-center">
+                        <div class="fw-bold bg-secondary">Amount returned</div>
+                        <div>1X stake </div><hr class="my-1">
+                        <div>2X stake</div><hr class="my-1">
+                        <div>5X stake</div><hr class="my-1">
+                        <div>10X stake</div>
+                    </div>
+                </div>
+                <div id="Win-boost" class=" offers-content">
+                    <div class="text-center">With win boost you increase your chances of winning</div>
+                    <div class="row g-0 text-center">
+                        <div class="col-6 fw-bold bg-secondary">Number of selections</div>
+                        <div class="col-6 fw-bold bg-secondary">Win boost percentage</div>
+                        <div class="col-6">2</div>
+                        <div class="col-6">2.5%</div><hr class="my-1">
+                        <div class="col-6">3</div>
+                        <div class="col-6">3%</div><hr class="my-1">
+                        <div class="col-6">4</div>
+                        <div class="col-6">4%</div><hr class="my-1">
+                        <div class="col-6">5</div>
+                        <div class="col-6">8%</div><hr class="my-1">
+                        <div class="col-6">6</div>
+                        <div class="col-6">10%</div><hr class="my-1">
+                        <div class="col-6">7</div>
+                        <div class="col-6">12%</div><hr class="my-1">
+                        <div class="col-6">8</div>
+                        <div class="col-6">14%</div><hr class="my-1">
+                        <div class="col-6">9</div>
+                        <div class="col-6">15%</div><hr class="my-1">
+                        <div class="col-6">10</div>
+                        <div class="col-6">16%</div><hr class="my-1">
+                        <div class="col-6">11</div>
+                        <div class="col-6">17%</div><hr class="my-1">
+                        <div class="col-6">12</div>
+                        <div class="col-6">18%</div><hr class="my-1">
+                        <div class="col-6">13</div>
+                        <div class="col-6">19%</div><hr class="my-1">
+                        <div class="col-6">14</div>
+                        <div class="col-6">20%</div><hr class="my-1">
+                        <div class="col-6">15</div>
+                        <div class="col-6">21%</div><hr class="my-1">
+                        <div class="col-6">16</div>
+                        <div class="col-6">22%</div><hr class="my-1">
+                        <div class="col-6">17</div>
+                        <div class="col-6">25%</div><hr class="my-1">
+                        <div class="col-6">18</div>
+                        <div class="col-6">28%</div><hr class="my-1">
+                        <div class="col-6">19</div>
+                        <div class="col-6">30%</div><hr class="my-1">
+                        <div class="col-6">20</div>
+                        <div class="col-6">35%</div><hr class="my-1">
+                        <div class="col-6">21</div>
+                        <div class="col-6">40%</div><hr class="my-1">
+                        <div class="col-6">22+</div>
+                        <div class="col-6">50%</div><hr class="my-1">
+                    </div>
+                </div>
+                <div id="free-bet" class="offers-content">
+                    <div>You have $1 free bets balance.</div>
+                    <div class="text-center">Everytime after loosing 5 tickets consecutively under the sports category, you are given a free bet of $0.5. With this free bet, you must select atleast 6 selections with atleast 1.5 odds per selection in order to redeem this free bet token</div>
+                </div>
+            </div>
+
+            <!-- Odds Change Alert -->
+            <div id="odds-change-alert" class="alert alert-warning d-none mx-2" role="alert">
+                Odds have changed. <button id="accept-odds-btn" class="btn btn-sm btn-primary">Accept New Odds</button>
+            </div>
+            <div id="alerts-container"></div>
+
+            <!-- Place Bet Form -->
+            <form id="betslip-form" method="POST">
+                {% csrf_token %}
+
+                <div class="row g-0 px-2">
+                    <div class="col-8 d-flex">
+                        {% if user.is_authenticated %}
+                        <span class="text-small text-yellow pt-1">Minimum stake is <span class="coral" id="min-stake-display"></span></span>
+                        {% else %}
+                        <span>Stake</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-4">
+                        <div class="input-group input-group-sm" style="height: 20px;">
+                            {% if user.is_authenticated %}
+                            <span class="input-group-text fw-bold px-1" style="height: 20px;">{{ currency_symbol }}</span>
+                            {% else %}
+                            <span class="input-group-text fw-bold px-1" style="height: 20px;">$</span>
+                            {% endif %}
+                            <input type="number" step="0.01" class="form-control text-end bg-transparent border-aqua" placeholder="Stake" id="input-stake" name="input_stake" style="border-radius: 0%; color: white; height: 20px;" required >
+                        </div>
+                    </div>
+                </div>
+                
+                <input type="hidden" name="selections" id="selections">
+                <input type="hidden" name="win_boost" id="win-boost">
+                <input type="hidden" name="total_odds" id="total-odds">
+                <input type="hidden" name="potential_win" id="potential-win">
+                <input type="hidden" name="bet_type" id="bet-type">
+               
+
+                <div class="betslip-summary mt-1">
+                    <div class="row px-2">
+                        <div class="col-12 d-flex justify-content-between">
+                            <div class="text-start">Total odds</div>
+                            <div class="text-end" id="total_odds">0.00</div>
+                        </div>
+                        <div class="toggle-display d-none">
+                            <div class="col-12 d-flex justify-content-between">
+                                <div class="text-start">Win boost</div>
+                                <div class="text-end" id="win_boost">0.00</div>
+                            </div>
+                            <div class="col-12 d-flex justify-content-between">
+                                <div class="text-start">Maximum payout</div>
+                                <div class="text-end">{{ currency_symbol }}<span id="potential_win"></span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="submit-buttons row g-0 d-flex justify-content-between m-2">
+                    <div class="col-6 pe-1 d-grid">
+                        <button value="book" type="submit" id="book-bet-btn" class="bg-sky-blue text-black rounded-1 border-0">Book a bet</button>
+                    </div>
+                    {% if user.is_authenticated %}
+                        <div class="col-6 ps-1 d-grid">
+                            <button value="place" type="submit" id="place-bet-btn" class="bg-yellow text-black rounded-1 border-0">Place a bet</button>
+                        </div>
+                    {% else %}
+                        <div class="col-6 ps-1 d-grid">
+                            <a href="{% url 'login' %}" class="bg-yellow text-black rounded-1 border-0 text-center text-decoration-none">Login to bet</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </form>
+        </div>    
+    </div>
+</div>
+
+<!-- Success Modal -->
+<!-- Add this modal at the bottom of your template -->
+<div class="modal fade text-black" id="successModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-yellow py-2">
+                <h5 class="modal-title">Bet Placed Successfully!</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body row g-0 bg-sky-blue px-3">
+                <div class="col-6 text-start">Ticket Number : </div><div id="ticket-id" class="col-6 text-end"></div>               
+                <div class="col-6 text-start">Stake : </div><div id="ticket-stake" class="col-6 text-end"></div>
+                <div class="col-6 text-start">Potential Win : </div><div id="ticket-potential-win" class="col-6 text-end"></div>   
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add this script to auto-show the modal if there's a success message -->
+{% if messages %}
+    {% for message in messages %}
+        {% if message.tags == 'success' %}
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+                    successModal.show();
+                });
+            </script>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+<!-- Booking Modal -->
+<!-- Add this modal at the bottom of your template -->
+<div class="modal fade text-black" id="bookingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-yellow py-2">
+                <h5 class="modal-title">Bet Booked Successfully!</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body row g-0 bg-sky-blue px-3">
+                <div class="col-6 text-start">Booking code : </div><div id="booking-code" class="col-6 text-end"></div>               
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        {% if message.tags == 'success' %}
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+                    bookingModal.show();
+                });
+            </script>
+        {% endif %}
+    {% endfor %}
+{% endif %}

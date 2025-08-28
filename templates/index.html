@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moxbet</title>
+    <link rel="icon" href="{% static 'images/jackpot.jpg' %}" type="x-icon">
+    <link rel="stylesheet" href="{% static 'styles/bootstrap/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'styles/css/all.min.css' %}">
+    <link rel="stylesheet" href="{% static 'styles/css/fontawesome.min.css' %}">
+    <link rel="stylesheet" href="{% static 'styles/flatpickr.min.css' %}">
+    <link rel="stylesheet" href="{% static 'styles/main.css' %}">
+    <style>
+        
+        /* Fix for modal backdrop */
+        .modal-backdrop {
+            z-index: 1040 !important;
+        }
+        .modal {
+            /* z-index: 1050 !important; */
+            overflow: hidden;
+            
+        }
+        .accordion-body {
+            padding: 0 !important;
+        }
+        .form-check:hover {
+            background-color: aqua;
+        }
+        .modal-dialog {
+            margin: 0 !important;
+        }
+        
+    </style>
+
+</head>
+<body class="bg-navy-blue">
+
+    {% include 'header.html' %}
+    <div id="limits" 
+        data-currency-symbol="{{ currency_symbol }}"
+        data-min-stake="{{ user_limits.min_stake }}"
+        data-min-deposit="{{ user_limits.min_deposit }}"
+        data-min-withdrawal="{{ user_limits.min_withdrawal }}"
+        data-max-withdrawal="{{ user_limits.max_withdrawal }}"
+        data-max-win="{{ user_limits.max_win }}">
+    </div>
+
+    {% include 'navbar.html' %}
+
+    
+    <div>     
+        <div data-win-boost-percentage="{{ win_boost_percentage }}"></div>
+        {% block content %}
+
+        {% endblock %}
+    </div>
+    
+    {% include 'footer.html' %}
+    {% include 'footer2.html' %}
+
+
+
+
+    <script src="{% static 'styles/bootstrap/js/bootstrap.bundle.js' %}"></script>
+    <script src="{% static 'js/flatpickr.min.js' %}"></script>
+    <script src="{% static 'js/script.js' %}"></script>
+    <!-- <script
+        type="module"
+        src="https://widgets.api-sports.io/football/1.1.8/widget.js">
+    </script> -->
+    <script
+        type="module"
+        src="https://widgets.api-sports.io/2.0.3/widgets.js">
+    </script>
+    <script>
+        const placeBetUrl = "{% url 'place_bet' %}";
+        const bookBetUrl = "{% url 'book_bet' %}";
+        const today = new Date();
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(today.getMonth() - 6);
+
+        document.addEventListener('DOMContentLoaded', function(){
+            flatpickr("#date-picker", {
+                mode: 'range',
+                dateFormat: "Y-m-d",
+                minDate: sixMonthsAgo,
+                maxDate: today,
+                onClose: function(selectedDates){
+                    if(selectedDates.length === 2){
+                        dateFrom = selectedDates[0].toISOString().slice(0, 10);
+                        dateTo = selectedDates[1].toISOString().slice(0, 10);
+                        // document.getElementById('dateRangeLabel').textContent = `${dateFrom}  to ${dateTo}`;
+                    }
+                }
+            });
+        });
+    
+    </script>
+</bodyc>
+</html> 
+
+
+
+

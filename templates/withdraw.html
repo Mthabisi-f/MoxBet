@@ -1,0 +1,75 @@
+{% extends 'index.html' %}
+
+{% block content %}
+
+<div class="max-width-600 container-fluid">
+    <div class="row-g-0">
+        <div class="col-12 p-3 rounded-bottom-3 bg-sky-blue">
+            
+            <form action="{% url 'withdraw' %}" method="POST" class="mt-5 p-3 rounded-3 bg-navy-blue">
+                {% csrf_token %}
+                <p class="text-center text-danger">
+                    {% for message in messages %}
+                        <div class="alert {% if message.tags == 'error' %} alert-danger {% else %} alert-success {% endif %} alert-dismissible" role="alert">
+                            <strong>{% if message.tags == 'error' %} Error! {% else %} Success {% endif %}</strong> {{message}}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                </p>
+                <p class="text-center text-yellow">
+                    <a href="{{request.META.HTTP_REFERER}}">
+                        <i class="fa-solid fa-arrow-left-long"></i>
+                    </a>
+                    <span>To make a withdrawal request fill the form below and hit "submit".</span>
+                    
+                </p>
+                <hr>  
+
+                <p>Note that the minimun withdrawal is $1</p>
+                
+                <div class="row gap-2">
+
+                    <div class="col-12">
+                        <div class="row">
+                            <div class="col-4 pe-1">
+                                <label for="withdrawal_amount">Withdrawal amount :</label>
+                            </div>
+                            <div class="col-8 ps-1">
+                                <input type="number" id="withdrawal_amount" name="withdrawal_amount" placeholder="100" class="form-control" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="row">
+                            <div class="col-4 pe-1">
+                                <label for="receiving_number">Receiver's number :</label>
+                            </div>
+                            <div class="col-8 ps-1">
+                                <input type="number" id="receiving_number" name="receiving_number" placeholder="0778251826" class="form-control" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="row">
+                            <div class="col-4 pe-1">
+                                <label for="confirm_password">Confirm password :</label>
+                            </div>
+                            <div class="col-8 ps-1">
+                                <input type="password" id="confirm_password" name="confirm_password" class="form-control" required>
+                            </div>
+                        </div>
+                    </div>
+    
+                    <div class="mt-4 text-center">
+                        <button class="btn btn-yellow px-5 py-1" type="submit">Submit</button>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div> 
+
+{% endblock content %}

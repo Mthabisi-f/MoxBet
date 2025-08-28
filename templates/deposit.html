@@ -1,0 +1,52 @@
+{% extends 'index.html' %}
+
+{% block content %}
+
+<div class="max-width-600 container-fluid">
+    <div class="row-g-0">
+        <div class="col-12 p-3 rounded-bottom-3 bg-sky-blue">
+            
+            <form action="/deposit/" method="POST" class="mt-5 p-3 rounded-3 bg-navy-blue">
+                {% csrf_token %}
+                <p class="text-center text-danger">
+                    {% for message in messages %}
+                    <div class="alert {% if message.tags == 'error' %} alert-danger {% else %} alert-success {% endif %} alert-dismissible" role="alert">
+                        <strong>{% if message.tags == 'error' %} Error! {% else %} Success {% endif %}</strong> {{message}}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endfor %}
+                </p>
+                <p class="text-center text-yellow">
+                    <span>
+                        <a href="{{request.META.HTTP_REFERER}}">
+                            <i class="fa-solid fa-arrow-left-long me-1"></i>
+                        </a>
+                    </span>
+                
+                    <span>Choose a deposit method</span>
+                    <div class="row g-2 d-flex justify-content-around text-center">
+                        <div class="col-3 rounded-1 text-black py-2 text-small bg-primary">ECOCASH</div>
+                        <div class="col-3 rounded-1 text-black py-2 text-small bg-warning">IN BUCKS</div>
+                        <div class="col-3 rounded-1 text-black py-2 text-small bg-success">PI WALLET</div>
+                    </div>
+                </p>
+                <hr>  
+                <p class="text-center">To make a deposit dial: *151*1*1*0778241826*amount#, you will recieve a message in your device after making this payment, Thne as proof of payment, copy and paste the Txn id (e.g <span class="text-yellow">RC250203.0909.B76297</span>) code into the below input field and press deposit</p>              
+                <p>Note that the minimun deposit is $1</p>
+                <div class="row g-0 text-center">
+                    <div class="col-auto" style="padding-top: 5px;">
+                        <label for="confirmation_code">Txn id:</label>
+                    </div>
+                    <div class="col">
+                        <input type="text" id="confirmation_code" name="confirmation_code" placeholder="RC250203.0909.B76297" class="form-control mb-2" required>
+                    </div>
+                </div>
+                <div class="mt-4 text-center">
+                    <button class="btn btn-yellow px-5 py-1" type="submit">Deposit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div> 
+
+{% endblock content %}

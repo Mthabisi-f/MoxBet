@@ -1,0 +1,382 @@
+body{
+    color: whitesmoke;
+} 
+.top-nav-item-active{
+    background-color: aqua;
+    font-weight: bold;
+    color: yellow;
+}
+.italic{
+    font-style: italic;
+}
+.text-extra-sm{
+    font-size: x-small;
+    letter-spacing: 1px;
+}
+.text-small{
+    font-size: small;
+}
+.small-screen-odds-btn{
+    background-color: #1E90FF;
+    border: 1px solid yellow;
+    border-radius: 4px;
+    width: 36%;
+    text-decoration: none;
+    color: black;
+    align-items: center;
+}
+.small-screen-draw-odds-btn{
+    border: 1px solid yellow;
+    border-radius: 4px;
+    width: 27%;
+    background-color: #1E90FF;
+    text-decoration: none;
+    color: black;
+    align-items: center;
+}
+.big-screen-odds-btn{
+    background-color: transparent;
+    border: 1px solid yellow; /* #1E90FF */
+    border-radius: 5px;
+    width: 31%;
+    text-decoration: none;
+    color: whitesmoke;
+    align-items: center;
+}
+.more-odds-btns{
+    background-color: transparent;
+    border: 1px solid yellow; /* #1E90FF */
+    color: whitesmoke;
+    border-radius:5px ;
+}
+.odds-btn-active{
+    background-color: yellow;
+    color: black;
+    border: none;
+}
+.accordion-header{
+    font-size: 1.5rem;
+    margin: 0px;
+}
+.accordion-button{
+    background-color: #1E90FF;
+    padding: 5px;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+}
+.accordion-button:not(.collapsed){
+    background-color: #1E90FF;;
+    padding: 5px;    
+    backdrop-filter: 30px;
+}
+.accordion-body .card{
+    border: 1px solid  #1E90FF/*#1E90FF*/;
+    background-color: #1E90FF /* #87CEFA*/;
+}
+.receipt-picture{
+    font-size: 300px;
+    color: #E0E0E0;
+}
+.betslip-container{
+    height: 100vh;
+    overflow-y: auto;
+}
+.betslip-container::-webkit-scrollbar{
+    display: none;
+}
+.navbar-nav::-webkit-scrollbar{
+    display: none;
+}
+.hide-scrollbar::-webkit-scrollbar{
+    display: none;
+}
+
+.remove-all-selections{
+    cursor: pointer;
+}
+
+/*====custon=====accordion======*/
+
+/* .my-item {
+    border: none;
+}
+
+.my-header {
+    padding: 2px 3px;
+    color: white;
+    cursor: pointer;
+    font-size: 1rem;
+    user-select: none;
+} */
+
+/* .my-content {
+    padding: 4px 2px;
+    display: none;
+    /* background-color: rgb(234, 234, 163); */
+    /* color: black;
+} */
+
+/* .my-item.open .my-content {
+    display: block;
+} */ 
+
+/*====end==of===accordion======*/
+
+.border-yellow{
+    border: 1px solid yellow;
+}
+.bt-yellow{
+    border-top: 1px solid yellow;
+}
+.max-width-700{
+    max-width: 700px;
+}
+
+.bet-top{
+    border-top-left-radius: .4em;
+    border-top-right-radius: .4em;
+}
+#bet-status{
+    border-top-right-radius: .4em;
+    border-bottom-left-radius: .6em;
+}
+/* .betslip-accordion-btn::after{
+    content: '\25bc';
+    transition: transform 0.3s ease-in-out;
+    transform: rotate(-90deg);
+} */
+
+.text-big{
+    font-size: 2.5rem;
+}
+.text-linear-grad{
+    background: linear-gradient(to right, aqua, whitesmoke, yellow);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+.text-whitesmoke{
+    color: whitesmoke;
+}
+.bg-sky-blue{
+    background-color: #1E90FF;/* #02B7E9 */
+}
+.text-navy-blue{
+    color: #121d4a;
+}
+.bg-aqua{
+    background-color: aqua;
+}
+.border-aqua{
+    border: 1px solid aqua;
+}
+.bg-yellow{
+    background-color: yellow;
+}
+.bg-navy-blue{
+    background-color: #121d4a; /* #235FAF */ /* rgba(29, 39, 48, 0.841) */
+}
+.bg-sky-blue{
+    background-color: #1E90FF ; /* rgba(29, 39, 48, 0.555) */
+}
+.text-sky-blue{
+    color: #02B7E9 ; /* #1E90FF */
+}
+.header-btn{
+    background-color: yellow;
+    border-radius: .25em;
+    color: black;
+}
+.header-btn:hover{
+    border: 2px solid aqua;
+    border-radius: .25em;
+    color: aqua;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+.top-nav-item{
+    color: black;
+    width: 5em;
+}
+.text-yellow{
+    color: yellow;
+}
+.text-aqua{
+    color: aqua;
+}
+
+.more-odds-page{
+    max-width: 1000px;
+}
+.border-black{
+    border: 1px solid black;
+}
+
+.sport-btn-active{
+    background-color: aqua;
+    font-weight: bold;
+}
+
+.dynamic-col{
+    display: inline-block;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.col-auto{
+    flex-shrink: 0;
+    max-width: 50%;
+}
+.text-smaller{
+    font-size: smaller;
+    vertical-align: bottom;
+    padding-bottom: 0px;
+}
+.btn-yellow{
+    background-color: yellow;
+    color: black;
+}
+.btn-yellow:hover{
+    color: aqua;
+    border: 2px solid aqua;
+    background-color: transparent;
+}
+.more-odds{
+    color: red;
+    background-color: aqua;
+    border: none;
+}
+.fw-500{
+    font-weight: 500;
+}
+.w-31{
+    padding: 0 .88em;
+    color: white;
+}
+.max-width-600{
+    max-width: 600px;
+}
+
+.max-width-1000{
+    max-width: 1000px;
+}
+#offers-wrapper, div{
+    cursor: pointer;
+}
+
+#offers-wrapper-content{
+    max-height: 80px;
+}
+
+.offer-wrapper-div-active{
+    color: black;
+    background-color: aqua;
+}
+
+
+/* strt modal  */
+
+  .modal {
+    position: fixed !important;
+    top: 10% !important;
+    left: 50% !important;
+    transform: translate(-50%, 0);
+    z-index: 1050;
+    border-radius: 5px;
+    /* box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3); */
+    max-width: 400px;
+    text-align: center;
+  }
+
+  .modal-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    
+  }
+
+.bg-sky-blue-text-black{
+    background-color: #1E90FF;
+    color: black;
+    font-weight: 500px;
+    border: none;
+    border-radius: 1rem;
+}
+
+.bt-aqua{
+    border-top: 1px solid aqua;
+}
+
+.bb-aqua{
+    border-bottom: 1px solid aqua;
+}
+.mb-5px{
+    margin-bottom: -5px;
+}
+
+/* end modal */
+/* .custom-accordion .accordion-button::after{
+    width: 25px;
+    height: 25px;
+} */
+
+.Lost{
+    color: red;
+}
+.Won{
+    color: green;
+}
+.Refund{
+    color: green;
+}
+.Pending{
+    color: gray;
+}
+.status-filter-active{
+    color: aqua;
+    border-bottom: 4px solid aqua;
+}
+
+.br-and-b-aqua{
+    border-radius: 0.5rem;
+    border: 1px solid aqua;
+    color: aqua;
+}
+
+.logo{
+    margin-bottom: 4px;
+    max-width: 14px;
+    max-height: 100%;
+    object-fit: cover; /* or contain, depending on your design choice */
+}
+
+
+/* Increase specificity if needed */
+#wg-api-football-games {
+    --color-green: #1E90FF /* Ensure this targets the widget specifically */
+}
+
+
+@media (max-width: 700px){
+    .top-nav-item{
+        width: 4em;
+    }
+}
+
+@media (max-width: 900px){
+    .w-31{
+        padding: 0 .8em;
+    }
+    .container-fluid{
+        margin-left: none;
+        margin-right: none;
+        padding: 5px;
+    }
+}
+@media (min-width: 1200px){
+    .w-31{
+        padding: 0 1.1em;
+    }
+}
+

@@ -1,0 +1,56 @@
+
+{% extends 'index.html' %}
+
+{% block content %}
+
+        
+<div id="results-page" class="row gx-2 my-1 d-flex justify-content-center">
+
+    <div id="games-display" class="col-12 col-md-8 col-xl-8 max-width-1000">
+        <div id="sports-row" class="row overflow-auto gx-4 mx-1 flex-nowrap hide-scrollbar my-2 text-whitesmoke">
+            <div data-sport="soccer" class="col-auto sport-button br-and-b-aqua">soccer</div>
+            <div data-sport="basketball" class="col-auto sport-button">Basketball</div>
+            <div data-sport="tennis" class="col-auto sport-button">Tennis</div>
+            <div data-sport="cricket" class="col-auto sport-button">Cricket</div>
+            <div data-sport="volley-ball" class="col-auto sport-button">Volley ball</div>
+            <div data-sport="baseball" class="col-auto sport-button">Baseball</div>
+            <div data-sport="hands-ball" class="col-auto sport-button">Hands ball</div>
+            <div data-sport="netball" class="col-auto sport-button">Netball</div>
+            <div data-sport="hockey-icy" class="col-auto sport-button">Hockey icy</div>
+            <div data-sport="american-football" class="col-auto sport-button">American football</div>
+        </div>       
+
+        <div id="wg-api-football-games"
+            data-host="v3.football.api-sports.io"
+            data-key="88cb9e0d29a0a8245c01b0d09ed572e4"
+            data-date=""
+            data-league=""
+            data-season=""
+            data-theme=""
+            data-refresh="15"
+            data-show-toolbar="true"
+            data-show-errors="false"
+            data-show-logos="false"
+            data-modal-game="true"
+            data-modal-standings="true"
+            data-modal-show-logos="true">
+        </div>
+
+    </div>
+
+    
+
+    <!-- <div class="d-none d-md-block col-md-4 col-xl-3">
+        {% include 'mybets_content.html' %} or include betslip
+    </div> -->
+
+</div>
+
+{% endblock content%}
+
+
+
+
+
+
+        

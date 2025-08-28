@@ -1,0 +1,25 @@
+<div class="row g-1">
+    <div class="text-center text-yellow">Highlights</div>
+    <div class="col-12">
+        <form method="post" action="" class="d-flex p-0" role="search">
+            {% csrf_token %}
+            <div>
+                <div class="row justify-content-center">
+                    <div class="col">
+                        <div class="input-group">
+                            <input type="text" placeholder="Search teams, players" aria-label="Search" aria-describedby="search-button" class="form-control">
+                            <button class="btn btn-yellow px-1 text-small" type="submit" id="search-button"><i class="bi bi-search"></i>Search</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    <div id="search-results" class="search-results row g-0 mt-1"></div>
+    <div id="highlist-games-container" class="row g-0">
+        
+    </div>
+
+    
+</div>

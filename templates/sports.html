@@ -1,0 +1,243 @@
+{% extends 'index.html' %}
+
+{% block content %}
+
+{% load static %}
+
+
+<div class="row gx-1 d-flex container-fluid my-1">
+
+    <div class="d-none d-xl-block col-xl-2">
+        {% include 'highlights.html' %}
+    </div>
+
+    <div class="col-12 col-md-8 col-xl-7">
+
+
+        <div id="mobile-view">
+
+            <div id="carouselExampleCaptions" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-indicators">
+                  <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+                  <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="1" aria-label="Slide 2"></button>
+                  <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="2" aria-label="Slide 3"></button>
+                  <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="3" aria-label="Slide 4"></button>
+                  <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="4" aria-label="Slide 5"></button>
+                  <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="5" aria-label="Slide 6"></button>
+                </div>
+        
+                <div class="carousel-inner">
+                  <div class="carousel-item active">
+                    <img src="{% static 'images/aviator.jpg' %}" alt="aviator" class="img-fluid">
+                    <div class="carousel-caption d-none d-md-block">
+                      <h5>First slide label</h5>
+                      <p>Some representative placeholder content for the first slide.</p>
+                    </div>
+                  </div>
+                  <div class="carousel-item">
+                    <img src="{% static 'images/casino.jpg' %}" alt="Casino" class="img-fluid">
+                    <div class="carousel-caption d-none d-md-block">
+                      <h5>Second slide label</h5>
+                      <p>Some representative placeholder content for the second slide.</p>
+                    </div>
+                  </div>
+                  <div class="carousel-item">
+                    <img src="{% static 'images/jackpot.jpg' %}" alt="jackpots" class="img-fluid">
+                    <div class="carousel-caption d-none d-md-block">
+                      <h5>Third slide label</h5>
+                      <p>Some representative placeholder content for the third slide.</p>
+                    </div>
+                  </div>
+                  <div class="carousel-item">
+                    <img src="{% static 'images/horse-racing.jpg' %}" alt="horse racing" class="img-fluid">
+                    <div class="carousel-caption d-none d-md-block">
+                      <h5>Fouth slide label</h5>
+                      <p>Some representative placeholder content for the fourth slide.</p>
+                    </div>
+                  </div>
+                  <div class="carousel-item">
+                    <img src="{% static 'images/virtual.jpg' %}" alt="virtual" class="img-fluid">
+                    <div class="carousel-caption d-none d-md-block">
+                      <h5>Fifth slide label</h5>
+                      <p>Some representative placeholder content for the fifth slide.</p>
+                    </div>
+                  </div>
+                  <div class="carousel-item">
+                    <img src="{% static 'images/lucky-numbers.jpg' %}" alt="lucky-numbers" class="img-fluid">
+                    <div class="carousel-caption d-none d-md-block">
+                      <h5>Sixth slide label</h5>
+                      <p>Some representative placeholder content for the sixth slide.</p>
+                    </div>
+                  </div>
+                </div>
+        
+                <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide="prev">
+                  <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                  <span class="visually-hidden">Previous</span>
+                </button>
+        
+                <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide="next">
+                  <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                  <span class="visually-hidden">Next</span>
+                </button>
+            </div>
+              
+            <nav class="navbar navbar-expand container-fluid bg-body-tertiary my-1 p-0">
+                <ul id="sport-navbar" class="navbar-nav  me-auto overflow-auto mb-lg-0 ">
+        
+                    <li class="nav-item">
+                        <a data-sport="football" class="nav-link sport-btn-active sport-button top-nav-item text-center py-0" aria-current="page" role="button">
+                            <div>
+                                <img width="34" height="34" style="margin-bottom: -5px;" src="https://img.icons8.com/3d-fluency/94/football2.png" alt="football">
+                            </div>
+                            <div class="text-truncate text-small">Football</div>
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a data-sport="basketball" class="nav-link sport-button top-nav-item text-center py-0" aria-current="page" role="button">
+                            <div>
+                                <img width="34" height="34" style="margin-bottom: -5px;"  src="https://img.icons8.com/emoji/34/basketball-emoji.png" alt="basketball-emoji"/>
+                            </div>
+                            <div class="text-truncate text-small">Basketball</div>
+                        </a>
+                    </li>
+        
+                    <li class="nav-item">
+                        <a data-sport="tennis" class="nav-link sport-button top-nav-item text-center py-0" aria-current="page" role="button">
+                            <div>
+                                <img width="34" height="34" style="margin-bottom: -5px;" src="https://img.icons8.com/emoji/34/tennis-emoji.png" alt="tennis-emoji"/>
+                            </div>
+                            <div class="text-truncate text-small">Tennis</div>
+                        </a>
+                    </li>
+        
+                    <li class="nav-item">
+                        <a data-sport="netball" class="nav-link sport-button top-nav-item text-center py-0" aria-current="page" role="button">
+                            <div>
+                                <img width="34" height="34" style="margin-bottom: -5px;" src="https://img.icons8.com/color/34/netball.png" alt="netball"/>
+                            </div>
+                            <div class="text-truncate text-small">Netball</div>
+                        </a>
+                    </li>
+        
+                    <li class="nav-item">
+                        <a data-sport="baseball" class="nav-link sport-button top-nav-item text-center py-0" aria-current="page" role="button">
+                            <div>
+                                <img width="34" height="34" style="margin-bottom: -5px;" src="https://img.icons8.com/emoji/34/baseball-emoji.png" alt="baseball-emoji"/>
+                            </div>
+                            <div class="text-truncate text-small">Baseball</div>
+                        </a>
+                    </li>
+        
+                    <li class="nav-item">
+                        <a data-sport="hockey-icy" class="nav-link sport-button top-nav-item text-center py-0" aria-current="page" role="button">
+                            <div>
+                                <img width="34" height="34" style="margin-bottom: -5px;" src="https://img.icons8.com/emoji/34/ice-hockey-emoji.png" alt="ice-hockey-emoji"/>
+                            </div>
+                            <div class="text-truncate text-small">Hockey icy</div>
+                        </a>
+                    </li>
+        
+                    <li class="nav-item">
+                        <a data-sport="volley-ball" class="nav-link sport-button top-nav-item text-center py-0" aria-current="page" role="button">
+                            <div>
+                                <img width="34" height="34" style="margin-bottom: -5px;" src="https://img.icons8.com/color/34/volleyball.png" alt="volleyball"/>
+                            </div>
+                            <div class="text-truncate text-small">Volley ball</div>
+                        </a>
+                    </li>
+        
+                    <li class="nav-item">
+                        <a data-sport="snooker" class="nav-link sport-button top-nav-item text-center py-0" aria-current="page" role="button">
+                            <div>
+                                <img width="34" height="34" style="margin-bottom: -5px;" src="https://img.icons8.com/emoji/34/pool-8-ball.png" alt="pool-8-ball"/>
+                            </div>
+                            <div class="text-truncate text-small">Snooker</div>
+                        </a>
+                    </li>
+        
+                    <li class="nav-item">
+                        <a data-sport="rugby" class="nav-link sport-button top-nav-item text-center py-0" aria-current="page" role="button">
+                            <div>
+                                <img width="34" height="34" style="margin-bottom: -5px;" src="https://img.icons8.com/emoji/34/rugby-football-emoji.png" alt="rugby-football-emoji"/>
+                            </div>
+                            <div class="text-truncate text-small">Rugby</div>
+                        </a>
+                    </li>
+         
+                    <li class="nav-item">
+                        <a data-sport="slot-machine" class="nav-link sport-button top-nav-item text-center py-0" aria-current="page" role="button">
+                            <div>
+                                <img width="34" height="34" style="margin-bottom: -5px;" src="https://img.icons8.com/emoji/34/slot-machine-emoji--v2.png" alt="slot-machine-emoji--v2"/>
+                            </div>
+                            <div class="text-truncate text-small">Slot Machine</div>
+                        </a>
+                    </li> 
+        
+                    <li class="nav-item">
+                        <a data-sport="darts" class="nav-link sport-button top-nav-item text-center py-0" aria-current="page" role="button">
+                            <div>
+                                <img width="34" height="34" style="margin-bottom: -5px;" src="https://img.icons8.com/emoji/34/bullseye.png" alt="bullseye"/>
+                            </div>
+                            <div class="text-truncate text-small">Darts</div>
+                        </a>
+                    </li> 
+                    
+                    <li class="nav-item">
+                        <a data-sport="boxing" class="nav-link sport-button top-nav-item text-center py-0" aria-current="page" role="button">
+                            <div>
+                                <img width="34" height="34" style="margin-bottom: -5px;" src="https://img.icons8.com/external-flaticons-lineal-color-flat-icons/34/external-boxing-martial-arts-flaticons-lineal-color-flat-icons-3.png" alt="boxing-img"/>
+                            </div>
+                            <div class="text-truncate text-small">Boxing</div>
+                        </a>
+                    </li> 
+        
+                    <li class="nav-item">
+                        <a data-sport="cricket" class="nav-link sport-button top-nav-item text-center py-0" aria-current="page" role="button">
+                            <div>
+                                <img width="34" height="34" style="margin-bottom: -5px;" src="https://img.icons8.com/emoji/34/cricket-game-emoji.png" alt="cricket-img"/>
+                            </div>
+                            <div class="text-truncate text-small">Cricket</div>
+                        </a>
+                    </li> 
+        
+                    <li class="nav-item">
+                        <a data-sport="handball" class="nav-link sport-button top-nav-item text-center py-0" aria-current="page" role="button">
+                            <div>
+                                <img width="34" height="34" style="margin-bottom: -5px;" src="https://img.icons8.com/emoji/34/man-playing-handball.png" alt="handball"/>
+                            </div>
+                            <div class="text-truncate text-small">Handball</div>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <div id="top-leagues-accordion-container"></div>         
+
+            <div id="all-events-container">
+                <div id="games-dipslay">
+                    <div id="odds-description" class=" row g-0 text-yellow"></div>
+                    <!-- Games will be displayed here -->
+
+                    <!-- spinner -->
+                </div>
+            </div>
+
+        
+        
+        </div>
+                
+
+
+    </div>
+
+            
+
+    <div class="d-none d-md-block col-md-4 col-xl-3">
+        {% include 'betslip.html' %}
+    </div>
+</div>
+
+
+{% endblock %}
