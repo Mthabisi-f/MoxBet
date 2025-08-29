@@ -1083,81 +1083,41 @@ async function fetchGamesBySport(sport, page = 1) {
     }
 }
 
-// function initLiveOddsWebSocket(currentSport) {
-//     const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-//     const socketUrl = `${wsProtocol}://${window.location.host}/ws/live/${currentSport}/`;
-//     const socket = new WebSocket(socketUrl);
+function initLiveOddsWebSocket(currentSport) {
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const socketUrl = `${wsProtocol}://${window.location.host}/ws/live/${currentSport}/`;
+    const socket = new WebSocket(socketUrl);
 
-//     socket.onopen = () => {
-//         console.log(`Connected to live odds WebSocket for ${currentSport}`);
-//     };
+    socket.onopen = () => {
+        console.log(`Connected to live odds WebSocket for ${currentSport}`);
+    };
 
-//     socket.onmessage = (event) => {
-//         const data = JSON.parse(event.data);
-//         // data will be the payload from Redis task
-//         const liveStatuses = ["LIVE", "1H", "2H", "HT", "ET", "BT", "PEN"];
+    socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        // data will be the payload from Redis task
+        const liveStatuses = ["LIVE", "1H", "2H", "HT", "ET", "BT", "PEN"];
 
-//         if (liveStatuses.includes(data.status.short)) {
-//             updateLiveOddsOnPage(data, currentSport);
-//         }
-//     };
+        if (liveStatuses.includes(data.status.short)) {
+            updateLiveOddsOnPage(data, currentSport);
+        }
+    };
 
-//     socket.onclose = () => {
-//         console.log(`Disconnected from live odds WebSocket for ${currentSport}`);
-//         // Optional: try to reconnect
-//         setTimeout(() => initLiveOddsWebSocket(currentSport), 5000);
-//     };
+    socket.onclose = () => {
+        console.log(`Disconnected from live odds WebSocket for ${currentSport}`);
+        // Optional: try to reconnect
+        setTimeout(() => initLiveOddsWebSocket(currentSport), 5000);
+    };
 
-//     socket.onerror = (error) => {
-//         console.error(`WebSocket error:`, error);
-//     };
-// }
-
-// let liveSocket = null;
-
-// function initLiveOddsWebSocket(currentSport) {
-//     // Close old socket if still open
-//     if (liveSocket && liveSocket.readyState !== WebSocket.CLOSED) {
-//         liveSocket.close();
-//     }
-
-//     const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-//     const socketUrl = `${wsProtocol}://${window.location.host}/ws/live/${currentSport}/`;
-
-//     liveSocket = new WebSocket(socketUrl);
-
-//     liveSocket.onopen = () => {
-//         console.log(`✅ Connected to live odds WebSocket for ${currentSport}`);
-//     };
-
-//     liveSocket.onmessage = (event) => {
-//         const data = JSON.parse(event.data);
-//         const liveStatuses = ["LIVE", "1H", "2H", "HT", "ET", "BT", "PEN"];
-
-//         if (liveStatuses.includes(data.status.short)) {
-//             updateLiveOddsOnPage(data, currentSport);
-//         }
-//     };
-
-//     liveSocket.onclose = () => {
-//         console.log(`❌ Disconnected from WebSocket for ${currentSport}`);
-//         // Auto-reconnect only if it wasn’t a manual close
-//         setTimeout(() => {
-//             if (!liveSocket || liveSocket.readyState === WebSocket.CLOSED) {
-//                 initLiveOddsWebSocket(currentSport);
-//             }
-//         }, 5000);
-//     };
-
-//     liveSocket.onerror = (error) => {
-//         console.error("⚠️ WebSocket error:", error);
-//     };
-// }
+    socket.onerror = (error) => {
+        console.error(`WebSocket error:`, error);
+    };
+}
 
 
-// document.addEventListener("DOMContentLoaded", () => {
-//     initLiveOddsWebSocket(`${currentSport}`);
-// });
+
+document.addEventListener("DOMContentLoaded", () => {
+    initLiveOddsWebSocket(`${currentSport}`);
+});
 
 
 function updateLiveOddsOnPage(matchPayload, currentSport) {
@@ -1166,6 +1126,25 @@ function updateLiveOddsOnPage(matchPayload, currentSport) {
     const matchEl = document.querySelector(`[data-match-id="${matchId}"]`);
     if (!matchEl) return;
 
+    // convert to local date and time
+    let dateObj = new Date(matchPayload.datetime);
+
+    let date = dateObj.toLocaleDateString("en-GB");
+    let time = dateObj.toLocaleTimeString("en-GB", {hour: "2-digit", minute: "2-digit"});
+
+    const times = matchEl.querySelectorAll(`[data-match-time="${time}"]`);
+    const dates = matchEl.querySelectorAll(`[data-match-date="${date}"]`);
+    if (!times) return;
+    if (!dates) return;
+
+    times.forEach(t =>{
+        t.innerText = `${matchPayload.status.elapsed}`;
+    })
+
+    dates.forEach(d =>{
+        d.innerText = `${ `Live ${matchPayload.status.short}`}`;
+    })
+
     // Iterate through updated odds
     matchPayload.odds.forEach(market => {
         const marketType = market.market_type;
@@ -1173,30 +1152,30 @@ function updateLiveOddsOnPage(matchPayload, currentSport) {
         const suspendedData = market.suspended;
 
         // Find the corresponding container/button
-        const oddsContainer = matchEl.querySelector(`[data-market-type="${marketType}"]`);
-        if (!oddsContainer) return;
+        const oddsContainers = matchEl.querySelectorAll(`[data-market-type="${marketType}"]`);
+        if (!oddsContainers) return;
+        oddsContainers.forEach(cont => {
+            cont.querySelectorAll(".odds-btn").forEach(btn => {
+                const prediction = btn.dataset.prediction; // e.g., 'home', 'draw', 'away'
+                // console.log(`prediction: ${prediction}, odds: ${oddsData[prediction.toLowerCase()]}`)
+                if (oddsData[prediction.toLowerCase()]) {
+                    console.log('odds found and inserted')
+                    btn.innerText = `${oddsData[prediction.toLowerCase()]}`;
+                    if(matchId === 1447008){
+                        console.log(`prediction: ${prediction}, odds: ${oddsData[prediction.toLowerCase()]}`)
+                    }
+                    if (suspendedData && suspendedData[prediction.toLowerCase()]) {
+                        btn.disabled = true;
+                        btn.classList.add("text-muted");
+                    } else {
+                        btn.disabled = false;
+                        btn.classList.remove("text-muted");
+                    }
+                }
+            });
+        })
 
-        oddsContainer.querySelectorAll(".odds-btn").forEach(btn => {
-            const prediction = btn.dataset.prediction; // e.g., 'home', 'draw', 'away'
-            // if (prediction === "1X"){
-            //     prediction = 
-            // }
-            // console.log(`prediction: ${prediction}, odds: ${oddsData[prediction.toLowerCase()]}`)
-            if (oddsData[prediction.toLowerCase()]) {
-                console.log('odds found and inserted')
-                btn.innerText = `${oddsData[prediction.toLowerCase()]}`;
-                if(matchId === 1447008){
-                    console.log(`prediction: ${prediction}, odds: ${oddsData[prediction.toLowerCase()]}`)
-                }
-                if (suspendedData && suspendedData[prediction.toLowerCase()]) {
-                    btn.disabled = true;
-                    btn.classList.add("text-muted");
-                } else {
-                    btn.disabled = false;
-                    btn.classList.remove("text-muted");
-                }
-            }
-        });
+        
     });
 }
 
@@ -2066,7 +2045,7 @@ function footballMatchElementInnerHTML(game, sport, container){
                             </div>
                             <div class="row g-0">
                                 <div class="col-auto">
-                                    <span class="text-small italic">${status.elapsed ?  `Live ${status.short}` : `${date} ${time}`}</span>
+                                    <span class="text-small italic"><span data-match-date="${date}">${status.elapsed ?  `Live ${status.short}` : `${date}`} </span><span data-match-time="${time}" class="text-yellow">${status.elapsed ?? `${time}`}</span></span>
                                     <span class="text-small" data-match-id="${match_id}"> ${status.elapsed ?  '' : `id : ${match_id}`}</span>
                                 </div>
                             </div>
@@ -2120,7 +2099,7 @@ function footballMatchElementInnerHTML(game, sport, container){
                                 </div>
                             </div>
                             <div style="margin-top: -5px;" class="row g-0 col-3 text-truncate">
-                                <div data-date="${date}" data-match-id="${match_id}" data-match-time="${time}" class="text-small italic">${status.elapsed ? `Live ${status.short}` : `${date}`} <span class="text-yellow">${status.elapsed ?? `${time}`}</span> ${status.elapsed ? '' : `id : ${match_id}`}</div>
+                                <div data-match-id="${match_id}"  class="text-small italic"><span data-match-date="${date}">${status.elapsed ?  `Live ${status.short}` : `${date}`}</span> <span data-match-time="${time}" class="text-yellow">${status.elapsed ?? `${time}`}</span> ${status.elapsed ? '' : `id : ${match_id}`}</div>
                             </div>
                         </div>                        
                     </div>

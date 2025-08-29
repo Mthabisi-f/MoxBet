@@ -472,6 +472,32 @@ async def fetch_live_games(request):
     }, safe=False)
 
 
+
+async def fetch_more_odds(request):
+    sport = request.GET.get("sport", "football").lower()
+    match_id = request.GET.get("match_id")
+
+    if not sport or not match_id:
+        return JsonResponse({"error": "Missing sport or match_id"}, status=400)
+
+    # Redis connection (same as fetch_games_by_leagues)
+    redis_client = aioredis.Redis(host="127.0.0.1", port=6379, db=1, decode_responses=True)
+
+    cache_key = f"match:{match_id}"
+    try:
+        value = await redis_client.get(cache_key)
+        if not value:
+            return JsonResponse({"error": "Match not found in cache"}, status=404)
+
+        match_data = json.loads(value)
+
+        return JsonResponse(match_data, safe=False)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+
 async def fetch_games_by_leagues(request):
     league_ids = request.GET.get("league_ids", "")
     league_ids = [id.strip() for id in league_ids.split(',') if id.strip().isdigit()]
@@ -518,7 +544,6 @@ async def fetch_games_by_leagues(request):
         "total_matches": len(matches),
         "selected_leagues": league_ids
     }, safe=False)
-
 
 
 
@@ -578,54 +603,47 @@ def sports(request):
     return render(request, 'sports.html')
 
 
-def fetch_more_odds(request):
-    # Get sport and match_id from query parameters
-    sport = request.GET.get("sport")
-    match_id = request.GET.get("match_id")
+# def fetch_more_odds(request):
+#     # Get sport and match_id from query parameters
+#     sport = request.GET.get("sport")
+#     match_id = request.GET.get("match_id")
 
-    if not sport or not match_id:
-        return JsonResponse({"error": "Missing sport or match_id"}, status=400)
+#     if not sport or not match_id:
+#         return JsonResponse({"error": "Missing sport or match_id"}, status=400)
 
-    # Get the match
-    try:
-        match = Matches.objects.get(match_id=match_id, sport__iexact=sport)
-    except Matches.DoesNotExist:
-        return JsonResponse({"error": "Match not found"}, status=404)
-
-    # Convert time to local format
-    local_kickoff = localtime(match.commence_datetime)
-    match_date = local_kickoff.strftime("%Y-%m-%d")
-    match_time = local_kickoff.strftime("%H:%M")
-
-    # Get odds for this match (FIX: Use `MatchOdds` model instead of `Odds`)
-    odds_queryset = MatchOdds.objects.filter(match="1321575")  # match
-
-    league_id = Leagues.objects.get(league=match.league["name"], sport=match.sport, country=match.country)
-
-    # Prepare response data
-    response_data = {
-        "match_id": match.match_id,
-        "sport": match.sport,
-        "league": match.league,
-        "league_id": league_id.id,
-        "country": match.country,
-        "venue": match.venue,
-        "extras": match.extras,
-        "date": match_date,
-        "time": match_time,
-        "odds": [],
-        "commence_datetime": local_kickoff,
-    }
-
-    # Add market odds
-    for odds in odds_queryset:
-        response_data["odds"].append({
-            "market_type": odds.market_type,
-            "odds": odds.odds
-        })
+#     # Get the match
+#     try:
+#         match = Matches.objects.get(match_id=match_id, sport__iexact=sport)
+#     except Matches.DoesNotExist:
+#         return JsonResponse({"error": "Match not found"}, status=404)
 
 
-    return JsonResponse(response_data, safe=False)
+#     # Get odds for this match (FIX: Use `MatchOdds` model instead of `Odds`)
+#     odds_queryset = MatchOdds.objects.filter(match=match)  
+
+
+#     # Prepare response data
+#     response_data = {
+#         "match_id": match.match_id,
+#         "sport": match.sport,
+#         "league": match.league,
+#         "league_id": match.league_id,
+#         "country": match.country,
+#         "venue": match.venue,
+#         "extras": match.extras,
+#         "odds": [],
+#         "datetime": match.datetime,
+#     }
+
+#     # Add market odds
+#     for odds in odds_queryset:
+#         response_data["odds"].append({
+#             "market_type": odds.market_type,
+#             "odds": odds.odds
+#         })
+
+
+#     return JsonResponse(response_data, safe=False)
 
 
 

@@ -1,10 +1,8 @@
 import os
 import asyncio
 import json
-import datetime
 import re
 from django.core.cache import cache
-# from redis import Redis
 from datetime import date, timedelta
 from django.core.cache import cache
 from .client import api_client, get
@@ -18,7 +16,7 @@ from channels.layers import get_channel_layer
 from .normalizers import (
     norm_fixture,norm_upcoming_fixture, norm_odds_entry, norm_standings, norm_lineups,
     norm_team, norm_player, norm_injury, norm_competition,
-    norm_transfer, norm_prediction
+    norm_transfer, normalize_market, normalize_prediction
 )
 from .repository import (
     upsert_fixture, upsert_odds, upsert_standings, upsert_lineup,
@@ -165,33 +163,65 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
             continue
 
         # Combine all markets/odds for this fixture
-        fixture_odds = []
+        fixture_odds = {}
+        # --- helper to build market object ---
+        # def build_market_object(bet):
+        #     market_type = normalize_market(bet["name"])
+        #     market_obj = {}
 
+        #     for v in bet.get("values", []):
+        #         key = normalize_prediction(str(v["value"]).lower())  # home, away, draw etc.
+        #         market_obj[key] = {
+        #             "odd": float(v["odd"]) if v.get("odd") else None,
+        #             "suspended": v.get("suspended", False)
+        #         }
+        #         if v.get("handicap") is not None:  # add handicap only if present
+        #             market_obj[key]["handicap"] = v["handicap"]
+
+        #     return market_type, market_obj
+        def build_market_object(bet):
+            market_type = normalize_market(bet["name"])
+            market_obj = {}
+
+            for v in bet.get("values", []):
+                prediction = str(v["value"]).lower()
+                handicap = v.get("handicap")
+
+                # Merge handicap into prediction if present
+                if handicap is not None and str(handicap).strip() != "":
+                    prediction_key = f"{prediction} {handicap}"
+                else:
+                    prediction_key = prediction
+
+                key = normalize_prediction(prediction_key)
+
+                market_obj[key] = {
+                    "odd": float(v["odd"]) if v.get("odd") else None,
+                    "suspended": v.get("suspended", False)
+                }
+
+            return market_type, market_obj
+
+        # --- UPCOMING / PREMATCH ODDS ---
         if not live:
-            # Upcoming / regular odds (multiple bookmakers)
             for bookmaker in odds_entry.get("bookmakers", []):
                 for bet in bookmaker.get("bets", []):
-                    market_type = bet["name"]
-                    odds = {str(v["value"]).lower(): v["odd"] for v in bet.get("values", [])}
-                    fixture_odds.append({
-                        "market_type": market_type,
-                        "odds": odds, 
-                        "suspended": False
-                    })
+                    market_type, market_obj = build_market_object(bet)
+
+                    # merge if market already exists (multiple bookmakers)
+                    if market_type not in fixture_odds:
+                        fixture_odds[market_type] = market_obj
+                    else:
+                        # optional: merge/overwrite if needed
+                        fixture_odds[market_type].update(market_obj)
+
+        # --- LIVE ODDS ---
         else:
-            # Live odds (single bookmaker)
-            for bet in odds_entry.get("odds", []):  # loop markets
-                market_type = bet["name"]
-                if market_type == "Fulltime Result":
-                    market_type = "Match Winner"
-                odds = {str(v["value"]).lower(): v["odd"] for v in bet.get("values", [])}
-                suspended_flag = {str(v["value"]).lower(): v["suspended"] for v in bet.get("values", [])}
-                fixture_odds.append({
-                    "market_type": market_type,
-                    "odds": odds, 
-                    "suspended": suspended_flag
-                })
-               
+            for bet in odds_entry.get("odds", []):
+                market_type, market_obj = build_market_object(bet)
+
+                # assign directly (live usually comes from 1 bookmaker)
+                fixture_odds[market_type] = market_obj
 
         payload = {
             "match_id": fixture_id,
@@ -227,8 +257,7 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
                 "type": "odds.update",
                 "data": payload
             }
-)
-
+        )
 
         # Add to indexes
         await redis_client.sadd(f"sport:{sport.lower()}", cache_key)
