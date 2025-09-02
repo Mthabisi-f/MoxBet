@@ -1,8 +1,9 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.http import HttpRequest, JsonResponse, HttpResponseRedirect
-from .models import User, Transactions, WinBoost, Tickets, Matches, MatchOdds, Leagues, Limits, MarketTypeMapping, Bookings
+from .models import User, Transactions, WinBoost, Tickets, Leagues, Limits, Bookings
 from .forms import UserRegistrationForm
+from .redis_client import redis_client
 from django.contrib.auth import authenticate, login, logout
 import json
 from django.db import connection
@@ -20,10 +21,7 @@ from rapidfuzz import process
 from datetime import datetime, timezone
 from dateutil import parser
 import string
-import redis
 import asyncio
-import os
-import redis.asyncio as aioredis
 from asgiref.sync import sync_to_async
 
 
@@ -33,6 +31,7 @@ def generate_barcode(ticket_id):
     random_letters  = ''.join(random.choices(string.ascii_uppercase, k=4))
     id_suffix = f"{ticket_id %10000:04d}"
     return f"{timestap}{random_letters}{id_suffix}"
+
 
 def generate_bookingcode(booking_id):
     timestap = datetime.now().strftime("%S")
@@ -47,6 +46,7 @@ def win_boost(request):
     return JsonResponse({'win_boost_percentage': percentage})
 
 # @csrf_exempt
+@login_required
 def place_bet(request):
     if request.method == "POST":
         try:
@@ -105,7 +105,7 @@ def place_bet(request):
                 "stake": ticket.stake,
                 "potential_win": ticket.potential_win,
                 "currency_symbol": currency_symbol,
-                "user_balance": str(user.balance),  # Add this
+                "user_balance": str(user.balance),  
                 "message": "Bet placed successfully"
             })
             
@@ -115,6 +115,7 @@ def place_bet(request):
             return JsonResponse({"success": False, "message": str(e)}, status=500)
     
     return JsonResponse({"success": False, "message": "Invalid request method"}, status=400)
+
 
 
 def book_bet(request):
@@ -147,121 +148,113 @@ def book_bet(request):
     
     return JsonResponse({"success": False, "message": "Invalid request method"}, status=400)
 
-def get_booking(request):
-    if request.method == "POST":
-        Bcode = request.POST.get('Bcode')
-        code = f"B{Bcode}" 
-        booking = Bookings.objects.get(booking_code=code)
-        
-        if booking:      
-            data = booking.selections
-            selections = json.loads(data)
-            # selections = data.get("selections", [])
 
-            # Mapping for 1/X/2 and 1X/12/X2 predictions to backend values
-            prediction_mapping = {
-                '1': 'home',
-                'X': 'draw',
-                '2': 'away',
-                '1X': 'home_or_draw',
-                '12': 'home_or_away',
-                'X2': 'draw_or_away'
-            }
-
-            updated_selections = []
-            for selection in selections:
-                frontend_market_type = selection["market_type"]
-                market_type_mapping = MarketTypeMapping.objects.filter(sport=selection["sport"],
-                                                                    frontend_market=frontend_market_type).first()
-                backend_market_type = market_type_mapping.backend_market
-
-                match = Matches.objects.filter(match_id=selection["match_id"], sport=selection["sport"], commence_datetime=selection["date_time"]).first()
-
-                if match:
-                    match_row = MatchOdds.objects.filter(match=match, market_type= backend_market_type).first()
-            
-                    #find original backend prediction that matches the best one
-                    if selection["prediction"] in prediction_mapping:
-                        original_prediction = prediction_mapping[selection["prediction"]]
-                    else:
-                        #Normalize to lowercase for comparison
-                        best_match, score, _ = process.extractOne(selection["prediction"].lower(), [opt.lower() for opt in match_row.odds])
-                        original_prediction = next(opt for opt in match_row.odds if opt.lower() == best_match)
-
-                    
-                    selection["match_odds"] = match_row.odds.get(original_prediction) if match else selection["match_odds"] #match.odds.get(selection["prediction"])
-
-                    updated_selections.append(selection)
-                else:
-                    for key in list(selection):
-                        del selection[key]
-
-            success = True
-            return JsonResponse({
-                    'success': success,
-                    'message': 'Form submitted succesfully!',
-                    "updated_selections": updated_selections})
-                # return render(request, 'betslip.html', {'booking': booking_data})
-        else:
-            return JsonResponse({'error': 'Booking not found'}, status=400)
-
-
+# Get booking using booking code from db
 @csrf_exempt
-def get_latest_odds(request):
+async def get_booking(request):
+    if request.method == "POST":
+        Bcode = request.POST.get("Bcode")
+        if not Bcode:
+            return JsonResponse({"success": False, "message": "Missing booking code"}, status=400)
+
+        code = f"B{Bcode}"
+        booking = await sync_to_async(Bookings.objects.filter(booking_code=code).first)()
+        if not booking:
+            return JsonResponse({"success": False, "message": "Booking not found"}, status=404)
+
+        try:
+            selections = json.loads(booking.selections)
+        except Exception:
+            return JsonResponse({"success": False, "message": "Invalid booking selections"}, status=400)
+
+    
+        updated_selections = []
+        for selection in selections:
+            try:
+                value = await redis_client.get(f"match:{selection['match_id']}")
+                match_data = json.loads(value) if value else None
+            except Exception as e:
+                print(f"Redis error: {e}")
+                continue
+
+            if not match_data:
+                continue
+
+            prediction = selection.get("prediction")
+            market_type = selection.get("market_type")
+
+            odd_info = (
+                match_data.get("odds", {})
+                .get(market_type, {})
+                .get(prediction, {})
+            )
+
+            if not odd_info or odd_info.get("suspended"):
+                continue
+
+            selection["match_odds"] = odd_info.get("odd")
+            updated_selections.append(selection)
+
+        if not updated_selections:
+            return JsonResponse({
+                "success": False,
+                "message": "No valid selections found (all odds suspended or matches missing)."
+            }, status=400)
+
+        return JsonResponse({
+            "success": True,
+            "message": "Booking retrieved successfully",
+            "updated_selections": updated_selections
+        })
+
+
+
+# Get latest odds from redis
+@csrf_exempt
+async def get_latest_odds(request):
     if request.method == "POST":
         data = json.loads(request.body)
         selections = data.get("selections", [])
 
-        # Mapping for 1/X/2 and 1X/12/X2 predictions to backend values
-        prediction_mapping = {
-            '1': 'home',
-            'X': 'draw',
-            '2': 'away',
-            '1X': 'home_or_draw',
-            '12': 'home_or_away',
-            'X2': 'draw_or_away'
-        }
-
         updated_selections = []
+
         for selection in selections:
-            frontend_market_type = selection["market_type"]
-            market_type_mapping = MarketTypeMapping.objects.filter(sport=selection["sport"],
-                                                                   frontend_market=frontend_market_type).first()
-            backend_market_type = market_type_mapping.backend_market
+            try:
+                # Fetch single match directly from Redis
+                value = await redis_client.get(f"match:{selection['match_id']}")
+                match_data = json.loads(value) if value else None
+            except Exception as e:
+                print(f"Redis error: {e}")
+                match_data = None
 
-            match = Matches.objects.filter(match_id=selection["match_id"], sport=selection["sport"]).first()
+            if match_data:
+                market_type = selection["market_type"]
+                prediction = selection["prediction"]
 
-            if match:
-                match_row = MatchOdds.objects.filter(match=match, market_type= backend_market_type).first()
-          
-           
-            #find original backend prediction that matches the best one
-            if selection["prediction"] in prediction_mapping:
-                original_prediction = prediction_mapping[selection["prediction"]]
-            else:
-                #Normalize to lowercase for comparison
-                best_match, score, _ = process.extractOne(selection["prediction"].lower(), [opt.lower() for opt in match_row.odds])
-                original_prediction = next(opt for opt in match_row.odds if opt.lower() == best_match)
+                odds = (
+                    match_data.get("odds", {})
+                    .get(market_type, {})
+                    .get(prediction, {})
+                    .get("odd", selection["match_odds"])
+                )
 
-            updated_selections.append({
-                "match_id": selection["match_id"],
-                "prediction": selection["prediction"],
-                "match_odds": match_row.odds.get(original_prediction) if match else selection["match_odds"] #match.odds.get(selection["prediction"])
-            })
+                updated_selections.append({
+                    "match_id": selection["match_id"],
+                    "match_odds": odds
+                })
 
         return JsonResponse({"updated_selections": updated_selections})
 
 
+
+# Fetches games by sport
 async def fetch_games(request):
     sport = request.GET.get("sport", "football").lower()
     page = int(request.GET.get("page", 1))
     page_size = 100
 
-    # connect to redis
-    redis_client = aioredis.Redis(host="127.0.0.1", port=6379, db=1,  decode_responses=True)  # index DB
 
-
-    # Fetch keys from async Redis client
+    # Fetch keys from Redis
     try:
         keys = await redis_client.smembers(f"sport:{sport}")
     except Exception as e:
@@ -270,38 +263,30 @@ async def fetch_games(request):
 
     key_list = list(keys)
 
-    # Async fetch all matches from Redis
     async def fetch_match(k):
         value = await redis_client.get(k)
-        if value:
-            return json.loads(value)
-        return None
+        return json.loads(value) if value else None
 
     tasks = [fetch_match(k) for k in key_list]
     all_matches = await asyncio.gather(*tasks) if tasks else []
-
     matches = [m for m in all_matches if m]
-    print(f"matches {len(matches)}")
 
     # Filter by upcoming matches
     filtered_matches = []
     for match in matches:
-        match_datetime_str = match.get("datetime")
-        if not match_datetime_str:
+        dt_str = match.get("datetime")
+        if not dt_str:
             continue
         try:
-            match_datetime = parser.parse(match_datetime_str)
-            # match_datetime = datetime.strptime(match_datetime_str, "%Y-%m-%dT%H:%M:%SZ")
+            dt = parser.parse(dt_str)
         except Exception as e:
             print(f"Skipping match due to invalid datetime: {e}")
             continue
-        if match_datetime >= datetime.now(timezone.utc):
-            match["datetime_obj"] = match_datetime
+        if dt >= datetime.now(timezone.utc):
+            match["datetime_obj"] = dt
             filtered_matches.append(match)
 
-    # Sort by datetime
     filtered_matches.sort(key=lambda m: m["datetime_obj"])
-
     total_matches = len(filtered_matches)
 
     # Pagination
@@ -315,74 +300,61 @@ async def fetch_games(request):
             "top_leagues": [],
             "games": [],
             "total_matches": 0,
-            "leagues": {}
+            "countries": {}
         }, safe=False)
 
-    ############## TOP LEAGUES (from DB) #################
-    @sync_to_async
-    def get_top_leagues():
-        leagues = Leagues.objects.filter(sport=sport.upper())
-        priority_leagues = list(leagues.filter(is_priority=True)[:3])
-        active_leagues = list(
-            leagues.exclude(is_priority=True)
-            .annotate(game_count=Count("matches"))
-            .order_by("-game_count")[:5]
-        )
-        unique_leagues = {
-            l.id: {"id": l.id, "league": l.league, "sport": l.sport}
-            for l in (priority_leagues + active_leagues)
-        }
-        all_leagues = list(unique_leagues.values())[:7]
+    ########### TOP LEAGUES ###########
+    # Try to get manually-set priority leagues
+    priority_leagues = await redis_client.lrange(f"priority_leagues:{sport.upper()}", 0, -1)
 
-        if len(all_leagues) < 7:
-            extra_league_ids = [l["id"] for l in all_leagues]
-            extra_leagues = leagues.exclude(id__in=extra_league_ids).order_by("?")[:7 - len(all_leagues)]
-            all_leagues += [{"id": l.id, "league": l.league, "sport": l.sport} for l in extra_leagues]
+    # Build league counts
+    league_counts = {}
+    for m in filtered_matches:
+        league_name = m.get("league", {}).get("name")
+        if league_name:
+            league_counts[league_name] = league_counts.get(league_name, 0) + 1
 
-        top_leagues = list(
-            leagues.filter(id__in=[l["id"] for l in all_leagues])
-            .annotate(game_count=Count("matches"))
-            .values("id", "league", "country", "sport")
-        )
-        return top_leagues
+    # Convert to sorted list (by count)
+    sorted_leagues = sorted(league_counts.items(), key=lambda x: x[1], reverse=True)
 
-    @sync_to_async
-    def get_leagues_summary():
-        query = """
-        SELECT 
-            ml.sport, 
-            ml.country, 
-            ml.id AS league_id_id, 
-            ml.league, 
-            COUNT(mm.id) AS game_count
-        FROM moxbet_leagues ml
-        LEFT JOIN moxbet_matches mm ON mm.league_id_id = ml.id
-        WHERE ml.sport = %s
-        GROUP BY ml.sport, ml.country, ml.id, ml.league
-        ORDER BY ml.country, ml.league;
-        """
-        with connection.cursor() as cursor:
-            cursor.execute(query, [sport.upper()])
-            rows = cursor.fetchall()
+    # Final top leagues: priority first, then fill with most active
+    top_leagues = []
+    added = set()
 
-        data = {"sport": sport, "total_games": 0, "countries": {}}
+    for pl in priority_leagues:
+        if pl in league_counts:
+            top_leagues.append({"league": pl, "game_count": league_counts[pl]})
+            added.add(pl)
 
-        for row in rows:
-            sport_val, country, league_id, league, game_count = row
-            game_count = int(game_count) if game_count is not None else 0
-            data["total_games"] += game_count
-            if country not in data["countries"]:
-                data["countries"][country] = {"total_games": 0, "leagues": []}
-            data["countries"][country]["total_games"] += game_count
-            data["countries"][country]["leagues"].append({
-                "id": league_id, "league": league, "game_count": game_count
+    for league, count in sorted_leagues:
+        if league not in added and len(top_leagues) < 10:
+            top_leagues.append({"league": league, "game_count": count})
+
+    ########### COUNTRIES ###########
+    countries_data = {}
+    for m in filtered_matches:
+        country = m.get("country")
+        league_name = m.get("league", {}).get("name")
+        league_id = m.get("league", {}).get("id")
+        flag = m.get("league", {}).get("flag")
+        if not country or not league_name:
+            continue
+
+        if country not in countries_data:
+            countries_data[country] = {"name": country, "total_games": 0, "leagues": [], "flag": flag}
+
+        countries_data[country]["total_games"] += 1
+
+        # Add league if not already added
+        leagues_list = countries_data[country]["leagues"]
+        if not any(l["name"] == league_name for l in leagues_list):
+            leagues_list.append({
+                "name": league_name,
+                "id": league_id,
+                "game_count": league_counts.get(league_name, 0)
             })
-        return data
 
-    top_leagues = await get_top_leagues()
-    leagues_summary = await get_leagues_summary()
-
-    ############## HIGHLIGHTS #################
+    ########### HIGHLIGHTS ###########
     highlight_games = filtered_matches[:10]
 
     return JsonResponse({
@@ -390,18 +362,178 @@ async def fetch_games(request):
         "top_leagues": top_leagues,
         "games": paginated_matches,
         "total_matches": total_matches,
-        "leagues": leagues_summary
+        "countries": countries_data
     }, safe=False)
 
 
+
+# async def fetch_games(request):
+#     sport = request.GET.get("sport", "football").lower()
+#     page = int(request.GET.get("page", 1))
+#     page_size = 100
+
+#     # connect to redis
+#     redis_client = aioredis.Redis(host="127.0.0.1", port=6379, db=1, decode_responses=True)
+
+
+#     # Fetch keys from async Redis client
+#     try:
+#         keys = await redis_client.smembers(f"sport:{sport}")
+#     except Exception as e:
+#         print(f"Redis error: {e}")
+#         keys = set()
+
+#     key_list = list(keys)
+
+#     # Async fetch all matches from Redis
+#     async def fetch_match(k):
+#         value = await redis_client.get(k)
+#         if value:
+#             return json.loads(value)
+#         return None
+
+#     tasks = [fetch_match(k) for k in key_list]
+#     all_matches = await asyncio.gather(*tasks) if tasks else []
+
+#     matches = [m for m in all_matches if m]
+#     print(f"matches {len(matches)}")
+
+#     # Filter by upcoming matches
+#     filtered_matches = []
+#     for match in matches:
+#         match_datetime_str = match.get("datetime")
+#         if not match_datetime_str:
+#             continue
+#         try:
+#             match_datetime = parser.parse(match_datetime_str)
+#         except Exception as e:
+#             print(f"Skipping match due to invalid datetime: {e}")
+#             continue
+#         if match_datetime >= datetime.now(timezone.utc):
+#             match["datetime_obj"] = match_datetime
+#             filtered_matches.append(match)
+
+#     # Sort by datetime
+#     filtered_matches.sort(key=lambda m: m["datetime_obj"])
+
+#     total_matches = len(filtered_matches)
+
+#     # Pagination
+#     start_idx = (page - 1) * page_size
+#     end_idx = start_idx + page_size
+#     paginated_matches = filtered_matches[start_idx:end_idx]
+
+#     if not filtered_matches:
+#         return JsonResponse({
+#             "highlight_games": [],
+#             "top_leagues": [],
+#             "games": [],
+#             "total_matches": 0,
+#             "leagues": {}
+#         }, safe=False)
+
+   
+#     ############## TOP LEAGUES (from DB) #################
+#     # @sync_to_async
+#     # def get_top_leagues():
+#     #     leagues = Leagues.objects.filter(sport=sport.upper())
+#     #     priority_leagues = list(leagues.filter(is_priority=True)[:3])
+#     #     active_leagues = list(
+#     #         leagues.exclude(is_priority=True)
+#     #         .annotate(game_count=Count("matches"))
+#     #         .order_by("-game_count")[:5]
+#     #     )
+
+#     #     unique_leagues = {}
+#     #     for l in priority_leagues + active_leagues:
+#     #         unique_leagues[l.id] = {
+#     #             "id": l.id,
+#     #             "league": l.league,
+#     #             "league_json": l.league_json,  # <-- include league_json
+#     #             "sport": l.sport,
+#     #         }
+
+#     #     all_leagues = list(unique_leagues.values())[:7]
+
+#     #     if len(all_leagues) < 7:
+#     #         extra_league_ids = [l["id"] for l in all_leagues]
+#     #         extra_leagues = leagues.exclude(id__in=extra_league_ids).order_by("?")[:7 - len(all_leagues)]
+#     #         all_leagues += [{
+#     #             "id": l.id,
+#     #             "league": l.league,
+#     #             "league_json": l.league_json,
+#     #             "sport": l.sport
+#     #         } for l in extra_leagues]
+
+#     #     top_leagues = list(
+#     #         leagues.filter(id__in=[l["id"] for l in all_leagues])
+#     #         .annotate(game_count=Count("matches"))
+#     #         .values("id", "league", "league_json", "country", "sport", "game_count")
+#     #     )
+#     #     return top_leagues
+
+
+#     # @sync_to_async
+#     # def get_leagues_summary():
+#     #     query = """
+#     #     SELECT 
+#     #         ml.sport, 
+#     #         ml.country, 
+#     #         ml.id AS league_id, 
+#     #         ml.league, 
+#     #         ml.league_json,
+#     #         COUNT(mm.id) AS game_count
+#     #     FROM moxbet_leagues ml
+#     #     LEFT JOIN moxbet_matches mm ON mm.league_id_id = ml.id
+#     #     WHERE ml.sport = %s
+#     #     GROUP BY ml.sport, ml.country, ml.id, ml.league, ml.league_json
+#     #     ORDER BY ml.country, ml.league;
+#     #     """
+#     #     with connection.cursor() as cursor:
+#     #         cursor.execute(query, [sport.upper()])
+#     #         rows = cursor.fetchall()
+
+#     #     data = {"sport": sport, "total_games": 0, "countries": {}}
+
+#     #     for row in rows:
+#     #         sport_val, country, league_id, league, league_json, game_count = row
+#     #         game_count = int(game_count) if game_count is not None else 0
+#     #         data["total_games"] += game_count
+#     #         if country not in data["countries"]:
+#     #             data["countries"][country] = {"total_games": 0, "leagues": []}
+#     #         data["countries"][country]["total_games"] += game_count
+#     #         data["countries"][country]["leagues"].append({
+#     #             "id": league_id,
+#     #             "league": league,
+#     #             "league_json": league_json,  # <-- include league_json
+#     #             "game_count": game_count
+#     #         })
+#     #     return data
+
+
+
+#     # top_leagues = await get_top_leagues()
+#     # leagues_summary = await get_leagues_summary()
+
+#     ############## HIGHLIGHTS #################
+#     highlight_games = filtered_matches[:10]
+
+#     return JsonResponse({
+#         "highlight_games": highlight_games,
+#         # "top_leagues": top_leagues,
+#         "games": paginated_matches,
+#         "total_matches": total_matches,
+#         # "leagues": leagues_summary
+#     }, safe=False)
+
+
+# Fetches all live games for chosen sport
 async def fetch_live_games(request):
     sport = request.GET.get("sport", "football").lower()
     page = int(request.GET.get("page", 1))
     page_size = 100
 
-    # Connect to Redis (live cache DB)
-    redis_client = aioredis.Redis(host="127.0.0.1", port=6379, db=1, decode_responses=True)
-
+   
     # Fetch all live fixture keys for this sport
     try:
         keys = await redis_client.smembers(f"live:{sport}")
@@ -472,7 +604,7 @@ async def fetch_live_games(request):
     }, safe=False)
 
 
-
+# Fetch all odds for a certain fixture
 async def fetch_more_odds(request):
     sport = request.GET.get("sport", "football").lower()
     match_id = request.GET.get("match_id")
@@ -480,14 +612,12 @@ async def fetch_more_odds(request):
     if not sport or not match_id:
         return JsonResponse({"error": "Missing sport or match_id"}, status=400)
 
-    # Redis connection (same as fetch_games_by_leagues)
-    redis_client = aioredis.Redis(host="127.0.0.1", port=6379, db=1, decode_responses=True)
 
     cache_key = f"match:{match_id}"
     try:
         value = await redis_client.get(cache_key)
         if not value:
-            return JsonResponse({"error": "Match not found in cache"}, status=404)
+            return JsonResponse({"error": "Match not found."}, status=404)
 
         match_data = json.loads(value)
 
@@ -497,18 +627,68 @@ async def fetch_more_odds(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
+# # Fetch games by leagues
+# async def fetch_games_by_leagues(request):
+#     league_ids = request.GET.get("league_ids", "")
+#     league_ids = [id.strip() for id in league_ids.split(',') if id.strip().isdigit()]
+#     league_ids = league_ids[:10]  # limit to 10 leagues
 
+#     if not league_ids:
+#         return JsonResponse({"games": [], "total_matches": 0})
+
+#     sport = request.GET.get("sport", "football").lower()
+
+#     # Collect all cache keys for selected leagues
+#     keys = set()
+#     for league_id in league_ids:
+#         try:
+#             league_keys = await redis_client.smembers(f"league:{sport}:{league_id}")
+#             keys.update(league_keys)
+#         except Exception as e:
+#             print(f"Redis error fetching league {league_id}: {e}")
+
+#     # Async fetch matches
+#     async def fetch_match(k):
+#         value = await redis_client.get(k)
+#         print(f"[DEBUG] Key: {k}, Exists: {bool(value)}")
+#         if not value:
+#             await redis_client.srem(f"league:{sport}:{league_id}", k)
+#         else:
+#             matches.append(json.loads(value))
+
+#     tasks = [fetch_match(k) for k in keys]
+#     matches = await asyncio.gather(*tasks) if tasks else []
+#     matches = [m for m in matches if m]
+
+#     # Debug print
+#     print(f"[DEBUG] Keys fetched: {len(keys)}, Matches found: {len(matches)} for leagues {league_ids}")
+
+#     # Parse datetime for sorting
+#     for m in matches:
+#         try:
+#             m["datetime_obj"] = parser.parse(m["datetime"])
+#         except:
+#             m["datetime_obj"] = datetime.now(timezone.utc)
+
+#     matches.sort(key=lambda m: m["datetime_obj"])
+
+#     return JsonResponse({
+#         "games": matches,
+#         "total_matches": len(matches),
+#         "selected_leagues": league_ids
+#     }, safe=False)
+
+
+# Fetch games by selected leagues
 async def fetch_games_by_leagues(request):
     league_ids = request.GET.get("league_ids", "")
-    league_ids = [id.strip() for id in league_ids.split(',') if id.strip().isdigit()]
+    league_ids = [id.strip() for id in league_ids.split(",") if id.strip().isdigit()]
     league_ids = league_ids[:10]  # limit to 10 leagues
 
     if not league_ids:
-        return JsonResponse({"games": [], "total_matches": 0})
+        return JsonResponse({"games": [], "total_matches": 0, "selected_leagues": []}, safe=False)
 
     sport = request.GET.get("sport", "football").lower()
-
-    redis_client = aioredis.Redis(host="127.0.0.1", port=6379, db=1, decode_responses=True)
 
     # Collect all cache keys for selected leagues
     keys = set()
@@ -519,29 +699,46 @@ async def fetch_games_by_leagues(request):
         except Exception as e:
             print(f"Redis error fetching league {league_id}: {e}")
 
-    # Async fetch matches
+    key_list = list(keys)
+
+    # Async fetch all matches from Redis
     async def fetch_match(k):
         value = await redis_client.get(k)
         if value:
             return json.loads(value)
-        return None
+        else:
+            # Remove dangling keys if they have no value
+            for league_id in league_ids:
+                await redis_client.srem(f"league:{sport}:{league_id}", k)
+            return None
 
-    tasks = [fetch_match(k) for k in keys]
-    matches = await asyncio.gather(*tasks) if tasks else []
-    matches = [m for m in matches if m]
+    tasks = [fetch_match(k) for k in key_list]
+    all_matches = await asyncio.gather(*tasks) if tasks else []
 
-    # Parse datetime for sorting
-    for m in matches:
+    matches = [m for m in all_matches if m]
+    print(f"[DEBUG] Keys fetched: {len(key_list)}, Matches found: {len(matches)} for leagues {league_ids}")
+
+    # Filter upcoming matches (optional)
+    filtered_matches = []
+    for match in matches:
+        match_datetime_str = match.get("datetime")
+        if not match_datetime_str:
+            continue
         try:
-            m["datetime_obj"] = parser.parse(m["datetime"])
-        except:
-            m["datetime_obj"] = datetime.now(timezone.utc)
+            match_datetime = parser.parse(match_datetime_str)
+        except Exception as e:
+            print(f"Skipping match due to invalid datetime: {e}")
+            continue
+        match["datetime_obj"] = match_datetime
+        filtered_matches.append(match)
 
-    matches.sort(key=lambda m: m["datetime_obj"])
+    # Sort by datetime
+    filtered_matches.sort(key=lambda m: m["datetime_obj"])
+    total_matches = len(filtered_matches)
 
     return JsonResponse({
-        "data": matches,
-        "total_matches": len(matches),
+        "games": filtered_matches,
+        "total_matches": total_matches,
         "selected_leagues": league_ids
     }, safe=False)
 
@@ -601,50 +798,6 @@ def receive_sms(request):
 
 def sports(request):    
     return render(request, 'sports.html')
-
-
-# def fetch_more_odds(request):
-#     # Get sport and match_id from query parameters
-#     sport = request.GET.get("sport")
-#     match_id = request.GET.get("match_id")
-
-#     if not sport or not match_id:
-#         return JsonResponse({"error": "Missing sport or match_id"}, status=400)
-
-#     # Get the match
-#     try:
-#         match = Matches.objects.get(match_id=match_id, sport__iexact=sport)
-#     except Matches.DoesNotExist:
-#         return JsonResponse({"error": "Match not found"}, status=404)
-
-
-#     # Get odds for this match (FIX: Use `MatchOdds` model instead of `Odds`)
-#     odds_queryset = MatchOdds.objects.filter(match=match)  
-
-
-#     # Prepare response data
-#     response_data = {
-#         "match_id": match.match_id,
-#         "sport": match.sport,
-#         "league": match.league,
-#         "league_id": match.league_id,
-#         "country": match.country,
-#         "venue": match.venue,
-#         "extras": match.extras,
-#         "odds": [],
-#         "datetime": match.datetime,
-#     }
-
-#     # Add market odds
-#     for odds in odds_queryset:
-#         response_data["odds"].append({
-#             "market_type": odds.market_type,
-#             "odds": odds.odds
-#         })
-
-
-#     return JsonResponse(response_data, safe=False)
-
 
 
 def more_odds(request):
@@ -832,11 +985,6 @@ def check_ticket(request):
     return render(request, 'Moxbet/check_ticket.html', {'ticket': ticket})
         
 
-# def get_tickets_data(req) get-tickets-data
-# def fetch_tickets(request):
-#     tickets = Tickets.objects.filter(user_id=request.user.id).values().order_by('-created_at')
-#     tickets_list = list(tickets)
-#     return JsonResponse({"tickets": tickets_list}, safe=False)
 
 @login_required
 def fetch_tickets(request):

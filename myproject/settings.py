@@ -106,7 +106,7 @@ CACHES = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'moxbet1_db',
+        'NAME': 'moxbet4_db',
         'USER': 'root',
         'PASSWORD': '13052002',
         'HOST': 'localhost',

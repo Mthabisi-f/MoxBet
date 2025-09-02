@@ -54,6 +54,44 @@ body{
     color: black;
     border: none;
 }
+
+/* Flash styles only apply when odds change */
+.odds-btn.flash-green,
+.odds-btn.flash-red {
+    position: relative;  /* create positioning context */
+    overflow: hidden;    /* keep the flash inside */
+}
+
+.odds-btn.flash-green::after,
+.odds-btn.flash-red::after {
+    content: "";
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    opacity: 0;
+    animation: flashAnim 1s ease-out;
+}
+
+.odds-btn.flash-green::after {
+    background-color: #28a745; /* Bootstrap green */
+}
+
+.odds-btn.flash-red::after {
+    background-color: #dc3545; /* Bootstrap red */
+}
+
+/* Fade in/out with a pulse */
+@keyframes flashAnim {
+    0%   { opacity: 0; transform: scale(0.5); }
+    20%  { opacity: 1; transform: scale(1.2); }
+    80%  { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0.5); }
+}
+
+
 .accordion-header{
     font-size: 1.5rem;
     margin: 0px;
@@ -65,7 +103,7 @@ body{
     border-top-right-radius: 5px;
 }
 .accordion-button:not(.collapsed){
-    background-color: #1E90FF;;
+    background-color: #1E90FF;
     padding: 5px;    
     backdrop-filter: 30px;
 }
@@ -95,32 +133,6 @@ body{
     cursor: pointer;
 }
 
-/*====custon=====accordion======*/
-
-/* .my-item {
-    border: none;
-}
-
-.my-header {
-    padding: 2px 3px;
-    color: white;
-    cursor: pointer;
-    font-size: 1rem;
-    user-select: none;
-} */
-
-/* .my-content {
-    padding: 4px 2px;
-    display: none;
-    /* background-color: rgb(234, 234, 163); */
-    /* color: black;
-} */
-
-/* .my-item.open .my-content {
-    display: block;
-} */ 
-
-/*====end==of===accordion======*/
 
 .border-yellow{
     border: 1px solid yellow;
@@ -140,11 +152,7 @@ body{
     border-top-right-radius: .4em;
     border-bottom-left-radius: .6em;
 }
-/* .betslip-accordion-btn::after{
-    content: '\25bc';
-    transition: transform 0.3s ease-in-out;
-    transform: rotate(-90deg);
-} */
+
 
 .text-big{
     font-size: 2.5rem;
@@ -315,11 +323,6 @@ body{
     margin-bottom: -5px;
 }
 
-/* end modal */
-/* .custom-accordion .accordion-button::after{
-    width: 25px;
-    height: 25px;
-} */
 
 .Lost{
     color: red;
@@ -351,6 +354,10 @@ body{
     object-fit: cover; /* or contain, depending on your design choice */
 }
 
+/* Hide scrollbar for webkit browsers */
+#countries-leagues-cont::-webkit-scrollbar {
+    display: none;
+}
 
 /* Increase specificity if needed */
 #wg-api-football-games {

@@ -5,7 +5,6 @@ import uuid
 from django.conf import settings
 
 
-
 # Create your models here.
 class User(AbstractUser):
     username =  models.CharField(max_length=70, unique=True)
@@ -64,20 +63,11 @@ class Bookings(models.Model):
         return f"Ticket {self.booking_code}"
 
 
-# class Leagues(models.Model):
-#     league = models.JSONField()
-#     sport  = models.CharField(max_length=100)
-#     created_at = models.DateTimeField(default=timezone.now)
-#     is_priority = models.BooleanField(default=False)
-
-#     class Meta:
-#         unique_together = ('league', 'country', 'sport')
-    
-#     def __str__(self):
-#         return f"{self.league} ({self.sport})"
-
+# Stores leagues data 
 class Leagues(models.Model):
-    league = models.CharField(max_length=255)
+    league_json = models.JSONField()
+    league = models.CharField(max_length=100)
+    total_matches = models.IntegerField(default=0)
     country = models.CharField(max_length=255, null=True, blank=True)
     sport = models.CharField(max_length=64)
     created_at = models.DateTimeField(default=timezone.now)
@@ -90,70 +80,6 @@ class Leagues(models.Model):
         return f"{self.league} ({self.sport})"
 
 
-
-class MarketTypeMapping(models.Model):
-    sport = models.CharField(max_length=100, blank=False, null=False)
-    frontend_market = models.CharField(max_length=100, blank=True, null=True)
-    backend_market = models.CharField(max_length=100, blank=False, null=False)
-    settlement_function = models.CharField(max_length=200, blank=True, null=True, unique=True)
-
-    class Meta:
-        unique_together = ('sport', "frontend_market")
-        verbose_name = 'Market Type Mapping'
-        verbose_name_plural = 'Market Type Mappings'
-
-    def __str__(self):
-        return f"{self.sport}: {self.backend_market} -> {self.frontend_market or 'Not mapped'}"
-
-
-
-class Matches(models.Model):
-    match_id = models.BigIntegerField(unique=True)
-    sport = models.CharField(max_length=64)
-    country = models.CharField(max_length=255, null=True, blank=True)
-    league = models.JSONField(null=True, blank=True)
-    league_id = models.ForeignKey(Leagues, null=True, blank=True, on_delete=models.SET_NULL)
-    venue = models.JSONField(null=True, blank=True)
-    commence_datetime = models.DateTimeField(null=True, blank=True)
-    status = models.JSONField(null=True, blank=True)
-    extras = models.JSONField(null=True, blank=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f"{self.match_id} - {self.league['name']} {self.sport}"
-
-
-
-# class Matches(models.Model):
-#     match_id = models.BigIntegerField(unique=True)
-#     sport = models.CharField(max_length=100)
-#     country = models.CharField(max_length=255, null=True, blank=True)
-#     league = models.CharField(max_length=255, null=True, blank=True)
-#     league_id = models.ForeignKey(Leagues, null=True, blank=True, on_delete=models.SET_NULL)
-#     venue = models.JSONField(null=True, blank=True)
-#     commence_datetime = models.DateTimeField(null=True, blank=True)
-#     status = models.JSONField(), 
-#     extras = models.JSONField(null=True, blank=True)
-#     updated_at = models.DateTimeField(auto_now=True)
-
-#     def __str__(self):
-#         return f"{self.match_id} - {self.league} {self.sport}"
-
-
-class MatchOdds(models.Model):
-    # match = models.IntegerField(null=True, blank=True)  # temporary for testing
-    match = models.ForeignKey(Matches, related_name='matchodds', on_delete=models.CASCADE)
-    sport = models.CharField(max_length=100)
-    market_type = models.CharField(max_length=100) # store e.g '1X2', 'Both teams to score'
-    odds =  models.JSONField()
-    updated_at = models.DateTimeField(auto_now_add=True)
-    extras = models.JSONField(null=True)
-
-    class Meta:
-        unique_together = ("match", "market_type")
-
-    def __str__(self):
-        return f"{self.match.match_id} - {self.market_type}"
 
 
 class Agents(models.Model):
@@ -174,14 +100,14 @@ class Tickets(models.Model):
         ('Void', 'Void'),
     ]
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    type = models.CharField(max_length=20, null=False)
-    total_odds = models.DecimalField(max_digits=10, decimal_places=2)
+    type = models.CharField(max_length=50, null=False)
+    total_odds = models.DecimalField(max_digits=30, decimal_places=2)
     total_matches = models.IntegerField()
     selections = models.JSONField(default=list)
-    stake = models.DecimalField(max_digits=10, decimal_places=2)
+    stake = models.DecimalField(max_digits=15, decimal_places=2)
     win_boost = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    potential_win = models.DecimalField(max_digits=10, decimal_places=2)
-    status = models.CharField(max_length=20, choices=TICKET_STATUS, default="Pending")
+    potential_win = models.DecimalField(max_digits=30, decimal_places=2)
+    status = models.CharField(max_length=50, choices=TICKET_STATUS, default="Pending")
     barcode = models.CharField(max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     settled_at = models.DateTimeField(null=True)
@@ -228,101 +154,19 @@ class Promotion(models.Model):
     bonus_percentage = models.DecimalField(max_digits=5, decimal_places=2)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
-    # eligible_markets = models.ManyToManyField() #pu markets in brackets
 
-
-
-class MoneyBack(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, default=1)
-    ticket_type = models.CharField(max_length=50, null=False, default='sports')
-    ticket_id = models.IntegerField(default=10)
-    minimum_odds = models.DecimalField(max_digits=10, decimal_places=2)
-    amount_returned = models.DecimalField(max_digits=10, decimal_places=2)
-    
 
 class WinBoost(models.Model):
     number_of_selections = models.IntegerField()
     win_boost_percentage = models.DecimalField(max_digits=10, decimal_places=2)
 
 class Results(models.Model):
-    extras = models.JSONField(null=True)
+    extras = models.JSONField()
     league_id = models.ForeignKey(Leagues, on_delete=models.CASCADE, db_column="league_id")
     match_id = models.CharField(max_length=50, null=False, blank=False)
     datetime = models.DateTimeField(blank=False, null=False)
     sport = models.CharField(max_length=50, null=False, blank=False)
 
-
-
-# New models to cover extra endpoints
-class Standings(models.Model):
-    league = models.ForeignKey(Leagues, on_delete=models.CASCADE)
-    sport = models.CharField(max_length=64, default="FOOTBALL")
-    season = models.IntegerField(null=True, blank=True)
-    standings = models.JSONField()  # full table json
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        unique_together = ("league", "season", "sport")
-
-class Lineup(models.Model):
-    match = models.ForeignKey(Matches, on_delete=models.CASCADE)
-    sport = models.CharField(max_length=64, default="FOOTBALL")
-    lineup = models.JSONField()
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        unique_together = ("match", "sport")
-
-class Team(models.Model):
-    team_id = models.BigIntegerField(unique=True)
-    name = models.CharField(max_length=255)
-    country = models.CharField(max_length=255, null=True, blank=True)
-    logo = models.URLField(null=True, blank=True)
-    sport = models.CharField(max_length=64, default="FOOTBALL")
-    extras = models.JSONField(null=True, blank=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-class Player(models.Model):
-    player_id = models.BigIntegerField(unique=True)
-    name = models.CharField(max_length=255)
-    team = models.ForeignKey(Team, null=True, blank=True, on_delete=models.SET_NULL)
-    position = models.CharField(max_length=64, null=True, blank=True)
-    nationality = models.CharField(max_length=255, null=True, blank=True)
-    birth = models.DateField(null=True, blank=True)
-    photo = models.URLField(null=True, blank=True)
-    sport = models.CharField(max_length=64, default="FOOTBALL")
-    extras = models.JSONField(null=True, blank=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-class Injury(models.Model):
-    player = models.ForeignKey(Player, null=True, blank=True, on_delete=models.SET_NULL)
-    team = models.ForeignKey(Team, null=True, blank=True, on_delete=models.SET_NULL)
-    sport = models.CharField(max_length=64, default="FOOTBALL")
-    details = models.JSONField()
-    updated_at = models.DateTimeField(auto_now=True)
-
-class Competition(models.Model):
-    competition_id = models.BigIntegerField(unique=True)
-    name = models.CharField(max_length=255)
-    country = models.CharField(max_length=255, null=True, blank=True)
-    season = models.IntegerField(null=True, blank=True)
-    sport = models.CharField(max_length=64, default="FOOTBALL")
-    extras = models.JSONField(null=True, blank=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-class Transfer(models.Model):
-    player = models.ForeignKey(Player, null=True, blank=True, on_delete=models.SET_NULL)
-    from_team = models.ForeignKey(Team, null=True, blank=True, related_name="left_transfers", on_delete=models.SET_NULL)
-    to_team = models.ForeignKey(Team, null=True, blank=True, related_name="joined_transfers", on_delete=models.SET_NULL)
-    details = models.JSONField()
-    sport = models.CharField(max_length=64, default="FOOTBALL")
-    updated_at = models.DateTimeField(auto_now=True)
-
-class Prediction(models.Model):
-    match = models.ForeignKey(Matches, on_delete=models.CASCADE)
-    sport = models.CharField(max_length=64, default="FOOTBALL")
-    payload = models.JSONField()
-    updated_at = models.DateTimeField(auto_now=True)
 
 
 

@@ -1,18 +1,15 @@
 from django.contrib import admin
-from .models import User, Transactions, Matches, MatchOdds, Leagues, Limits, MarketTypeMapping, Tickets, WinBoost, Bookings, Results
+from .models import User, Transactions, Leagues, Limits, Tickets, WinBoost, Bookings, Results
 
 # Register your models here.
 admin.site.register(User)
 admin.site.register(Transactions)
-admin.site.register(Matches)
-admin.site.register(MatchOdds)
 admin.site.register(Leagues)
 admin.site.register(Limits)
 admin.site.register(Tickets)
 admin.site.register(WinBoost)
 admin.site.register(Bookings)
 admin.site.register(Results)
-admin.site.register(MarketTypeMapping)
 
 
 class LeaguesAdmin(admin.ModelAdmin):

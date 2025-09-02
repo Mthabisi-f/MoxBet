@@ -1,7 +1,7 @@
 
 INTERVALS = {
     "fixtures_live":  15,
-    "fixtures_upcoming": 600,
+    "fixtures_upcoming": 3600,
     "events": 3600, # 15
     "statistics": 3600, # 60
     "lineups": 900,
