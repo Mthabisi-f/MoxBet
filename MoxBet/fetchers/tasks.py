@@ -39,7 +39,7 @@ async def fetch_matches_and_odds_bulk(client, sport, host):
             print(f"[CACHE] Loaded data for {sport} on {today}")
         else:
             print(f"[TASK] Fetching data for {sport} on {today}")
-            resp_f = await get(client, host, "fixtures", params={"date": today,"status": "NS"}) # removed  to fetch all games including finished
+            resp_f = await get(client, host, "fixtures", params={"date": today}) # removed  to fetch all games including finished
             fixtures_data = resp_f.get("response", [])
             if not fixtures_data:
                 print(f"[INFO] No fixtures on {today}")
@@ -60,6 +60,7 @@ async def fetch_matches_and_odds_bulk(client, sport, host):
             await cache.aset(cache_key, (fixtures_data, all_odds), timeout=60 * 60 * 6)
 
         print(f"[INFO] Got {len(fixtures_data)} fixtures & {len(all_odds)} odds for {today}")
+        print(f"Calling process day from fixtures fetcher")
         await process_day(fixtures_data, all_odds, sport)
         current += timedelta(days=1)
 
@@ -90,6 +91,7 @@ async def fetch_live_matches_and_odds(client, sport, host):
         return
 
     # Process live fixtures and odds
+    print(f"Calling process day from live fetcher")
     await process_day(fixtures_data, all_odds, sport, live=True)
 
     print(f"[INFO] Updated {len(fixtures_data)} LIVE fixtures & {len(all_odds)} odds for {sport}")
@@ -97,12 +99,14 @@ async def fetch_live_matches_and_odds(client, sport, host):
 # To process for both live games and fixtures for all sports
 async def process_day(fixtures_data, all_odds, sport, live=False):
     if not all_odds:
+        print(f"All odds is empty,  top not all_odds")
         return
 
     odds_map = {entry["fixture"]["id"]: entry for entry in all_odds}
 
     for nf in fixtures_data:
         fixture_id = nf["fixture"]["id"]
+        print(f"Processing fixture : {fixture_id}")
         league_id = nf["league"]["id"]
         league_name = nf["league"]["name"]
         country = nf["league"]["country"]
@@ -115,6 +119,7 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
         elif status in FINISHED_STATUSES:
             expiry = 60 * 60
             # Store result in DB (we still keep Results in DB!)
+            print(f"Processing or putting results on model")
             await sync_to_async(Results.objects.update_or_create, thread_sensitive=True)(
                 match_id=fixture_id,
                 sport=sport,
@@ -124,16 +129,19 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
                     "extras": {k: v for k, v in nf.items() if k not in ["league", "fixture", "id"]},
                 }
             )
+            print(f"Done inserting results")
 
 
         odds_entry = odds_map.get(fixture_id)
         if not odds_entry:
+            print(f"No odds entry for fixture {fixture_id}, so im skiping it")
             continue
 
         # Build odds dict
         fixture_odds = {}
 
         def build_market_object(bet):
+            print(f"Building market type")
             market_type = normalize_market(bet["name"])
             market_obj = {}
             special_markets = {"Double Chance 1st Half", "Double Chance 2nd Half", "Double Chance"}
@@ -150,14 +158,17 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
                     "odd": float(v["odd"]) if v.get("odd") else None,
                     "suspended": v.get("suspended", False)
                 }
+            print(f"Done building market type")
             return market_type, market_obj
 
         if not live:
+            print(f"Not live {status}")
             for bookmaker in odds_entry.get("bookmakers", []):
                 for bet in bookmaker.get("bets", []):
                     market_type, market_obj = build_market_object(bet)
                     fixture_odds.setdefault(market_type, {}).update(market_obj)
         else:
+            print(f"Live game")
             for bet in odds_entry.get("odds", []):
                 market_type, market_obj = build_market_object(bet)
                 fixture_odds[market_type] = market_obj
