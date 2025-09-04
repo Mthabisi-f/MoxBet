@@ -1,6 +1,31 @@
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
+# sports used by fetching functions in tasks.py
+SPORTS = {
+    "FOOTBALL": "APISPORTS_HOST_FOOTBALL",
+    # "BASKETBALL": "APISPORTS_HOST_BASKETBALL",
+    # "HOCKEY": "APISPORTS_HOST_HOCKEY",
+    # "RUGBY": "APISPORTS_HOST_RUGBY",
+    # "VOLLEYBALL": "APISPORTS_HOST_VOLLEYBALL",
+    # "NFL": "APISPORTS_HOST_NFL",
+    # "NBA": "APISPORTS_HOST_NBA",
+    # "MMA": "APISPORTS_HOST_MMA",
+    # "HANDBALL": "APISPORTS_HOST_HANDBALL",
+    # "FORMULA-1": "APISPORTS_HOST_FORMULA1",
+    # "AFL": "APISPORTS_HOST_AFL",
+    # "BASEBALL": "APISPORTS_HOST_BASEBALL",
+}
+
+# intervals for for calling fetch functions
+INTERVALS = {
+    "fixtures_live":  15,
+    "fixtures_upcoming": 3600,
+}
+
+# short statuses for ninished fixtures
+FINISHED_STATUSES = {"FT", "AET", "PEN", "CANC", "PST"}
+
 
 # Standardize market types
 MARKET_TYPE_MAP = {
@@ -34,6 +59,7 @@ MARKET_TYPE_MAP = {
     "Exact Total Goals": ["Exact Goals Number"],
     "Halftime/Fulltime": ["HT/FT Double", "HT/FT"]
 }
+
 
 # Standardize prediction values
 SPECIAL_MAP = {

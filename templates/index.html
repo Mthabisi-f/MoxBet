@@ -39,6 +39,7 @@
 
     {% include 'header.html' %}
     <div id="limits" 
+        data-api-key="{{ api_key }}"
         data-currency-symbol="{{ currency_symbol }}"
         data-min-stake="{{ user_limits.min_stake }}"
         data-min-deposit="{{ user_limits.min_deposit }}"

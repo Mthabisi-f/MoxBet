@@ -25,7 +25,8 @@ const placeBetBtn = document.getElementById("place-bet-btn");
 const bookBetBtn = document.getElementById("book-bet-btn");
 const spinner = document.createElement('div');
 const path = window.location.pathname;
-let successModal, bookingModal, currencySymbol, data, Countries, functionName, dropDownName, oddsDescName ;
+let successModal, bookingModal, currencySymbol, data, Countries, functionName
+let api_key, dropDownName, oddsDescName ;
 let minStake, maxWin, minWithdrawal, maxWithdrawal, minDeposit
 let currentSport = 'football';      
 const now = new Date();
@@ -70,6 +71,7 @@ document.querySelectorAll('.sport-button').forEach(btn => {
 
 
 if(limits){
+    api_key = limits.apiKey;
     currencySymbol = limits.dataset.currencySymbol;
     maxWin = limits.dataset.maxWin;
     minWithdrawal = limits.dataset.minWithdrawal;
@@ -2362,7 +2364,7 @@ function footballMoreOddsInnerHTML(data){
     const matchsum = document.createElement('div');
     matchsum.innerHTML = `<div id="wg-api-football-game"
                             data-host="v3.football.api-sports.io"
-                            data-key="88cb9e0d29a0a8245c01b0d09ed572e4"
+                            data-key="${api_key}"
                             data-id="${match_id}"
                             data-theme=""
                             data-refresh="15"

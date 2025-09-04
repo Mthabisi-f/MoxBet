@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
-
+import os
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -21,13 +21,12 @@ load_dotenv(BASE_DIR / ".env")
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-gi!bhvm-l#vdic!%(m%h!9t&$5=$+uo!avw!9-+lm0+6f+_ila'
+# Security
+SECRET_KEY = os.environ.get("SECRET_KEY")
+DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '93ff-196-220-122-111.ngrok-free.app']
-
+# Allowed hosts
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "127.0.0.1").split(",")
 
 
 # Application definition
@@ -82,19 +81,25 @@ TEMPLATES = [
 WSGI_APPLICATION = "myproject.wsgi.application"   # for normal Django (HTTP)
 ASGI_APPLICATION = "myproject.asgi.application"   # for Channels (WebSocket)
 
+# Channels / Redis
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [("127.0.0.1", 6379)],
+            "hosts": [
+                (
+                    os.environ.get("REDIS_HOST", "127.0.0.1"),
+                    int(os.environ.get("REDIS_PORT", 6379)),
+                )
+            ],
         },
     },
 }
 
 CACHES = {
     "default": {
-       "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/1",
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": f"redis://{os.environ.get('REDIS_HOST', '127.0.0.1')}:{os.environ.get('REDIS_PORT', 6379)}/{os.environ.get('REDIS_DB', 1)}",
     }
 }
 
@@ -103,15 +108,16 @@ CACHES = {
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+# Database (MySQL)
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'moxbet4_db',
-        'USER': 'root',
-        'PASSWORD': '13052002',
-        'HOST': 'localhost',
-        'PORT': '3306',
-        'OPTIONS': {'init_command': "SET NAMES 'utf8mb4'"}
+    "default": {
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": os.environ.get("DB_NAME"),
+        "USER": os.environ.get("DB_USER"),
+        "PASSWORD": os.environ.get("DB_PASSWORD"),
+        "HOST": os.environ.get("DB_HOST", "localhost"),
+        "PORT": os.environ.get("DB_PORT", "3306"),
+        "OPTIONS": {"init_command": "SET NAMES 'utf8mb4'"},
     }
 }
 
@@ -156,7 +162,6 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [
     BASE_DIR/ 'static'
 ]
-
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
 

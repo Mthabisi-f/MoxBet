@@ -24,7 +24,7 @@ import string
 import asyncio
 from asgiref.sync import sync_to_async
 
-
+# ssh root@165.22.36.98 -i C:\Users\learnmore\.ssh\id_ed25519
 
 def generate_barcode(ticket_id):
     timestap = datetime.now().strftime("%y%m%d%H%M%S")
@@ -627,58 +627,6 @@ async def fetch_more_odds(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-# # Fetch games by leagues
-# async def fetch_games_by_leagues(request):
-#     league_ids = request.GET.get("league_ids", "")
-#     league_ids = [id.strip() for id in league_ids.split(',') if id.strip().isdigit()]
-#     league_ids = league_ids[:10]  # limit to 10 leagues
-
-#     if not league_ids:
-#         return JsonResponse({"games": [], "total_matches": 0})
-
-#     sport = request.GET.get("sport", "football").lower()
-
-#     # Collect all cache keys for selected leagues
-#     keys = set()
-#     for league_id in league_ids:
-#         try:
-#             league_keys = await redis_client.smembers(f"league:{sport}:{league_id}")
-#             keys.update(league_keys)
-#         except Exception as e:
-#             print(f"Redis error fetching league {league_id}: {e}")
-
-#     # Async fetch matches
-#     async def fetch_match(k):
-#         value = await redis_client.get(k)
-#         print(f"[DEBUG] Key: {k}, Exists: {bool(value)}")
-#         if not value:
-#             await redis_client.srem(f"league:{sport}:{league_id}", k)
-#         else:
-#             matches.append(json.loads(value))
-
-#     tasks = [fetch_match(k) for k in keys]
-#     matches = await asyncio.gather(*tasks) if tasks else []
-#     matches = [m for m in matches if m]
-
-#     # Debug print
-#     print(f"[DEBUG] Keys fetched: {len(keys)}, Matches found: {len(matches)} for leagues {league_ids}")
-
-#     # Parse datetime for sorting
-#     for m in matches:
-#         try:
-#             m["datetime_obj"] = parser.parse(m["datetime"])
-#         except:
-#             m["datetime_obj"] = datetime.now(timezone.utc)
-
-#     matches.sort(key=lambda m: m["datetime_obj"])
-
-#     return JsonResponse({
-#         "games": matches,
-#         "total_matches": len(matches),
-#         "selected_leagues": league_ids
-#     }, safe=False)
-
-
 # Fetch games by selected leagues
 async def fetch_games_by_leagues(request):
     league_ids = request.GET.get("league_ids", "")
@@ -800,6 +748,7 @@ def sports(request):
     return render(request, 'sports.html')
 
 
+
 def more_odds(request):
     context = {}
     return render(request, 'Moxbet/more-odds.html', context)
@@ -811,7 +760,7 @@ def registerPage(request):
         form =  UserRegistrationForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
-            user.username = user.username.lower()
+            user.username = user.username.upper()
             user.save()
             login(request, user)
             return redirect('sports')
@@ -822,13 +771,14 @@ def registerPage(request):
     context = {'form':form}
     return render(request, 'register_login.html', context)
 
+
 def loginPage(request):
     page = 'login'
     if request.user.is_authenticated:
         return redirect('sports')
     
     if request.method == 'POST':
-        username = request.POST.get('username').lower()
+        username = request.POST.get('username').upper()
         password = request.POST.get('password')
         #checking if the user exists
         try:
@@ -846,12 +796,15 @@ def loginPage(request):
     context = {'page':page}
     return render(request, 'register_login.html', context)
 
+
 def logoutUser(request):
     logout(request)
     return render(request, 'sports.html')
 
+
 def index(request): 
     return render(request, 'index.html')
+
 
 @login_required
 def deposit(request):
@@ -952,6 +905,8 @@ def withdraw(request):
     context = {}
     return render(request, 'withdraw.html', context)
 
+
+
 def h2hPage(request):
     context = {}
     return render(request, 'home-2-head.html', context)
@@ -969,6 +924,8 @@ def luckyNumbers(request):
 
 def live(request):
     return render(request, 'live.html')
+
+
 
 def check_ticket(request):
     ticket = []
@@ -1029,9 +986,4 @@ def mybets(request):
 def betslip(request):
     context = {}
     return render(request, 'betslip.html', context)
-
-# temporary view
-def details(request):
-    context = {}
-    return render(request, 'details.html', context)
 

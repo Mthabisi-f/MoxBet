@@ -2,6 +2,10 @@ from django.urls import path
 from . import views, context_processors
 
 urlpatterns = [
+    # main pages
+    path('', views.sports, name='index'),
+    path('sports/', views.sports,  name='sports'),
+    
     path('api/fetch-games/', views.fetch_games, name='fetch_games'),
     path('api/fetch-leagues/', views.fetch_games_by_leagues, name='fetch_leagues'),
     path('api/fetch-more-odds/', views.fetch_more_odds, name='fetch_more_odds'),
@@ -12,8 +16,6 @@ urlpatterns = [
     path('place-bet/', views.place_bet, name='place_bet'),
     path('book-bet/', views.book_bet, name='book_bet'),
     path('get-booking/', views.get_booking, name='get_booking'),
-    path('more-odds-sample/', views.details, name='details'), #temporary url
-    path('', views.index, name='index'),
     path('login/', views.loginPage, name='login'),
     path('mybets/', views.mybets, name='mybets'),
     path('register/', views.registerPage, name='register'),
@@ -23,7 +25,6 @@ urlpatterns = [
     path('head-to-head/', views.h2hPage, name='h2h'),
     path('betslip/', views.betslip, name='betslip'),
     path('lucky-numbers/', views.luckyNumbers, name='lucky_numbers'),
-    path('sports/', views.sports,  name='sports'),
     path('live/', views.live, name='live'),
     path('results/', views.results, name='results'),
     path('win-boost/', views.win_boost, name='win_boost'),
