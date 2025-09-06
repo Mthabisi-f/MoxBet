@@ -89,6 +89,79 @@ from .normalizers import SPORTS, INTERVALS, FINISHED_STATUSES
 
 
 # --- FETCHER IMPLEMENTATIONS ---
+# async def fetch_matches_and_odds_bulk(client, sport, host):
+#     start_date = date.today()
+#     end_date = start_date + timedelta(days=2)
+#     current = start_date
+
+#     while current <= end_date:
+#         today = current.isoformat()
+#         cache_key = f"fixtures_odds_{sport}_{today}"
+
+#         cached = await cache.aget(cache_key)
+#         if cached:
+#             fixtures_data, all_odds = cached
+#             print(f"[CACHE] Loaded data for {sport} on {today}")
+#         else:
+#             print(f"[TASK] Fetching data for {sport} on {today}")
+#             resp_f = await get(client, host, "fixtures", params={"date": today,"status": "NS"}) # removed  to fetch all games including finished
+#             fixtures_data = resp_f.get("response", [])
+#             if not fixtures_data:
+#                 print(f"[INFO] No fixtures on {today}")
+#                 current += timedelta(weeks=1)
+#                 continue
+
+#             all_odds = []
+#             page = 1
+#             while True:
+#                 print(f"[TASK] Fetching odds page {page} for {sport} on {today}")
+#                 resp_o = await get(client, host, "odds", params={"date": today, "bookmaker": 8, "page": page})
+#                 odds_page = resp_o.get("response", [])
+#                 if not odds_page:
+#                     break
+#                 all_odds.extend(odds_page)
+#                 page += 1
+
+#             await cache.aset(cache_key, (fixtures_data, all_odds), timeout=60 * 60 * 6)
+
+#         print(f"[INFO] Got {len(fixtures_data)} fixtures & {len(all_odds)} odds for {today}")
+#         print(f"Calling process day from fixtures fetcher")
+#         await process_day(fixtures_data, all_odds, sport)
+#         current += timedelta(days=1)
+
+#     print(f"[FINISHED] Processed from {start_date} to {end_date}")
+
+
+# async def fetch_live_matches_and_odds(client, sport, host):
+#     """
+#     Fetch live fixtures and their odds separately for all in-play matches,
+#     then process and update Redis.
+#     """
+#     print(f"[TASK] Fetching LIVE fixtures for {sport}")
+
+#     # Fetch live fixtures
+#     resp_f = await get(client, host, "fixtures", params={"live": "all"})
+#     fixtures_data = resp_f.get("response", [])
+
+#     if not fixtures_data:
+#         print(f"[INFO] No LIVE fixtures found for {sport}")
+#         return
+
+#     # Fetch live odds
+#     resp_o = await get(client, host, "odds/live")
+#     all_odds = resp_o.get("response", [])
+
+#     if not all_odds:
+#         print(f"[INFO] No LIVE odds found for {sport}")
+#         return
+
+#     # Process live fixtures and odds
+#     print(f"Calling process day from live fetcher")
+#     await process_day(fixtures_data, all_odds, sport, live=True)
+
+#     print(f"[INFO] Updated {len(fixtures_data)} LIVE fixtures & {len(all_odds)} odds for {sport}")
+
+
 async def fetch_matches_and_odds_bulk(client, sport, host):
     start_date = date.today()
     end_date = start_date + timedelta(days=2)
@@ -104,11 +177,11 @@ async def fetch_matches_and_odds_bulk(client, sport, host):
             print(f"[CACHE] Loaded data for {sport} on {today}")
         else:
             print(f"[TASK] Fetching data for {sport} on {today}")
-            resp_f = await get(client, host, "fixtures", params={"date": today,"status": "NS"}) # removed  to fetch all games including finished
+            resp_f = await get(client, host, "fixtures", params={"date": today, "status": "NS"})
             fixtures_data = resp_f.get("response", [])
             if not fixtures_data:
                 print(f"[INFO] No fixtures on {today}")
-                current += timedelta(weeks=1)
+                current += timedelta(days=1)
                 continue
 
             all_odds = []
@@ -125,7 +198,6 @@ async def fetch_matches_and_odds_bulk(client, sport, host):
             await cache.aset(cache_key, (fixtures_data, all_odds), timeout=60 * 60 * 6)
 
         print(f"[INFO] Got {len(fixtures_data)} fixtures & {len(all_odds)} odds for {today}")
-        print(f"Calling process day from fixtures fetcher")
         await process_day(fixtures_data, all_odds, sport)
         current += timedelta(days=1)
 
@@ -156,7 +228,6 @@ async def fetch_live_matches_and_odds(client, sport, host):
         return
 
     # Process live fixtures and odds
-    print(f"Calling process day from live fetcher")
     await process_day(fixtures_data, all_odds, sport, live=True)
 
     print(f"[INFO] Updated {len(fixtures_data)} LIVE fixtures & {len(all_odds)} odds for {sport}")
