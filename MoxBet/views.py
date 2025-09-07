@@ -24,7 +24,6 @@ import string
 import asyncio
 from asgiref.sync import sync_to_async
 
-# ssh root@165.22.36.98 -i C:\Users\learnmore\.ssh\id_ed25519
 
 def generate_barcode(ticket_id):
     timestap = datetime.now().strftime("%y%m%d%H%M%S")
@@ -307,12 +306,30 @@ async def fetch_games(request):
     # Try to get manually-set priority leagues
     priority_leagues = await redis_client.lrange(f"priority_leagues:{sport.upper()}", 0, -1)
 
-    # Build league counts
+    # Build league counts + league info map
     league_counts = {}
+    league_info_map = {}
+
     for m in filtered_matches:
-        league_name = m.get("league", {}).get("name")
-        if league_name:
-            league_counts[league_name] = league_counts.get(league_name, 0) + 1
+        league = m.get("league", {})
+        league_id = league.get("id")
+        league_name = league.get("name")
+        country = m.get("country")
+        flag = league.get("flag")
+
+        if not league_name:
+            continue
+
+        league_counts[league_name] = league_counts.get(league_name, 0) + 1
+
+        # Store league info once
+        if league_name not in league_info_map:
+            league_info_map[league_name] = {
+                "id": league_id,
+                "name": league_name,
+                "country": country,
+                "flag": flag,
+            }
 
     # Convert to sorted list (by count)
     sorted_leagues = sorted(league_counts.items(), key=lambda x: x[1], reverse=True)
@@ -323,12 +340,21 @@ async def fetch_games(request):
 
     for pl in priority_leagues:
         if pl in league_counts:
-            top_leagues.append({"league": pl, "game_count": league_counts[pl]})
+            info = league_info_map.get(pl, {"id": None, "name": pl, "country": None, "flag": None})
+            top_leagues.append({
+                **info,
+                "game_count": league_counts[pl],
+            })
             added.add(pl)
 
-    for league, count in sorted_leagues:
-        if league not in added and len(top_leagues) < 10:
-            top_leagues.append({"league": league, "game_count": count})
+    for nm, ct in sorted_leagues:
+        if nm not in added and len(top_leagues) < 10:
+            info = league_info_map.get(nm, {"id": None, "name": nm, "country": None, "flag": None})
+            top_leagues.append({
+                **info,
+                "game_count": ct,
+            })
+
 
     ########### COUNTRIES ###########
     countries_data = {}
@@ -365,166 +391,6 @@ async def fetch_games(request):
         "countries": countries_data
     }, safe=False)
 
-
-
-# async def fetch_games(request):
-#     sport = request.GET.get("sport", "football").lower()
-#     page = int(request.GET.get("page", 1))
-#     page_size = 100
-
-#     # connect to redis
-#     redis_client = aioredis.Redis(host="127.0.0.1", port=6379, db=1, decode_responses=True)
-
-
-#     # Fetch keys from async Redis client
-#     try:
-#         keys = await redis_client.smembers(f"sport:{sport}")
-#     except Exception as e:
-#         print(f"Redis error: {e}")
-#         keys = set()
-
-#     key_list = list(keys)
-
-#     # Async fetch all matches from Redis
-#     async def fetch_match(k):
-#         value = await redis_client.get(k)
-#         if value:
-#             return json.loads(value)
-#         return None
-
-#     tasks = [fetch_match(k) for k in key_list]
-#     all_matches = await asyncio.gather(*tasks) if tasks else []
-
-#     matches = [m for m in all_matches if m]
-#     print(f"matches {len(matches)}")
-
-#     # Filter by upcoming matches
-#     filtered_matches = []
-#     for match in matches:
-#         match_datetime_str = match.get("datetime")
-#         if not match_datetime_str:
-#             continue
-#         try:
-#             match_datetime = parser.parse(match_datetime_str)
-#         except Exception as e:
-#             print(f"Skipping match due to invalid datetime: {e}")
-#             continue
-#         if match_datetime >= datetime.now(timezone.utc):
-#             match["datetime_obj"] = match_datetime
-#             filtered_matches.append(match)
-
-#     # Sort by datetime
-#     filtered_matches.sort(key=lambda m: m["datetime_obj"])
-
-#     total_matches = len(filtered_matches)
-
-#     # Pagination
-#     start_idx = (page - 1) * page_size
-#     end_idx = start_idx + page_size
-#     paginated_matches = filtered_matches[start_idx:end_idx]
-
-#     if not filtered_matches:
-#         return JsonResponse({
-#             "highlight_games": [],
-#             "top_leagues": [],
-#             "games": [],
-#             "total_matches": 0,
-#             "leagues": {}
-#         }, safe=False)
-
-   
-#     ############## TOP LEAGUES (from DB) #################
-#     # @sync_to_async
-#     # def get_top_leagues():
-#     #     leagues = Leagues.objects.filter(sport=sport.upper())
-#     #     priority_leagues = list(leagues.filter(is_priority=True)[:3])
-#     #     active_leagues = list(
-#     #         leagues.exclude(is_priority=True)
-#     #         .annotate(game_count=Count("matches"))
-#     #         .order_by("-game_count")[:5]
-#     #     )
-
-#     #     unique_leagues = {}
-#     #     for l in priority_leagues + active_leagues:
-#     #         unique_leagues[l.id] = {
-#     #             "id": l.id,
-#     #             "league": l.league,
-#     #             "league_json": l.league_json,  # <-- include league_json
-#     #             "sport": l.sport,
-#     #         }
-
-#     #     all_leagues = list(unique_leagues.values())[:7]
-
-#     #     if len(all_leagues) < 7:
-#     #         extra_league_ids = [l["id"] for l in all_leagues]
-#     #         extra_leagues = leagues.exclude(id__in=extra_league_ids).order_by("?")[:7 - len(all_leagues)]
-#     #         all_leagues += [{
-#     #             "id": l.id,
-#     #             "league": l.league,
-#     #             "league_json": l.league_json,
-#     #             "sport": l.sport
-#     #         } for l in extra_leagues]
-
-#     #     top_leagues = list(
-#     #         leagues.filter(id__in=[l["id"] for l in all_leagues])
-#     #         .annotate(game_count=Count("matches"))
-#     #         .values("id", "league", "league_json", "country", "sport", "game_count")
-#     #     )
-#     #     return top_leagues
-
-
-#     # @sync_to_async
-#     # def get_leagues_summary():
-#     #     query = """
-#     #     SELECT 
-#     #         ml.sport, 
-#     #         ml.country, 
-#     #         ml.id AS league_id, 
-#     #         ml.league, 
-#     #         ml.league_json,
-#     #         COUNT(mm.id) AS game_count
-#     #     FROM moxbet_leagues ml
-#     #     LEFT JOIN moxbet_matches mm ON mm.league_id_id = ml.id
-#     #     WHERE ml.sport = %s
-#     #     GROUP BY ml.sport, ml.country, ml.id, ml.league, ml.league_json
-#     #     ORDER BY ml.country, ml.league;
-#     #     """
-#     #     with connection.cursor() as cursor:
-#     #         cursor.execute(query, [sport.upper()])
-#     #         rows = cursor.fetchall()
-
-#     #     data = {"sport": sport, "total_games": 0, "countries": {}}
-
-#     #     for row in rows:
-#     #         sport_val, country, league_id, league, league_json, game_count = row
-#     #         game_count = int(game_count) if game_count is not None else 0
-#     #         data["total_games"] += game_count
-#     #         if country not in data["countries"]:
-#     #             data["countries"][country] = {"total_games": 0, "leagues": []}
-#     #         data["countries"][country]["total_games"] += game_count
-#     #         data["countries"][country]["leagues"].append({
-#     #             "id": league_id,
-#     #             "league": league,
-#     #             "league_json": league_json,  # <-- include league_json
-#     #             "game_count": game_count
-#     #         })
-#     #     return data
-
-
-
-#     # top_leagues = await get_top_leagues()
-#     # leagues_summary = await get_leagues_summary()
-
-#     ############## HIGHLIGHTS #################
-#     highlight_games = filtered_matches[:10]
-
-#     return JsonResponse({
-#         "highlight_games": highlight_games,
-#         # "top_leagues": top_leagues,
-#         "games": paginated_matches,
-#         "total_matches": total_matches,
-#         # "leagues": leagues_summary
-#     }, safe=False)
 
 
 # Fetches all live games for chosen sport

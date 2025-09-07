@@ -25,7 +25,9 @@ const placeBetBtn = document.getElementById("place-bet-btn");
 const bookBetBtn = document.getElementById("book-bet-btn");
 const spinner = document.createElement('div');
 const path = window.location.pathname;
-let successModal, bookingModal, currencySymbol, data, Sportleagues, functionName, dropDownName, oddsDescName ;
+let successModal, bookingModal, currencySymbol, data, Countries, functionName
+let api_key, dropDownName, oddsDescName ;
+let minStake, maxWin, minWithdrawal, maxWithdrawal, minDeposit
 let currentSport = 'football';      
 const now = new Date();
 
@@ -69,7 +71,12 @@ document.querySelectorAll('.sport-button').forEach(btn => {
 
 
 if(limits){
+    api_key = limits.apiKey;
     currencySymbol = limits.dataset.currencySymbol;
+    maxWin = limits.dataset.maxWin;
+    minWithdrawal = limits.dataset.minWithdrawal;
+    maxWithdrawal = limits.dataset.maxWithdrawal;
+    minDeposit = limits.dataset.minDeposit;
 }
 
 spinner.className = 'text-center my-5 p-5';
@@ -110,7 +117,7 @@ if(document.getElementById("bookingModal")){
 
 
 if(limits && stakeInput){
-    const minStake = parseFloat(limits.dataset.minStake);
+    minStake = parseFloat(limits.dataset.minStake);
     if(minStake && currencySymbol){
         minStakeDisplay.textContent = `${currencySymbol} ${minStake}`;
     }    
@@ -125,7 +132,7 @@ async function fetchUpdatedOdds(selections) {
                 "Content-Type": "application/json",
                 "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value,
             },
-            body: JSON.stringify({ selections }), //JSON.stringify({ selections })
+            body: JSON.stringify({ selections }), 
         });
         return await response.json();
     } catch (error) {
@@ -135,9 +142,15 @@ async function fetchUpdatedOdds(selections) {
 }
 
 
-// Function to Create Bet Item
-function createGameElement(oddsValue, marketType, homeTeam, awayTeam, time, date, prediction, matchId, sport, datetime, leagueId, country, league) {
-    
+// Function to Create Bet Item per match on betslip
+// it requires 11 arguments
+function createGameElement(oddsValue, marketType, homeTeam, awayTeam, prediction, matchId, sport, datetime, leagueId, country, league) {
+    // convert to local date and time
+    let dateObj = new Date(datetime);
+
+    let date = dateObj.toLocaleDateString("en-GB");
+    let time = dateObj.toLocaleTimeString("en-GB", {hour: "2-digit", minute: "2-digit"});
+
     const li = document.createElement("li");
     li.className = `row g-0 bb-aqua p-2 selected-game ${matchId}`;
     li.innerHTML = `
@@ -148,37 +161,37 @@ function createGameElement(oddsValue, marketType, homeTeam, awayTeam, time, date
                 <div data-home-team="${homeTeam}" class="col-auto pe-1 text-truncate">${homeTeam}</div>
                 <div data-away-team="${awayTeam}" class="col-6 text-truncate"><span class="me-1">v</span>${awayTeam}</div>
             </div>
-            <div class="text-small"><span class="text-yellow">${date}</span> ${time}</div>
+            <div class="text-small text-yellow"><span class="text-white">${date}</span> ${time}</div>
         </div>
         <div class="col-2 text-center">
             <button class="btn-close" type="button" aria-label="Close"></button>
         </div>
     `;
 
-    const closeBtn = li.querySelector(".btn-close");
-    closeBtn.addEventListener("click", function(){
+    // A button for removing that match element on beslip
+    const removeBtn = li.querySelector(".btn-close");
+    removeBtn.addEventListener("click", function(){
         li.remove();
         numberOfSelectedGames.textContent = gamesInATicket.querySelectorAll(".selected-game").length;
-        const match = allEventsContainer.querySelector(`[data-match-id="${matchId}"]`);
-        
+        betslipSummaryCalculator();
+        const match = gamesDisplay.querySelector(`[data-match-id="${matchId}"]`);
         if(match){
-            const oddsBtn = match.querySelector('.odds-btn-active').classList.remove('odds-btn-active')
+            const oddsBtn = match.querySelector('.odds-btn-active');
+            oddsBtn.classList.remove('odds-btn-active');
         }
         if(gamesInATicket.innerHTML == ''){
             if(!someGamesSelected.classList.contains('d-none')){
                 someGamesSelected.classList.add('d-none');
-            }
-            if(noGamesSelected.classList.contains('d-none')){
                 noGamesSelected.classList.remove('d-none');
             }
         }
-        betslipSummaryCalculator();
     });
 
     return li;   
 }
 
 
+// For removing all selections in a betslip
 const removeAllSelections = document.getElementById('remove-all-selections');
 if(removeAllSelections){
     removeAllSelections.addEventListener('click', function(){
@@ -200,6 +213,8 @@ if(removeAllSelections){
     })
 }
 
+
+// If betslip is empty
 if(noGamesSelected){
     document.getElementById('get-booking').addEventListener('submit', function(e){
         e.preventDefault();
@@ -237,32 +252,8 @@ if(noGamesSelected){
                     const league = selection["league"];
                     const sport = selection["sport"];
                     const prediction = selection["prediction"];
-                    const dt = new Date(datetime);
-
-                    const day = dt.getDate().toString().padStart(2, '0');
-                    const month = (dt.getMonth() + 1).toString().padStart(2, '0');
-                    const year = dt.getFullYear().toString().slice(-2);
-                    const date = `${day}/${month}/${year}`;
-
-                    const hours = dt.getHours().toString().padStart(2, '0');
-                    const minutes = dt.getMinutes().toString().padStart(2, '0')
-                    const time = `${hours}:${minutes}`;
-
-                    const newGame = createGameElement(oddsValue, marketType, homeTeam, awayTeam, date, time, prediction, matchId, sport, datetime, leagueId, country, league);
-
-                    
-                    
-
-                    // const activeBtns = matchContainer.querySelectorAll('.odds-btn-active');
-                    // if(activeBtns){
-                    //     activeBtns.forEach(btn=>{
-                    //         btn.classList.remove('odds-btn-active');
-                    //     })
-                    // }
-                    
-                    // if(!button.classList.contains('odds-btn-active')){
-                    //     button.classList.add('odds-btn-active');
-                    // }
+    
+                    const newGame = createGameElement(oddsValue, marketType, homeTeam, awayTeam, prediction, matchId, sport, datetime, leagueId, country, league);
 
                     let matchFound = false;
                     selectedGames.forEach((game) => {
@@ -303,8 +294,28 @@ if(noGamesSelected){
                 
                 })
                 
-            }else{
-            }
+            } else {
+                // Show backend error
+                const errorContainer = noGamesSelected.querySelector(".errors");
+                let message = data.message || data.error || "Something went wrong.";
+                errorContainer.innerHTML = `
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+
+                // Auto-hide after 10 seconds
+                setTimeout(() => {
+                    const alert = errorContainer.querySelector(".alert");
+                    if (alert) {
+                        alert.classList.remove("show");
+                        alert.classList.add("fade");
+                        setTimeout(() => alert.remove(), 500);
+                    }
+                    },5000);
+                }
+
         })
         .catch(error =>{
             console.log(error)
@@ -312,6 +323,8 @@ if(noGamesSelected){
     })
 } 
 
+
+// If on live page
 document.addEventListener('DOMContentLoaded', function(){
     if(livePage && window.location.pathname.includes('/live/')){
         let chosenSport = 'football'
@@ -360,8 +373,6 @@ if(gamesDisplay){
                 const awayTeam = matchContainer.querySelector("[data-away-team]").getAttribute("data-away-team");
                 const datetime = matchContainer.querySelector("[data-datetime]").getAttribute('data-datetime');
                 const leagueId = matchContainer.querySelector("[data-league-id]").getAttribute('data-league-id');
-                const date = matchContainer.querySelector("[data-date]").getAttribute("data-date");
-                const time = matchContainer.querySelector("[data-match-time]").getAttribute("data-match-time");
                 const matchId = matchContainer.querySelector("[data-match-id]").getAttribute("data-match-id");
                 const country = matchContainer.querySelector("[data-country]").getAttribute("data-country");
                 const league = matchContainer.querySelector("[data-league]").getAttribute("data-league");
@@ -369,7 +380,7 @@ if(gamesDisplay){
                 const prediction = button.getAttribute("data-prediction");
 
                
-                const newGame = createGameElement(oddsValue, marketType, homeTeam, awayTeam, date, time, prediction, matchId, sport, datetime, leagueId, country, league);
+                const newGame = createGameElement(oddsValue, marketType, homeTeam, awayTeam, prediction, matchId, sport, datetime, leagueId, country, league);
 
                 const activeBtns = matchContainer.querySelectorAll('.odds-btn-active');
                 if(activeBtns){
@@ -398,72 +409,19 @@ if(gamesDisplay){
                 numberOfSelectedGames.textContent = gamesInATicket.querySelectorAll(".selected-game").length;
                 betslipSummaryCalculator();
             }
-        }
-        // if(event.target.classList.contains('prediction')){
-        //     event.preventDefault();
-        //     event.stopPropagation();
-
-        //     if(someGamesSelected.classList.contains('d-none')){
-        //         someGamesSelected.classList.remove('d-none');
-        //         noGamesSelected.classList.add('d-none');
-        //     }
-        
-        //     const option = event.target;
-        //     const button = option.closest('.odds-btn');
-        //     const oddsValue = button.querySelector('.odds-value').textContent;
-        //     if (oddsValue) {
-        //         const matchContainer = button.closest(".match-link");
-        //         const marketType = button.closest('[data-market-type]').getAttribute("data-market-type");
-        //         const selectedGames = gamesInATicket.querySelectorAll(".selected-game");
-        //         const homeTeam = matchContainer.querySelector("[data-home-team]").getAttribute("data-home-team");
-        //         const awayTeam = matchContainer.querySelector("[data-away-team]").getAttribute("data-away-team");
-        //         const datetime = matchContainer.querySelector("[data-datetime]").getAttribute("data-datetime");
-        //         const leagueId = matchContainer.querySelector("[data-league-id]").getAttribute("data-league-id");
-        //         const date = matchContainer.querySelector("[data-date]").getAttribute("data-date");
-        //         const time = matchContainer.querySelector("[data-match-time]").getAttribute("data-match-time");
-        //         const matchId = matchContainer.querySelector("[data-match-id]").getAttribute("data-match-id");
-        //         const sport = matchContainer.querySelector("[data-sport]").getAttribute("data-sport");
-        //         const option = button.getAttribute("data-option");
-
-        //         const newGame = createGameElement(oddsValue, marketType, homeTeam, awayTeam, date, time, option, matchId, sport, datetime, leagueId);
-
-        //         const activeBtns = matchContainer.querySelectorAll('.odds-btn-active');
-        //         if(activeBtns){
-        //             activeBtns.forEach(btn=>{
-        //                 btn.classList.remove('odds-btn-active');
-        //             })
-        //         }
-                
-        //         if(!button.classList.contains('odds-btn-active')){
-        //             button.classList.add('odds-btn-active');
-        //         }
-
-        //         let matchFound = false;
-        //         selectedGames.forEach((game) => {
-        //             if (game.classList.contains(matchId)) {
-        //                 game.remove();
-        //                 gamesInATicket.appendChild(newGame);
-        //                 matchFound = true;
-        //             }
-        //         });
-
-        //         if (!matchFound) {
-        //             gamesInATicket.appendChild(newGame);
-        //         }
-
-        //         numberOfSelectedGames.textContent = gamesInATicket.querySelectorAll(".selected-game").length;
-        //         betslipSummaryCalculator();
-
-        //     }
-
-        // }
+        }    
+       
     });
 }
 
 async function  WinBoost(number_of_games, totalOdds, stakeAmount){
-    const res = await fetch(`/win-boost/?number_of_selections=${number_of_games}`);
-    const data = await res.json();
-    return  Number((data.win_boost_percentage) * (totalOdds * stakeAmount)).toFixed(2);
+    if(number_of_games <= 21){
+        const res = await fetch(`/win-boost/?number_of_selections=${number_of_games}`);
+        const data = await res.json();
+        return  Number((data.win_boost_percentage) * (totalOdds * stakeAmount)).toFixed(2);
+    }else if(number_of_games >= 22){
+        return  Number( 0.5 * (totalOdds * stakeAmount)).toFixed(2);
+    }
 }
 
 
@@ -492,17 +450,20 @@ function betslipSummaryCalculator() {
     if(selections.length !== prevSelectionsLength){
         WinBoost(selections.length, totalOdds, stakeAmount).then(boost => {
             win_boost = boost;
-            // document.getElementById("win_boost").textContent = win_boost;
-            
+            let potential_win = (Number(win_boost) + (Number(totalOdds) * Number(stakeAmount))).toFixed(2);
+            if(potential_win > Number(maxWin)){
+                potential_win = Number(maxWin);
+            }
+
             document.getElementById("total_odds").textContent = totalOdds.toFixed(2);
             document.getElementById("win_boost").textContent = win_boost;
-            document.getElementById("potential_win").textContent = (Number(win_boost) + (Number(totalOdds) * Number(stakeAmount))).toFixed(2);
+            document.getElementById("potential_win").textContent = potential_win;
 
             document.getElementById("selections").value = JSON.stringify(selections);
             document.getElementById("total-odds").value = totalOdds.toFixed(2) || 1;
             document.getElementById("bet-type").value = getFirstPathSegment();
             document.getElementById("win-boost").value = win_boost || 0;
-            document.getElementById("potential-win").value = (Number(win_boost) + (stakeAmount * totalOdds)).toFixed(2) || 1;
+            document.getElementById("potential-win").value = potential_win || 1; 
         });
         
         prevSelectionsLength = selections.length;
@@ -517,6 +478,7 @@ function betslipSummaryCalculator() {
 
 }
 
+
 if(stakeInput){
     stakeInput.addEventListener("input", function () {
         const newStakeAmount = parseFloat(this.value || 0).toFixed(2);
@@ -529,6 +491,7 @@ if(stakeInput){
         betslipSummaryCalculator();
     });
 }
+
 
 if(betslipContainer){
     const offersWrapper = document.getElementById('offers-wrapper');
@@ -580,7 +543,7 @@ if(betslipContainer){
         }
     }) 
     
-
+    
     betslipForm.addEventListener("submit", async function (event) {
         event.preventDefault();
 
@@ -592,69 +555,73 @@ if(betslipContainer){
             
             try {
                 let selections = JSON.parse(document.getElementById("selections").value);
-                let response = await fetchUpdatedOdds(selections);
-                let hasChanges = false;
+                if(selections.length <= 25){
+                    let response = await fetchUpdatedOdds(selections);
+                    let hasChanges = false;
 
-                // Check for odds changes
-                document.querySelectorAll(".selected-game").forEach((selection, index) => {
-                    let newOdds = response.updated_selections[index].match_odds;
-                    if (parseFloat(selection.querySelector("#odds-value").textContent) !== newOdds) {
-                        selection.querySelector("#odds-value").textContent = newOdds;
-                        hasChanges = true;
-                    }
-                });
-
-                if (hasChanges) {  
-                    oddsChangeAlert.classList.remove("d-none");
-                    return; // Wait for user to accept changes
-                }
-
-                // Proceed with bet placement
-                const formData = new FormData(betslipForm);
-                const betResponse = await fetch(betslipForm.action, {
-                    method: "POST",
-                    body: formData,
-                    headers: {
-                        "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value,
-                        "X-Requested-With": "XMLHttpRequest"
-                    }
-                });
-
-                const data = await betResponse.json();
-                
-                if (data.success) {
-                    // Update balance display if you add it to response
-                    if (data.new_balance) {
-                        updateBalanceDisplay(data.new_balance);
-                    }
-                    
-                    // Show success modal
-                    document.getElementById("user_balance").textContent = `${data.user_balance}`;
-                    document.getElementById("ticket-id").textContent = data.ticket_id;
-                    document.getElementById("ticket-stake").textContent = `${data.currency_symbol}${data.stake}`;
-                    document.getElementById("ticket-potential-win").textContent = `${data.currency_symbol}${data.potential_win}`;
-                    successModal.show();
-                    
-                    // Clear betslip
-                    gamesInATicket.innerHTML = '';
-
-                    // deactivate all active oddsbutons
-                    const activeBtns = document.querySelectorAll('.odds-btn-active');
-                    activeBtns.forEach(btn=>{
-                        btn.classList.remove('odds-btn-active');
-                    })
-
-                    if(noGamesSelected.classList.contains('d-none')){
-                        noGamesSelected.classList.remove('d-none')
-                        if(!someGamesSelected.classList.contains('d-none')){
-                            someGamesSelected.classList.add('d-none');
-                            numberOfSelectedGames.textContent = '0';
-                            stakeInput.value = '';
+                    // Check for odds changes
+                    document.querySelectorAll(".selected-game").forEach((selection, index) => {
+                        let newOdds = response.updated_selections[index].match_odds;
+                        if (parseFloat(selection.querySelector("#odds-value").textContent) !== newOdds) {
+                            selection.querySelector("#odds-value").textContent = newOdds;
+                            hasChanges = true;
                         }
+                    });
+
+                    if (hasChanges) {  
+                        oddsChangeAlert.classList.remove("d-none");
+                        return; // Wait for user to accept changes
                     }
+
+                    // Proceed with bet placement
+                    const formData = new FormData(betslipForm);
+                    const betResponse = await fetch(betslipForm.action, {
+                        method: "POST",
+                        body: formData,
+                        headers: {
+                            "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value,
+                            "X-Requested-With": "XMLHttpRequest"
+                        }
+                    });
+
+                    const data = await betResponse.json();
                     
-                } else {
-                    showErrorAlert(data.message || "Failed to place bet");
+                    if (data.success) {
+                        // Update balance display if you add it to response
+                        if (data.user_balance) {
+                            updateBalanceDisplay(data.user_balance);
+                        }
+                        
+                        // Show success modal
+                        document.getElementById("user_balance").textContent = `${data.user_balance}`;
+                        document.getElementById("ticket-id").textContent = data.ticket_id;
+                        document.getElementById("ticket-stake").textContent = `${data.currency_symbol}${data.stake}`;
+                        document.getElementById("ticket-potential-win").textContent = `${data.currency_symbol}${data.potential_win}`;
+                        successModal.show();
+                        
+                        // Clear betslip
+                        gamesInATicket.innerHTML = '';
+
+                        // deactivate all active oddsbutons
+                        const activeBtns = document.querySelectorAll('.odds-btn-active');
+                        activeBtns.forEach(btn=>{
+                            btn.classList.remove('odds-btn-active');
+                        })
+
+                        if(noGamesSelected.classList.contains('d-none')){
+                            noGamesSelected.classList.remove('d-none')
+                            if(!someGamesSelected.classList.contains('d-none')){
+                                someGamesSelected.classList.add('d-none');
+                                numberOfSelectedGames.textContent = '0';
+                                stakeInput.value = '';
+                            }
+                        }
+                        
+                    } else {
+                        showErrorAlert(data.message || "Failed to place bet");
+                    }
+                }else{
+                    showErrorAlert("Betslsip must have 25 or less selections");
                 }
 
             } catch (error) {
@@ -743,12 +710,8 @@ if(betslipContainer){
     function updateBalanceDisplay(newBalance) {
         const balanceElement = document.getElementById("user-balance");
         if (balanceElement) {
-            // Add animation to highlight balance change
+            // Update user balance
             balanceElement.textContent = newBalance;
-            balanceElement.classList.add("balance-update-highlight");
-            setTimeout(() => {
-                balanceElement.classList.remove("balance-update-highlight");
-            }, 1000);
         }
     }
     
@@ -765,7 +728,7 @@ if(betslipContainer){
         
         setTimeout(() => {
             alertDiv.remove();
-        }, 5000);
+        }, 3000);
     }
 
     // Add this handler for accepting odds changes
@@ -920,45 +883,45 @@ async function fetchGamesBySport(sport, page = 1) {
         // Extract games, topLeagues, highlights
         data = combinedData.games || [];
         let topLeagues = combinedData.top_leagues || [];
-        Sportleagues = combinedData.leagues || {}; 
-        let highlightGames = combinedData.highlight_games || [];
+        Countries = combinedData.countries || {}; 
+        // let highlightGames = combinedData.highlight_games || [];
         let totalMatches = combinedData.total_matches || 0;
 
-        
+
         // --- Highlight Games ---
-        const highlightGamesContainer = document.getElementById('highlist-games-container');
-        if (highlightGamesContainer) {
-            if (highlightGames.length === 0) {
-                highlightGamesContainer.innerHTML = '';
-            } else {
-                highlightGamesContainer.innerHTML = `
-                    <hr class="text-yellow mb-0">
-                    <ul id="highlist-games-list"></ul>`;
-                const highlightGamesList = document.getElementById('highlist-games-list');
+        // const highlightGamesContainer = document.getElementById('highlist-games-container');
+        // if (highlightGamesContainer) {
+        //     if (highlightGames.length === 0) {
+        //         highlightGamesContainer.innerHTML = '';
+        //     } else {
+        //         highlightGamesContainer.innerHTML = `
+        //             <hr class="text-yellow mb-0">
+        //             <ul id="highlist-games-list"></ul>`;
+        //         const highlightGamesList = document.getElementById('highlist-games-list');
 
-                highlightGames.forEach(game => {
-                    const {match_id, country, league, extras} = game;
+        //         highlightGames.forEach(game => {
+        //             const {match_id, country, league, extras} = game;
 
-                    const highlightGame = document.createElement('li');
-                    highlightGame.className = 'highlist-game col-12 text-truncate';
+        //             const highlightGame = document.createElement('li');
+        //             highlightGame.className = 'highlist-game col-12 text-truncate';
 
-                    const matchlink = document.createElement('a');
-                    matchlink.href = `/more-odds/?sport=${sport}&match_id=${match_id}`;
-                    matchlink.className = `match-link text-decoration-none text-white`;
-                    matchlink.innerHTML = `
-                        <div class="text-small text-truncate" style="margin-bottom: -5px;">
-                            ${country}&nbsp;${league.name}
-                        </div>
-                        <div class="text-truncate">
-                            ${extras.teams?.home?.name} <span class="text-yellow">vs</span> ${extras.teams?.away?.name}
-                        </div>
-                        <hr class="my-1 text-yellow">`;
+        //             const matchlink = document.createElement('a');
+        //             matchlink.href = `/more-odds/?sport=${sport}&match_id=${match_id}`;
+        //             matchlink.className = `match-link text-decoration-none text-white`;
+        //             matchlink.innerHTML = `
+        //                 <div class="text-small text-truncate" style="margin-bottom: -5px;">
+        //                     ${country}&nbsp;${league.name}
+        //                 </div>
+        //                 <div class="text-truncate">
+        //                     ${extras.teams?.home?.name} <span class="text-yellow">vs</span> ${extras.teams?.away?.name}
+        //                 </div>
+        //                 <hr class="my-1 text-yellow">`;
 
-                    highlightGame.appendChild(matchlink);
-                    highlightGamesList.appendChild(highlightGame);
-                });
-            }
-        }
+        //             highlightGame.appendChild(matchlink);
+        //             highlightGamesList.appendChild(highlightGame);
+        //         });
+        //     }
+        // }
 
         // --- Top Leagues (accordion) ---
         const topLeaguesContainer = document.getElementById('top-leagues-accordion-container');
@@ -985,14 +948,15 @@ async function fetchGamesBySport(sport, page = 1) {
             topLeaguesAccordionBody.innerHTML = `<div class="text-center my-1">No top leagues for ${sport}.</div>`;
         } else if (topLeagues.length > 0 && topLeaguesAccordionBody) {
             topLeagues.forEach(topLig => {
+                const {id, name, country, flag} = topLig
                 const topLigItem = document.createElement('a');
                 topLigItem.className = 'col-4 col-sm-3 text-decoration-none top-league-item m-1';
                 topLigItem.innerHTML = `
-                    <div class="card" data-league-id="${topLig.id}" data-country="${topLig.country}" data-league="${topLig.league}">
+                    <div class="card" data-league-id="${id}" data-country="${country}" data-league="${name}">
                         <div class="card-body row g-0 d-flex justify-content-between align-items-center px-2 py-0">
                             <div class="col-11">
-                                <div class="card-titte text-truncate text-small fw-bold" style="margin-bottom: -5px;">${topLig.league}</div>
-                                <div class="card-text text-truncate text-small">🤣 ${topLig.country}</div>
+                                <div class="card-titte text-truncate text-small fw-bold" style="margin-bottom: -5px;">${name}</div>
+                                <div class="card-text text-truncate text-small"><img src="${flag}" class="logo" alt="flag" /> ${country}</div>
                             </div>
                             <div class="col-1 h3 text-center"><strong><code>&gt;</code></strong></div>
                         </div>
@@ -1076,6 +1040,8 @@ async function fetchGamesBySport(sport, page = 1) {
             }  
         }   
 
+        showLeaguesResponsive()
+
     } catch (error) {
         console.error("Error fetching games:", error);
     } finally {
@@ -1098,7 +1064,7 @@ function initLiveOddsWebSocket(currentSport) {
         const liveStatuses = ["LIVE", "1H", "2H", "HT", "ET", "BT", "PEN"];
 
         if (liveStatuses.includes(data.status.short)) {
-            updateLiveOddsOnPage(data, currentSport);
+            updateLiveOddsOnPage(data);
         }
     };
 
@@ -1120,65 +1086,78 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-function updateLiveOddsOnPage(matchPayload, currentSport) {
-    console.log(`Match payload:`, matchPayload)
+function updateLiveOddsOnPage(matchPayload) {
     const matchId = matchPayload.match_id;
     const matchEl = document.querySelector(`[data-match-id="${matchId}"]`);
     if (!matchEl) return;
 
     // convert to local date and time
     let dateObj = new Date(matchPayload.datetime);
-
     let date = dateObj.toLocaleDateString("en-GB");
     let time = dateObj.toLocaleTimeString("en-GB", {hour: "2-digit", minute: "2-digit"});
 
+    // Update all away scores
+    const awayScoreEls = matchEl.querySelectorAll(`[data-away-score]`);
+    awayScoreEls.forEach(el => {
+        const newAway = matchPayload.extras?.goals?.away ?? '';
+        el.textContent = newAway;        // updates visible text
+        el.dataset.awayScore = newAway;  // updates data attribute
+    });
+
+    // Update all home scores
+    const homeScoreEls = matchEl.querySelectorAll(`[data-home-score]`);
+    homeScoreEls.forEach(el => {
+        const newHome = matchPayload.extras?.goals?.home ?? '';
+        el.textContent = newHome;
+        el.dataset.homeScore = newHome;
+    });
+        
     const times = matchEl.querySelectorAll(`[data-match-time="${time}"]`);
     const dates = matchEl.querySelectorAll(`[data-match-date="${date}"]`);
-    if (!times) return;
-    if (!dates) return;
 
-    times.forEach(t =>{
+    times.forEach(t => {
         t.innerText = `${matchPayload.status.elapsed}`;
-    })
+    });
 
-    dates.forEach(d =>{
-        d.innerText = `${ `Live ${matchPayload.status.short}`}`;
-    })
+    dates.forEach(d => {
+        d.innerText = `Live ${matchPayload.status.short}`;
+    });
 
-    // Iterate through updated odds
-    matchPayload.odds.forEach(market => {
-        const marketType = market.market_type;
-        const oddsData = market.odds;
-        const suspendedData = market.suspended;
+    // --- HERE: update odds ---
+    const newOdds = matchPayload.odds; // fresh odds from server
 
-        // Find the corresponding container/button
+    Object.keys(newOdds).forEach(marketType => {
         const oddsContainers = matchEl.querySelectorAll(`[data-market-type="${marketType}"]`);
         if (!oddsContainers) return;
+    
         oddsContainers.forEach(cont => {
             cont.querySelectorAll(".odds-btn").forEach(btn => {
-                const prediction = btn.dataset.prediction; // e.g., 'home', 'draw', 'away'
-                // console.log(`prediction: ${prediction}, odds: ${oddsData[prediction.toLowerCase()]}`)
-                if (oddsData[prediction.toLowerCase()]) {
-                    console.log('odds found and inserted')
-                    btn.innerText = `${oddsData[prediction.toLowerCase()]}`;
-                    if(matchId === 1447008){
-                        console.log(`prediction: ${prediction}, odds: ${oddsData[prediction.toLowerCase()]}`)
-                    }
-                    if (suspendedData && suspendedData[prediction.toLowerCase()]) {
-                        btn.disabled = true;
-                        btn.classList.add("text-muted");
-                    } else {
-                        btn.disabled = false;
-                        btn.classList.remove("text-muted");
-                    }
+                const prediction = btn.dataset.prediction;
+                const oddsValue = btn.querySelector('.odds-value');
+                const newInfo = newOdds[marketType]?.[prediction];
+                const oldInfo = matchPayload?.odds?.[marketType]?.[prediction];
+
+                if (!newInfo) return;
+
+                // Flash red/green if odds changed
+                if (oldInfo && oldInfo.odd !== newInfo.odd) {
+                    btn.classList.add(newInfo.odd > oldInfo.odd ? "flash-green" : "flash-red");
+                    setTimeout(() => btn.classList.remove("flash-green", "flash-red"), 1000);
                 }
+
+                // Update text & state
+                const target = oddsValue || btn;
+                target.innerText = newInfo.suspended ? "-" : newInfo.odd;
+                btn.disabled = newInfo.suspended;
+                btn.classList.toggle("text-muted", newInfo.suspended);
             });
-        })
+        });
 
-        
     });
-}
 
+    // replace global cache with fresh odds
+    // fixtureOdds = newOdds;
+}
 
 
 
@@ -1380,7 +1359,7 @@ function filterGames(data){
                     break;
 
                 case 'Leagues':
-                    showLeaguesModal();
+                    // showLeaguesResponsive();
                     break;
 
                 case 'Next-hour':
@@ -1647,12 +1626,13 @@ function filterGames(data){
 async function fetchGamesByLeagues(leagueIds) {
     try {
         // Fetch games data
-        const url = `/api/fetch-leagues/?league_ids=${leagueIds}`;
+        const url = `/api/fetch-leagues/?league_ids=${leagueIds}&sport=${currentSport.toLowerCase()}`;
         const response = await fetch(url);
         
         if (!response.ok) throw new Error('Network response was not ok');
         
-        const { data: games = [] } = await response.json();
+        // const { data: games = [] } = await response.json();
+        const { games = [] } = await response.json();
 
         // Handle empty results
         if (!games.length) {
@@ -1751,7 +1731,7 @@ async function fetchGamesByLeagues(leagueIds) {
                 });
             });
 
-            let dropDownName = `${sport}OddsDropdowns`;  
+            let dropDownName = `${currentSport}OddsDropdowns`;  
             if(typeof window[dropDownName] === "function"){
                 window[dropDownName](data, containers);
             }
@@ -1784,6 +1764,7 @@ async function fetchMoreOdds() {
         try {
             let response = await fetch(`/api/fetch-more-odds/?sport=${sport}&match_id=${matchId}`);
             let data = await response.json();
+
 
             if(data){
                 let pageFunctionHtml = `${sport}MoreOddsInnerHTML`;
@@ -1983,8 +1964,10 @@ function toggleDisplayNone(container_id){
 }
 
 
+
+
 function footballMatchElementInnerHTML(game, sport, container){
-    const { match_id, country , league, datetime, extras , odds, status} = game;
+    const { match_id, country , league, league_id, datetime, extras , odds, status} = game;
 
     // convert to local date and time
     let dateObj = new Date(datetime);
@@ -1992,34 +1975,50 @@ function footballMatchElementInnerHTML(game, sport, container){
     let date = dateObj.toLocaleDateString("en-GB");
     let time = dateObj.toLocaleTimeString("en-GB", {hour: "2-digit", minute: "2-digit"});
 
-    // Extract relevant odds
-    let marketOdds = {};
-    let marketsCount = 0;
-    odds.forEach(market => {
-        marketOdds[market.market_type] = market.odds;
-        if(market.odds){
-            marketsCount += Object.keys(market).length
+    console.log(game)
+    let marketsCount = Object.keys(odds).length;  // number of markets
+    // --- Core Helpers ---
+    // Safely get full info object for a market + selection
+    function getOddInfo(market, selection) {
+        if (
+            odds[market] &&
+            odds[market][selection]
+        ) {
+            return odds[market][selection]; // { odd, suspended, handicap }
         }
-    });
-
-    // Helper function to safely get odds values
-    function getOdds(market, selection) {            
-        return marketOdds[market] && marketOdds[market][selection] ? marketOdds[market][selection] : "N/A";
+        return null;
     }
 
-    // function getMarket
+    // Display odd or fallback if suspended/missing
+    function displayOdd(market, selection) {
+        const info = getOddInfo(market, selection);
+        if (!info) return "-"; // market/selection not found
+        return !info.suspended ? info.odd : "-";
+    }
+
+    // Check if a market/selection is suspended
+    function isSuspended(market, selection) {
+        const info = getOddInfo(market, selection);
+        return info ? info.suspended : true;
+    }
+
+    // Example calls:
+    // console.log(displayOdd("1X2", "home"));   // 2.56
+    // console.log(displayOdd("1X2", "draw"));   // "-" (suspended)
+    // console.log(isSuspended("1X2", "draw"));  // true
+
 
     const matchElement = document.createElement('a');
     matchElement.href = `/more-odds/?sport=${sport}&match_id=${match_id}`;
-    matchElement.classList.add('text-decoration-none', `${match_id}`, 'match-link', 'text-whitesmoke', 'mb-2');
-    
+    matchElement.classList.add('text-decoration-none', 'match-link', 'text-whitesmoke', 'mb-2');
+    matchElement.dataset.matchId = "${match_id}";
     matchElement.innerHTML = `
-                <div data-match-id="${match_id}" class="match-container bb-white pt-1 pb-1">
-                    <div data-sport="${sport}" class="row g-0 d-md-none">
+                <div data-sport="${sport}" data-league-id="${league_id}" data-datetime="${datetime}" class="match-container bb-white pt-1 pb-1">
+                    <div  class="row g-0 d-md-none">
                         <div class="col-12">
                             <div class="row g-0 text-small">
                                 <div class="col-7 text-truncate" style="margin-bottom: -5px;">
-                                    <span data-country="${country}">🎟</span>&nbsp;
+                                    <span data-country="${country}"><img src="${league.flag}" class="logo" alt="logo"/></span>&nbsp;
                                     <span data-country="${country}">${country}</span>&nbsp; 
                                     <span data-league="${league.name}">${league.name}</span>
                                 </div>
@@ -2032,15 +2031,15 @@ function footballMatchElementInnerHTML(game, sport, container){
                                             <div data-away-team="${extras.teams?.away?.name}">${extras.teams?.away?.name}</div>
                                         </div>
                                         <div class="col-2 text-aqua">
-                                            <div style="margin-bottom: -5px;">${extras.goals?.home ?? ''}</div>
-                                            <div>${extras.goals?.away ?? ''}</div>
+                                            <div data-home-score="${extras.goals?.home ?? ''}" style="margin-bottom: -5px;">${extras.goals?.home ?? ''}</div>
+                                            <div data-away-score="${extras.goals?.away ?? ''}" >${extras.goals?.away ?? ''}</div>
                                         </div>
                                     </div>
                                 </div>
                                 <div id="odds-desc-container1-small" data-market-type="Match Winner" class="col-6 d-flex odds-desc-container1-small">
-                                    <button class="odds-btn my-2 big-screen-odds-btn" data-prediction="home">${getOdds('Match Winner', 'home')}</button>
-                                    <button class="mx-1 my-2 odds-btn big-screen-odds-btn" data-prediction="draw">${getOdds('Match Winner', 'draw')}</button >
-                                    <button class="odds-btn my-2 big-screen-odds-btn" data-prediction="away">${getOdds('Match Winner', 'away')}</button>
+                                    <button class="odds-btn my-2 big-screen-odds-btn" data-prediction="1">${displayOdd('Match Winner', '1')}</button>
+                                    <button class="mx-1 my-2 odds-btn big-screen-odds-btn" data-prediction="X">${displayOdd('Match Winner', 'X')}</button >
+                                    <button class="odds-btn my-2 big-screen-odds-btn" data-prediction="2">${displayOdd('Match Winner', '2')}</button>
                                 </div>
                             </div>
                             <div class="row g-0">
@@ -2057,7 +2056,7 @@ function footballMatchElementInnerHTML(game, sport, container){
                             <div class="row g-0 d-flex">
                                 <div class="col-6">
                                     <div class="text-small">
-                                        <span class="text-truncate" data-datetime="${datetime}"><img src="${league.flag}" class="logo" alt="logo"/></span>&nbsp;
+                                        <span class="text-truncate"><img src="${league.flag}" class="logo" alt="logo"/></span>&nbsp;
                                         <span class="text-truncate data-country="${country}">${country}</span>&nbsp; 
                                         <span class="text-truncate data-league="${league.name}" data-league-id="${league.id}">${league.name}</span>
                                     </div>
@@ -2077,25 +2076,25 @@ function footballMatchElementInnerHTML(game, sport, container){
                                     <div class="text-truncate">${extras.teams?.away?.name}</div>
                                 </div>
                                  <div class="col-1 text-center text-aqua"> 
-                                    <div>${extras.goals?.home ?? ''}</div>
-                                    <div>${extras.goals?.away ?? ''}</div>
+                                    <div data-home-score="${extras.goals?.home ?? ''}">${extras.goals?.home ?? ''}</div>
+                                    <div data-away-score="${extras.goals?.away ?? ''}">${extras.goals?.away ?? ''}</div>
                                 </div> 
                                 <div id="odds-desc-container1" data-market-type="Match Winner" class="col-4 col-lg-3 d-flex pe-1 py-2 odds-desc-container1">
-                                    <button class="odds-btn big-screen-odds-btn" data-prediction="home">${getOdds('Match Winner', 'home')}</button>
-                                    <button class="mx-1 odds-btn big-screen-odds-btn" data-prediction="draw">${getOdds('Match Winner', 'draw')}</button >
-                                    <button class="odds-btn big-screen-odds-btn" data-prediction="away">${getOdds('Match Winner', 'away')}</button>
+                                    <button class="odds-btn big-screen-odds-btn" data-prediction="1">${displayOdd('Match Winner', '1')}</button>
+                                    <button class="mx-1 odds-btn big-screen-odds-btn" data-prediction="X">${displayOdd('Match Winner', 'X')}</button >
+                                    <button class="odds-btn big-screen-odds-btn" data-prediction="2">${displayOdd('Match Winner', '2')}</button>
                                 </div>
                                 <div id="odds-desc-container2" data-market-type="Goals Over/Under" class="col-4 col-lg-3 d-flex pe-1 py-2 odds-desc-container2">
                                     <span class="w-31">
                                         <span class="line fw-bold">2.5</span>
                                     </span>
-                                    <button class="mx-1 odds-btn big-screen-odds-btn" data-prediction="Over">${getOdds('Goals Over/Under', 'over 2.5')}</button >
-                                    <button class="odds-btn big-screen-odds-btn" data-prediction="Under">${getOdds('Goals Over/Under', 'under 2.5')}</button>
+                                    <button class="mx-1 odds-btn big-screen-odds-btn" data-prediction="over 2.5">${displayOdd('Goals Over/Under', 'over 2.5')}</button >
+                                    <button class="odds-btn big-screen-odds-btn" data-prediction="under 2.5">${displayOdd('Goals Over/Under', 'under 2.5')}</button>
                                 </div>
                                 <div id="odds-desc-container3" data-market-type="Double Chance" class="col-4 col-lg-3 d-flex pe-1 py-2 odds-desc-container3">
-                                    <button class="odds-btn big-screen-odds-btn " data-prediction="home/draw">${getOdds('Double Chance', 'home/draw')}</button>
-                                    <button class="mx-1 odds-btn big-screen-odds-btn" data-prediction="home/away">${getOdds('Double Chance', 'home/away')}</button >
-                                    <button class="odds-btn big-screen-odds-btn" data-prediction="draw/away">${getOdds('Double Chance', 'draw/away')}</button>
+                                    <button class="odds-btn big-screen-odds-btn " data-prediction="1X">${displayOdd('Double Chance', '1X')}</button>
+                                    <button class="mx-1 odds-btn big-screen-odds-btn" data-prediction="12">${displayOdd('Double Chance', '12')}</button >
+                                    <button class="odds-btn big-screen-odds-btn" data-prediction="X2">${displayOdd('Double Chance', 'X2')}</button>
                                 </div>
                             </div>
                             <div style="margin-top: -5px;" class="row g-0 col-3 text-truncate">
@@ -2233,97 +2232,88 @@ function basketballMatchElementInnerHTML(game, sport){
 
 // MORE ODDS FUNCTIONS FOR DIFFERENT SPORTS
 function footballMoreOddsInnerHTML(data){
-    console.log(data)
-    const { match_id, country ,date, time, league, sport, venue,datetime, extras , odds} = data;
+    //Get match data    
+    const { match_id, league_id, league, datetime, country, sport, extras , odds} = data;
     let container = document.getElementById("all-odds-page");
     const allMarkets = document.getElementById('all-markets');
+    // Set data-mach-id dynamically so that websocet finds the match and update its info, should there be any changes
+    container.dataset.matchId = `${match_id}`;
+    allMarkets.dataset.sport = `${sport}`;
+    allMarkets.dataset.country = `${country}`;
+    allMarkets.dataset.datetime = `${datetime}`;
+    allMarkets.dataset.leagueId = `${league_id}`;
+    allMarkets.dataset.league = `${league.name}`;
+    allMarkets.dataset.homeTeam = `${extras.teams?.home?.name}`;
+    allMarkets.dataset.awayTeam = `${extras.teams?.away?.name}`;
+    
 
-    // convert to local date and time
+    /**
+     * Check if a market (and optional prediction) exists in fixture_odds
+     * 
+     * @param {Object} odds - the fixture_odds object
+     * @param {string} market - market type name (e.g., "1X2", "Asian Handicap")
+     * @param {string|null} prediction - optional prediction key (e.g., "home", "draw", "home -2")
+     * @returns {boolean}
+     */
 
-    // let date = dateObj.toLocaleDateString("en-GB");
-    // let time = dateObj.toLocaleTimeString("en-GB", {hour: "2-digit", minute: "2-digit"});
+    // --- Core Helpers ---
+    function hasMarket(odds, market, prediction = null) {
+        if (!odds || !odds[market]) return false;
 
+        if (prediction === null) {
+            return true; // Market exists
+        }
 
-    container.querySelectorAll('.filter-odds-by').forEach(btn => {
-        btn.addEventListener('click', function (event) {
-            
-            const selectedFilter = event.target.textContent;
-            const currentFilter = 'all';
-            
-            if(selectedFilter !== currentFilter){
-                currentFilter = selectedFilter ? selectedFilter.trim() : 'All';
-                fetchGamesBySport(currentFilter);
-            }
-            const navItem = this.closest('.nav-item');
-            const previouslyActive = btn.closest('.sport-btn-active')
-            if(previouslyActive){
-                return;
-            }
-            else{
-                sportNavbar.querySelectorAll('.sport-btn-active').forEach(activeBtn => {
-                    activeBtn.classList.remove('sport-btn-active');
-                })
-                navItem.classList.add('sport-btn-active');
-                // navItem.style.color = 'yellow';
-            }
-        })
-    })
-
-
-    // Extract relevant odds
-    let marketOdds = {};
-    odds.forEach(market => {
-        marketOdds[market.market_type] = market.odds;
-    });
-
-    // Helper function to safely get odds values
-    function getOdds(market, selection) {
-        return marketOdds[market] && marketOdds[market][selection] ? marketOdds[market][selection] : "N/A";
+        return odds[market][prediction] !== undefined;
     }
+
+    
+    // Safely get full info object for a market + selection
+    function getOddInfo(market, selection) {
+        if (
+            odds[market] &&
+            odds[market][selection]
+        ) {
+            return odds[market][selection]; // { odd, suspended, handicap }
+        }
+        return null;
+    }
+
+    // Display odd or fallback if suspended/missing
+    function displayOdd(market, selection) {
+        const info = getOddInfo(market, selection);
+        if (!info) return "-"; // market/selection not found
+        return !info.suspended ? info.odd : "-";
+    }
+
+    // Check if a market/selection is suspended
+    function isSuspended(market, selection) {
+        const info = getOddInfo(market, selection);
+        return info ? info.suspended : true;
+    }
+
+    
+    // Example calls:
+    // console.log(displayOdd("1X2", "home"));   // 2.56
+    // console.log(displayOdd("1X2", "draw"));   // "-" (suspended)
+    // console.log(isSuspended("1X2", "draw"));  // true
+
+   
     const matchsum = document.createElement('div');
     matchsum.innerHTML = `<div id="wg-api-football-game"
                             data-host="v3.football.api-sports.io"
-                            data-key="88cb9e0d29a0a8245c01b0d09ed572e4"
+                            data-key="${api_key}"
                             data-id="${match_id}"
                             data-theme=""
                             data-refresh="15"
                             data-show-errors="false"
                             data-show-logos="true">
-                        </div>`
+                        </div>`;
 
-    const matchSummary = document.createElement('div');
-    matchSummary.innerHTML = `
-        <div class="row g-0">
-            <div class="col-2">
-                <a href="{{ request.META.HTTP_REFERER }}">
-                    <i class="fa-solid fa-arrow-left-long text-yellow"></i>
-                </a>
-            </div>
-            <div class="col-8 text-center text-yellow text-truncate" data-sport="${sport}" data-country="${country}" data-league="${league.name}" data-league-id="${league.id}"><img src="${league.flag}" class="logo" alt="flag"/> ${country} ${league.name}</div>
-            <div class="col-2 text-end">
-                <a href="#">
-                    <i class="fa-solid fa-chart-simple text-yellow"></i>
-                </a>
-            </div>
-        </div>
-
-        <div id="more-odds-match-summary" class="more-odds-match-summary row gx-0 mb-3 mt-2">
-            <div data-datetime="1${datetime}" class="col-4 text-center">
-                <div class="fs-3">👕</div>
-                    <div data-home-team="${extras.teams?.home?.name}">${extras.teams?.home?.name}</div>
-                </div>
-                <div class="col-4 text-center">
-                    <div data-match-time="${time}" data-date="${date}" class="text-yellow text-small">${date} ${time}</div>
-                    <div data-scores="">2 : 2</div>
-                    <div data-match-id="${match_id}" class="text-small">id : ${match_id}</div>
-                </div>
-                <div class="col-4 text-center">
-                    <div class="fs-3">👚</div>
-                    <div data-away-team="${extras.teams?.away?.name}">${extras.teams?.away?.name}</div>
-                </div>
-            </div>
-        </div>
-
+    container.prepend(matchsum)
+    
+    const filterodds = document.createElement('div');
+    filterodds.innerHTML = `
         <div class="row overflow-auto gx-4 mx-1 flex-nowrap hide-scrollbar my-2 text-whitesmoke">
             <div class="col-auto filter-odds-by br-and-b-aqua">All</div>
             <div class="col-auto filter-odds-by">Popular</div>
@@ -2338,3044 +2328,3252 @@ function footballMoreOddsInnerHTML(data){
         </div>
     `;
 
-    const fullTime = document.createElement('div');
-    fullTime.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#fullTime" aria-expanded="true" aria-controls="fullTime">
-                    <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                    <span>Match Winner</span>
-                </button>
-            </h2>
-            <div id="fullTime" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
-                <div data-market-type="Fulltime" class="accordion-body bg-navy-blue row g-1">
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="1">
-                            <div class="text-yellow prediction">1</div>
-                            <div class="odds-value">${getOdds('Match Winner', 'home')}</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="X">
-                            <div class="text-yellow prediction">X</div>
-                            <div class="odds-value">${getOdds('Match Winner', 'draw')}</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="2">
-                            <div class="text-yellow prediction">2</div>
-                            <div class="odds-value">${getOdds('Match Winner', 'away')}</div>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    `;
+    allMarkets.prepend(filterodds);
 
-    const doubleChance = document.createElement('div');
-    doubleChance.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#doubleChance" aria-expanded="true" aria-controls="doubleChance">
-                    <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                    <span>Double chance</span>
-                </button>
-            </h2>
-            <div id="doubleChance" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
-                <div data-market-type="Double Chance" class="accordion-body bg-navy-blue row g-1 p-1">
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="DC - Home/Draw">
-                            <div class="text-yellow prediction">1X</div>
-                            <div class="odds-value">${getOdds('Double Chance', 'home/draw')}</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="DC - Home/Away">
-                            <div class="text-yellow prediction">12</div>
-                            <div class="odds-value">${getOdds('Double Chance', 'home/away')}</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="DC - Draw/Away">
-                            <div class="text-yellow prediction">X2</div>
-                            <div class="odds-value">${getOdds('Double Chance', 'draw/away')}</div>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    `;
 
-    const btts = document.createElement('div');
-    btts.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#btts" aria-expanded="true" aria-controls="btts">
-                    <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                    <span>Both teams to score</span>
-                </button>
-            </h2>
-            <div id="btts" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
-                <div data-market-type="Both Teams Score" class="accordion-body bg-navy-blue row g-1 p-1">
-                    <div class="col-6 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Both teams to score - Yes">
-                            <div class="text-yellow prediction">Yes</div>
-                            <div class="odds-value">${getOdds('Both Teams Score', 'yes')}</div> 
-                        </button>
-                    </div>
-                    <div class="col-6 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Both teams to score - No">
-                            <div class="text-yellow prediction">No</div>
-                            <div class="odds-value">${getOdds('Both Teams Score', 'no')}</div> 
-                        </button>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    `;
-
-    const goals = document.createElement('div');
-    goals.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
+    if(hasMarket(odds, 'Match Winner')){
+        const match_winner = document.createElement('div');
+        match_winner.innerHTML = `
+            <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+                <div class="accordion-item">
                 <h2 class="accordion-header">
-                    <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#goals" aria-expanded="true" aria-controls="goals">
-                        <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                        <span>Goals Over/Under</span>
+                    <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#match_winner" aria-expanded="true" aria-controls="match_winner">
+                        <span>Match Winner</span>
                     </button>
                 </h2>
-            <div id="goals" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
-                <div class="accordion-body bg-navy-blue p-1">
-                    <div data-market-type="Goals Over/Under" class="row g-2 mb-2">
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Over - 0.5">
-                                <div class="text-yellow prediction">Over 0.5</div>
-                                <div class="odds-value">${getOdds('Goals Over/Under', 'over 0.5')}</div>
+                <div id="match_winner" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
+                    <div data-market-type="Match Winner" class="accordion-body bg-navy-blue row g-1">
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="1">
+                                <div class="text-yellow prediction">1</div>
+                                <div class="odds-value">${displayOdd('Match Winner', '1')}</div>
                             </button>
                         </div>
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Under - 0.5">
-                                <div class="text-yellow prediction">Under 0.5</div>
-                                <div class="odds-value">${getOdds('Goals Over/Under', 'under 0.5')}</div> 
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="X">
+                                <div class="text-yellow prediction">X</div>
+                                <div class="odds-value">${displayOdd('Match Winner', 'X')}</div>
                             </button>
                         </div>
-                    </div>
-
-                    <div data-market-type="Over/Under" class="row g-2 mb-2">
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Over - 1.5">
-                                <div class="text-yellow prediction">Over 1.5</div>
-                                <div class="odds-value">${getOdds('Goals Over/Under', 'over 1.5')}</div>
-                            </button>
-                        </div>
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Under - 1.5">
-                                <div class="text-yellow prediction">Under 1.5</div>
-                                <div class="odds-value">${getOdds('Goals Over/Under', 'under 1.5')}</div> 
-                            </button>
-                        </div>
-                    </div>
-
-                    <div data-market-type="Over/Under" class="row g-2 mb-2">
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Over - 2.5">
-                                <div class="text-yellow prediction">Over 2.5</div>
-                                <div class="odds-value">${getOdds('Goals Over/Under', 'over 2.5')}</div>
-                            </button>
-                        </div>
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Under - 2.5">
-                                <div class="text-yellow prediction">Under 2.5</div>
-                                <div class="odds-value">${getOdds('Goals Over/Under', 'under 2.5')}</div> 
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="row g-2 mb-2">
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Over - 3.5">
-                                <div class="text-yellow prediction">Over 3.5</div>
-                                <div class="odds-value">${getOdds('Goals Over/Under', 'over 3.5')}</div>
-                            </button>
-                        </div>
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Under - 3.5">
-                                <div class="text-yellow prediction">Under 3.5</div>
-                                <div class="odds-value">${getOdds('Goals Over/Under', 'under 3.5')}</div> 
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="row g-2 mb-2">
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Over - 4.5">
-                                <div class="text-yellow prediction">Over 4.5</div>
-                                <div class="odds-value">${getOdds('Goals Over/Under', 'over 4.5')}</div>
-                            </button>
-                        </div>
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Under - 4.5">
-                                <div class="text-yellow prediction">Under 4.5</div>
-                                <div class="odds-value">${getOdds('Goals Over/Under', 'under 4.5')}</div> 
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="row g-2 mb-2">
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Over - 5.5">
-                                <div class="text-yellow prediction">Over 5.5</div>
-                                <div class="odds-value">${getOdds('Goals Over/Under', 'over 5.5')}</div>
-                            </button>
-                        </div>
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Under - 5.5">
-                                <div class="text-yellow prediction">Under 5.5</div>
-                                <div class="odds-value">${getOdds('Goals Over/Under', 'under 5.5')}</div> 
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="2">
+                                <div class="text-yellow prediction">2</div>
+                                <div class="odds-value">${displayOdd('Match Winner', '2')}</div>
                             </button>
                         </div>
                     </div>
                 </div>
+                </div>
             </div>
-            </div>
-        </div>
-    `;
+        `;
+        allMarkets.appendChild(match_winner)
+    }
 
-    const firstHalf1X2 = document.createElement('div');
-    firstHalf1X2.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
+    if(hasMarket(odds, 'Double Chance')){
+        const doubleChance = document.createElement('div');
+        doubleChance.innerHTML = `
+            <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+                <div class="accordion-item">
                 <h2 class="accordion-header">
-                    <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#First-half-1X2" aria-expanded="true" aria-controls="First-half-1X2">
-                        <span class="px-2"><i class="fa-solid fa-info"></i></span>
+                    <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#doubleChance" aria-expanded="true" aria-controls="doubleChance">
+                        <span>Double chance</span>
+                    </button>
+                </h2>
+                <div id="doubleChance" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
+                    <div data-market-type="Double Chance" class="accordion-body bg-navy-blue row g-1 p-1">
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="1X">
+                                <div class="text-yellow prediction">1X</div>
+                                <div class="odds-value">${displayOdd('Double Chance', '1X')}</div>
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="12">
+                                <div class="text-yellow prediction">12</div>
+                                <div class="odds-value">${displayOdd('Double Chance', '12')}</div>
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="X2">
+                                <div class="text-yellow prediction">X2</div>
+                                <div class="odds-value">${displayOdd('Double Chance', 'X2')}</div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        `;
+        allMarkets.appendChild(doubleChance);
+    }
+
+    if(hasMarket(odds, 'Both Teams To Score')){
+    const btts = document.createElement('div');
+        btts.innerHTML = `
+            <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+                <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#btts" aria-expanded="true" aria-controls="btts">
+                        <span>Both Teams To Score</span>
+                    </button>
+                </h2>
+                <div id="btts" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
+                    <div data-market-type="Both Teams To Score" class="accordion-body bg-navy-blue row g-1 p-1">
+                        <div class="col-6 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="yes">
+                                <div class="text-yellow prediction">Yes</div>
+                                <div class="odds-value">${displayOdd('Both Teams To Score', 'yes')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-6 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="no">
+                                <div class="text-yellow prediction">No</div>
+                                <div class="odds-value">${displayOdd('Both Teams To Score', 'no')}</div> 
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        `;
+        allMarkets.appendChild(btts);
+    }
+
+    if(hasMarket(odds, 'Goals Over/Under')){
+        const goals = document.createElement('div');
+        goals.innerHTML = `
+            <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#goals" aria-expanded="true" aria-controls="goals">
+                            <span>Goals Over/Under</span>
+                        </button>
+                    </h2>
+                <div id="goals" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
+                    <div data-market-type="Goals Over/Under" class="accordion-body bg-navy-blue p-1">
+                        <div class="row g-2 mb-2">
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="over 0.5">
+                                    <div class="text-yellow prediction">Over 0.5</div>
+                                    <div class="odds-value">${displayOdd('Goals Over/Under', 'over 0.5')}</div>
+                                </button>
+                            </div>
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="under 0.5">
+                                    <div class="text-yellow prediction">Under 0.5</div>
+                                    <div class="odds-value">${displayOdd('Goals Over/Under', 'under 0.5')}</div> 
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-2">
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="over 1.5">
+                                    <div class="text-yellow prediction">Over 1.5</div>
+                                    <div class="odds-value">${displayOdd('Goals Over/Under', 'over 1.5')}</div>
+                                </button>
+                            </div>
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="under 1.5">
+                                    <div class="text-yellow prediction">Under 1.5</div>
+                                    <div class="odds-value">${displayOdd('Goals Over/Under', 'under 1.5')}</div> 
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-2">
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="over 2.5">
+                                    <div class="text-yellow prediction">Over 2.5</div>
+                                    <div class="odds-value">${displayOdd('Goals Over/Under', 'over 2.5')}</div>
+                                </button>
+                            </div>
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="under 2.5">
+                                    <div class="text-yellow prediction">Under 2.5</div>
+                                    <div class="odds-value">${displayOdd('Goals Over/Under', 'under 2.5')}</div> 
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-2">
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="over 3.5">
+                                    <div class="text-yellow prediction">Over 3.5</div>
+                                    <div class="odds-value">${displayOdd('Goals Over/Under', 'over 3.5')}</div>
+                                </button>
+                            </div>
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="under 3.5">
+                                    <div class="text-yellow prediction">Under 3.5</div>
+                                    <div class="odds-value">${displayOdd('Goals Over/Under', 'under 3.5')}</div> 
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-2">
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="over 4.5">
+                                    <div class="text-yellow prediction">Over 4.5</div>
+                                    <div class="odds-value">${displayOdd('Goals Over/Under', 'over 4.5')}</div>
+                                </button>
+                            </div>
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="under 4.5">
+                                    <div class="text-yellow prediction">Under 4.5</div>
+                                    <div class="odds-value">${displayOdd('Goals Over/Under', 'under 4.5')}</div> 
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-2">
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="over 5.5">
+                                    <div class="text-yellow prediction">Over 5.5</div>
+                                    <div class="odds-value">${displayOdd('Goals Over/Under', 'over 5.5')}</div>
+                                </button>
+                            </div>
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="under 5.5">
+                                    <div class="text-yellow prediction">Under 5.5</div>
+                                    <div class="odds-value">${displayOdd('Goals Over/Under', 'under 5.5')}</div> 
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        `;
+        allMarkets.appendChild(goals);
+    }
+
+    if(hasMarket(odds, "First Half Winner")){
+        const firstHalf1X2 = document.createElement('div');
+        firstHalf1X2.innerHTML = `
+            <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#First-half-1X2" aria-expanded="true" aria-controls="First-half-1X2">
+                            <span>First Half Winner</span>
+                        </button>
+                    </h2>
+                    <div id="First-half-1X2" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
+                        <div data-market-type="First Half Winner" class="accordion-body bg-navy-blue row g-1 p-1">
+                            <div class="col-4 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="1">
+                                    <div class="text-yellow prediction">1</div>
+                                    <div class="odds-value">${displayOdd('First Half Winner', '1')}</div>
+                                </button>
+                            </div>
+                            <div class="col-4 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="X">
+                                    <div class="text-yellow prediction">X</div>
+                                    <div class="odds-value">${displayOdd('First Half Winner', 'X')}</div>
+                                </button>
+                            </div>
+                            <div class="col-4 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="2">
+                                    <div class="text-yellow prediction">2</div>
+                                    <div class="odds-value">${displayOdd('First Half Winner', '2')}</div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        allMarkets.appendChild(firstHalf1X2);
+    }
+
+    if(hasMarket(odds, "Highest Scoring Half")){
+        const highestScoringHalf = document.createElement('div');
+        highestScoringHalf.innerHTML = `
+            <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+                <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#highest-scoring-half" aria-expanded="true" aria-controls="highest-scoring-half">
+                        <span>Highest Scoring Half</span>
+                    </button>
+                </h2>
+                <div id="highest-scoring-half" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
+                    <div data-market-type="Highest Scoring Half" class="accordion-body bg-navy-blue row g-1 p-1">
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="1st half">
+                                <div class="text-yellow prediction">First</div>
+                                <div class="odds-value">${displayOdd('Highest Scoring Half', '1st half')}</div>
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="X">
+                                <div class="text-yellow prediction">Equal</div>
+                                <div class="odds-value">${displayOdd('Highest Scoring Half', 'X')}</div>
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="2nd half">
+                                <div class="text-yellow prediction">Second</div>
+                                <div class="odds-value">${displayOdd('Highest Scoring Half', '2nd half')}</div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        `;
+        allMarkets.appendChild(highestScoringHalf);
+    }
+
+    // const firstHalfGoals = document.createElement('div');
+    // firstHalfGoals.innerHTML = `
+    //     <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+    //         <div class="accordion-item">
+    //             <h2 class="accordion-header">
+    //                 <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#First-half-goals" aria-expanded="true" aria-controls="First-half-goals">
+    //                     <span class="px-2"><i class="fa-solid fa-info"></i></span>
+    //                     <span>Halftime Over/Under</span>
+    //                 </button>
+    //             </h2>
+    //             <div id="First-half-goals" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+    //                 <div class="accordion-body bg-navy-blue p-1">
+    //                     <div data-market-type="Halftime Over/Under" class="row g-2 mb-2">
+    //                         <div class="col-6 d-grid">
+    //                             <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Half time over - 0.5">
+    //                                 <div class="text-yellow prediction">Over 0.5</div>
+    //                                 <div class="odds-value">1.10</div>
+    //                             </button>
+    //                         </div>
+    //                         <div class="col-6 d-grid">
+    //                             <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Half time under - 0.5">
+    //                                 <div class="text-yellow prediction">Under 0.5</div>
+    //                                 <div class="odds-value">9.56</div> 
+    //                             </button>
+    //                         </div>
+    //                     </div>
+
+    //                     <div data-market-type="Halftime Over/Under" class="row g-2 mb-2">
+    //                         <div class="col-6 d-grid">
+    //                             <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Half time over - 1.5">
+    //                                 <div class="text-yellow prediction">Over 1.5</div>
+    //                                 <div class="odds-value">${getOdds('first_half_goals', 'over_1.5')}</div>
+    //                             </button>
+    //                         </div>
+    //                         <div class="col-6 d-grid">
+    //                             <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Half time under - 1.5">
+    //                                 <div class="text-yellow prediction">Under 1.5</div>
+    //                                 <div class="odds-value">${getOdds('first_half_goals', 'under_1.5')}</div> 
+    //                             </button>
+    //                         </div>
+    //                     </div>
+
+    //                     <div data-market-type="Halftime Over/Under" class="row g-2 mb-2">
+    //                         <div class="col-6 d-grid">
+    //                             <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Half time over - 2.5">
+    //                                 <div class="text-yellow prediction">Over 2.5</div>
+    //                                 <div class="odds-value">1.10</div>
+    //                             </button>
+    //                         </div>
+    //                         <div class="col-6 d-grid">
+    //                             <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Half time under - 2.5">
+    //                                 <div class="text-yellow prediction">Under 2.5</div>
+    //                                 <div class="odds-value">9.56</div> 
+    //                             </button>
+    //                         </div>
+    //                     </div>
+
+    //                 </div>
+    //             </div>
+    //         </div>
+    //     </div>
+    // `;
+
+    if(hasMarket(odds, "Second Half Winner")){
+        const secondHalf1X2 = document.createElement('div');
+        secondHalf1X2.innerHTML = `
+        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+                <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#second-half-1X2" aria-expanded="true" aria-controls="second-half-1X2">
+                        <span>Second Half Winner</span>
+                    </button>
+                </h2>
+                <div id="second-half-1X2" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                    <div data-market-type="Second Half Winner" class="accordion-body bg-navy-blue row g-1 p-1">
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="1">
+                                <div class="text-yellow prediction">1</div>
+                                <div class="odds-value">${displayOdd('Second Half Winner', '1')}</div>
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="X">
+                                <div class="text-yellow prediction">X</div>
+                                <div class="odds-value">${displayOdd('Second Half Winner', 'X')}</div>
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="2">
+                                <div class="text-yellow prediction">2</div>
+                                <div class="odds-value">${displayOdd('Second Half Winner', '2')}</div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        `; 
+        allMarkets.appendChild(secondHalf1X2);
+    }
+
+    if(hasMarket(odds, "Correct Score 1st Half")){
+        const correctScore1sthalf = document.createElement('div');
+        correctScore1sthalf.innerHTML = `
+            <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+                <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#correct-score-1st-half" aria-expanded="true" aria-controls="correct-score-1st-half">
+                        <span>Correct Score 1st Half</span>
+                    </button>
+                </h2>
+                <div id="correct-score-1st-half" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                    <div data-market-type="Correct Score 1st Half" class="accordion-body bg-navy-blue row g-1 p-1">
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="0:0">
+                                <div class="text-yellow prediction">0:0</div>
+                                <div class="odds-value">${displayOdd('Correct Score 1st Half', '0:0')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="0:1">
+                                <div class="text-yellow prediction">0:1</div>
+                                <div class="odds-value">${displayOdd('Correct Score 1st Half', '0:1')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="0:2">
+                                <div class="text-yellow prediction">0:2</div>
+                                <div class="odds-value">${displayOdd('Correct Score 1st Half', '0:2')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="0:3">
+                                <div class="text-yellow prediction">0:3</div>
+                                <div class="odds-value">${displayOdd('Correct Score 1st Half', '0:3')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="1:0">
+                                <div class="text-yellow prediction">1:0</div>
+                                <div class="odds-value">${displayOdd('Correct Score 1st Half', '1:0')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="1:1">
+                                <div class="text-yellow prediction">1:1</div>
+                                <div class="odds-value">${displayOdd('Correct Score 1st Half', '1:1')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="1:2">
+                                <div class="text-yellow prediction">1:2</div>
+                                <div class="odds-value">${displayOdd('Correct Score 1st Half', '1:2')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="1:3">
+                                <div class="text-yellow prediction">1:3</div>
+                                <div class="odds-value">${displayOdd('Correct Score 1st Half', '1:3')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="2:0">
+                                <div class="text-yellow prediction">2:0</div>
+                                <div class="odds-value">${displayOdd('Correct Score 1st Half', '2:0')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="2:1">
+                                <div class="text-yellow prediction">2:1</div>
+                                <div class="odds-value">${displayOdd('Correct Score 1st Half', '2:1')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="2:2">
+                                <div class="text-yellow prediction">2:2</div>
+                                <div class="odds-value">${displayOdd('Correct Score 1st Half', '2:2')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="2:3">
+                                <div class="text-yellow prediction">2:3</div>
+                                <div class="odds-value">${displayOdd('Correct Score 1st Half', '2:3')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="3:0">
+                                <div class="text-yellow prediction">3:0</div>
+                                <div class="odds-value">${displayOdd('Correct Score 1st Half', '3:0')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="3:1">
+                                <div class="text-yellow prediction">3:1</div>
+                                <div class="odds-value">${displayOdd('Correct Score 1st Half', '3:1')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="3:2">
+                                <div class="text-yellow prediction">3:2</div>
+                                <div class="odds-value">${displayOdd('Correct Score 1st Half', '3:2')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="4:0">
+                                <div class="text-yellow prediction">4:0</div>
+                                <div class="odds-value">${displayOdd('Correct Score 1st Half', '4:0')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="4:1">
+                                <div class="text-yellow prediction">4:1</div>
+                                <div class="odds-value">${displayOdd('Correct Score 1st Half', '4:1')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="4:2">
+                                <div class="text-yellow prediction">4:2</div>
+                                <div class="odds-value">${displayOdd('Correct Score 1st Half', '4:2')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="4:3">
+                                <div class="text-yellow prediction">4:3</div>
+                                <div class="odds-value">${displayOdd('Correct Score 1st Half', '4:3')}</div> 
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        `; 
+        allMarkets.appendChild(correctScore1sthalf);
+    }
+
+    if(hasMarket(odds, "Correct Score")){
+        const correctScore = document.createElement('div');
+        correctScore.innerHTML = `
+            <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+                <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#correct-score" aria-expanded="true" aria-controls="correct-score">
+                        <span>Correct Score</span>
+                    </button>
+                </h2>
+                <div id="correct-score" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                    <div data-market-type="Correct Score" class="accordion-body bg-navy-blue row g-1 p-1">
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="0:0">
+                                <div class="text-yellow prediction">0:0</div>
+                                <div class="odds-value">${displayOdd('Correct Score', '0:0')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="0:1">
+                                <div class="text-yellow prediction">0:1</div>
+                                <div class="odds-value">${displayOdd('Correct Score', '0:1')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="0:2">
+                                <div class="text-yellow prediction">0:2</div>
+                                <div class="odds-value">${displayOdd('Correct Score', '0:2')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="0:3">
+                                <div class="text-yellow prediction">0:3</div>
+                                <div class="odds-value">${displayOdd('Correct Score', '0:3')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="0:4">
+                                <div class="text-yellow prediction">0:4</div>
+                                <div class="odds-value">${displayOdd('Correct Score', '0:4')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="1:0">
+                                <div class="text-yellow prediction">1:0</div>
+                                <div class="odds-value">${displayOdd('Correct Score', '1:0')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="1:1">
+                                <div class="text-yellow prediction">1:1</div>
+                                <div class="odds-value">${displayOdd('Correct Score', '1:1')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="1:2">
+                                <div class="text-yellow prediction">1:2</div>
+                                <div class="odds-value">${displayOdd('Correct Score', '1:2')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="1:3">
+                                <div class="text-yellow prediction">1:3</div>
+                                <div class="odds-value">${displayOdd('Correct Score', '1:3')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="1:4">
+                                <div class="text-yellow prediction">1:4</div>
+                                <div class="odds-value">${displayOdd('Correct Score', '1:4')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="2:0">
+                                <div class="text-yellow prediction">2:0</div>
+                                <div class="odds-value">${displayOdd('Correct Score', '2:0')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="2:1">
+                                <div class="text-yellow prediction">2:1</div>
+                                <div class="odds-value">${displayOdd('Correct Score', '2:1')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="2:2">
+                                <div class="text-yellow prediction">2:2</div>
+                                <div class="odds-value">${displayOdd('Correct Score', '2:2')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="2:3">
+                                <div class="text-yellow prediction">2:3</div>
+                                <div class="odds-value">${displayOdd('Correct Score', '2:3')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="2:4">
+                                <div class="text-yellow prediction">2:4</div>
+                                <div class="odds-value">${displayOdd('Correct Score', '2:4')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="3:0">
+                                <div class="text-yellow prediction">3:0</div>
+                                <div class="odds-value">${displayOdd('Correct Score', '3:0')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="3:1">
+                                <div class="text-yellow prediction">3:1</div>
+                                <div class="odds-value">${displayOdd('Correct Score', '3:1')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="3:2">
+                                <div class="text-yellow prediction">3:2</div>
+                                <div class="odds-value">${displayOdd('Correct Score', '3:2')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="3:3">
+                                <div class="text-yellow prediction">3:3</div>
+                                <div class="odds-value">${displayOdd('Correct Score', '3:3')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="3:4">
+                                <div class="text-yellow prediction">3:4</div>
+                                <div class="odds-value">${displayOdd('Correct Score', '3:4')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="4:0">
+                                <div class="text-yellow prediction">4:0</div>
+                                <div class="odds-value">${displayOdd('Correct Score', '4:0')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="4:1">
+                                <div class="text-yellow prediction">4:1</div>
+                                <div class="odds-value">${displayOdd('Correct Score', '4:1')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="4:2">
+                                <div class="text-yellow prediction">4:2</div>
+                                <div class="odds-value">${displayOdd('Correct Score', '4:2')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="4:3">
+                                <div class="text-yellow prediction">4:3</div>
+                                <div class="odds-value">${displayOdd('Correct Score', '4:3')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="4:4">
+                                <div class="text-yellow prediction">4:4</div>
+                                <div class="odds-value">${displayOdd('Correct Score', '4:4')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="4:5">
+                                <div class="text-yellow prediction">4:5</div>
+                                <div class="odds-value">${displayOdd('Correct Score', '4:5')}</div> 
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        `; 
+        allMarkets.appendChild(correctScore);
+    }
+
+    // const totalGoalRange = document.createElement('div');
+    // totalGoalRange.innerHTML = `
+    //     <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+    //         <div class="accordion-item">
+    //         <h2 class="accordion-header">
+    //             <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#total-goal-range" aria-expanded="true" aria-controls="total-goal-range">
+    //                 <span class="px-2"><i class="fa-solid fa-info"></i></span>
+    //                 <span>Total Goal Range</span>
+    //             </button>
+    //         </h2>
+    //         <div id="total-goal-range" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+    //             <div data-market-type="Total Goal Range" class="accordion-body bg-navy-blue row g-1 p-1">
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
+    //                         <div class="text-yellow prediction">0</div>
+    //                         <div class="odds-value">2.01</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
+    //                         <div class="text-yellow prediction">1-2</div>
+    //                         <div class="odds-value">6.80</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
+    //                         <div class="text-yellow prediction">1-3</div>
+    //                         <div class="odds-value">2.29</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
+    //                         <div class="text-yellow prediction">1-4</div>
+    //                         <div class="odds-value">2.01</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
+    //                         <div class="text-yellow prediction">1-5</div>
+    //                         <div class="odds-value">6.80</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
+    //                         <div class="text-yellow prediction">1-6</div>
+    //                         <div class="odds-value">2.29</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
+    //                         <div class="text-yellow prediction">2-3</div>
+    //                         <div class="odds-value">2.01</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
+    //                         <div class="text-yellow prediction">2-4</div>
+    //                         <div class="odds-value">6.80</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
+    //                         <div class="text-yellow prediction">2-5</div>
+    //                         <div class="odds-value">2.29</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
+    //                         <div class="text-yellow prediction">2-6</div>
+    //                         <div class="odds-value">2.01</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
+    //                         <div class="text-yellow prediction">3-4</div>
+    //                         <div class="odds-value">6.80</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
+    //                         <div class="text-yellow prediction">3-5</div>
+    //                         <div class="odds-value">2.29</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
+    //                         <div class="text-yellow prediction">3-6</div>
+    //                         <div class="odds-value">2.01</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
+    //                         <div class="text-yellow prediction">4-5</div>
+    //                         <div class="odds-value">6.80</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
+    //                         <div class="text-yellow prediction">4-6</div>
+    //                         <div class="odds-value">2.29</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-6 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - 7+">
+    //                         <div class="text-yellow prediction">5-6</div>
+    //                         <div class="odds-value">1.65</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-6 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - No goals">
+    //                         <div class="text-yellow prediction">7+</div>
+    //                         <div class="odds-value">2.98</div>
+    //                     </button>
+    //                 </div>                    
+    //             </div>
+    //         </div>
+    //         </div>
+    //     </div>
+        
+    // `; 
+
+    if(hasMarket(odds, "Who Will Win")){
+        const whoWillWin = document.createElement('div');
+        whoWillWin.innerHTML = `
+            <div class="accordion accordion-flush border-0 br-toark mb-2" id="accordionExample">
+                <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#who-will-win" aria-expanded="true" aria-controls="who-will-win">
+                        <span>Who Will Win? (If Draw, Money backAway)</span>
+                    </button>
+                </h2>
+                <div id="who-will-win" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                    <div data-market-type="Who Will Win" class="accordion-body bg-navy-blue row g-1 p-1">
+                        <div class="col-6 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="1">
+                                <div class="text-yellow prediction">1</div>
+                                <div class="odds-value">${displayOdd('Who Will Win', '1')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-6 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="2">
+                                <div class="text-yellow prediction">2</div>
+                                <div class="odds-value">${displayOdd('Who Will Win', '2')}</div> 
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        `;
+        allMarkets.appendChild(whoWillWin);
+    }
+
+    if(hasMarket(odds, "Team To Score First")){ 
+        const teamToScoreFirst = document.createElement('div');
+        teamToScoreFirst.innerHTML = `
+            <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#Team-to-score-first" aria-expanded="true" aria-controls="Team-to-score-first">
+                            <span>Team To Score First</span>
+                        </button>
+                    </h2>
+                    <div id="Team-to-score-first" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                        <div data-market-type="Team To Score First" class="accordion-body bg-navy-blue row g-1 p-1">
+                            <div class="col-4 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="1">
+                                    <div class="text-yellow prediction">1</div>
+                                    <div class="odds-value">${displayOdd('Team To Score First', '1')}</div> 
+                                </button>
+                            </div>
+                            <div class="col-4 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="X">
+                                    <div class="text-yellow prediction">X</div>
+                                    <div class="odds-value">${displayOdd('Team To Score First', 'X')}</div> 
+                                </button>
+                            </div>
+                            <div class="col-4 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="2">
+                                    <div class="text-yellow prediction">2</div>
+                                    <div class="odds-value">${displayOdd('Team To Score First', '2')}</div> 
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        allMarkets.appendChild(teamToScoreFirst);
+    }
+
+    if(hasMarket(odds, "First Half Winner")){
+        const first10mins1X2 = document.createElement('div');
+        first10mins1X2.innerHTML = `
+            <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+                <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#first-10min-1X2" aria-expanded="true" aria-controls="first-10min-1X2">
                         <span>First Half Winner</span>
                     </button>
                 </h2>
-                <div id="First-half-1X2" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
-                    <div data-market-type="First Half Winner" class="accordion-body bg-navy-blue row g-1 p-1">
+                <div id="first-10min-1X2" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                    <div data-market-tyep="First Half Winner" class="accordion-body bg-navy-blue row g-1 p-1">
                         <div class="col-4 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half 1X2 - Home Win">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="1">
                                 <div class="text-yellow prediction">1</div>
-                                <div class="odds-value">${getOdds('First Half Winner', 'home')}</div>
+                                <div class="odds-value">${displayOdd('First Half Winner', '1')}</div>
                             </button>
                         </div>
                         <div class="col-4 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half 1X2 - Draw">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="X">
                                 <div class="text-yellow prediction">X</div>
-                                <div class="odds-value">${getOdds('First Half Winner', 'draw')}</div>
+                                <div class="odds-value">${displayOdd('First Half Winner', 'X')}</div>
                             </button>
                         </div>
                         <div class="col-4 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half 1X2 - Away Win">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="2">
                                 <div class="text-yellow prediction">2</div>
-                                <div class="odds-value">${getOdds('First Half Winner', 'away')}</div>
+                                <div class="odds-value">${displayOdd('First Half Winner', '2')}</div>
                             </button>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    `;
-
-    const highestScoringHalf = document.createElement('div');
-    highestScoringHalf.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#highest-scoring-half" aria-expanded="true" aria-controls="highest-scoring-half">
-                    <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                    <span>Highest Scoring Half</span>
-                </button>
-            </h2>
-            <div id="highest-scoring-half" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
-                <div data-market-type="Highest Scoring Half" class="accordion-body bg-navy-blue row g-1 p-1">
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Home Win">
-                            <div class="text-yellow prediction">First</div>
-                            <div class="odds-value">${getOdds('Highest Scoring Half', '1st half')}</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Draw">
-                            <div class="text-yellow prediction">Equal</div>
-                            <div class="odds-value">${getOdds('Highest Scoring Half', 'draw')}</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Away Win">
-                            <div class="text-yellow prediction">Second</div>
-                            <div class="odds-value">${getOdds('Highest Scoring Half', '2nd half')}</div>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    `;
-
-    const firstHalfGoals = document.createElement('div');
-    firstHalfGoals.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-                <h2 class="accordion-header">
-                    <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#First-half-goals" aria-expanded="true" aria-controls="First-half-goals">
-                        <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                        <span>Halftime Over/Under</span>
-                    </button>
-                </h2>
-                <div id="First-half-goals" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                    <div class="accordion-body bg-navy-blue p-1">
-                        <div data-market-type="Halftime Over/Under" class="row g-2 mb-2">
-                            <div class="col-6 d-grid">
-                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Half time over - 0.5">
-                                    <div class="text-yellow prediction">Over 0.5</div>
-                                    <div class="odds-value">1.10</div>
-                                </button>
-                            </div>
-                            <div class="col-6 d-grid">
-                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Half time under - 0.5">
-                                    <div class="text-yellow prediction">Under 0.5</div>
-                                    <div class="odds-value">9.56</div> 
-                                </button>
-                            </div>
-                        </div>
-
-                        <div data-market-type="Halftime Over/Under" class="row g-2 mb-2">
-                            <div class="col-6 d-grid">
-                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Half time over - 1.5">
-                                    <div class="text-yellow prediction">Over 1.5</div>
-                                    <div class="odds-value">${getOdds('first_half_goals', 'over_1.5')}</div>
-                                </button>
-                            </div>
-                            <div class="col-6 d-grid">
-                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Half time under - 1.5">
-                                    <div class="text-yellow prediction">Under 1.5</div>
-                                    <div class="odds-value">${getOdds('first_half_goals', 'under_1.5')}</div> 
-                                </button>
-                            </div>
-                        </div>
-
-                        <div data-market-type="Halftime Over/Under" class="row g-2 mb-2">
-                            <div class="col-6 d-grid">
-                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Half time over - 2.5">
-                                    <div class="text-yellow prediction">Over 2.5</div>
-                                    <div class="odds-value">1.10</div>
-                                </button>
-                            </div>
-                            <div class="col-6 d-grid">
-                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Half time under - 2.5">
-                                    <div class="text-yellow prediction">Under 2.5</div>
-                                    <div class="odds-value">9.56</div> 
-                                </button>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-
-    const secondHalf1X2 = document.createElement('div');
-    secondHalf1X2.innerHTML = `
-      <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#second-half-1X2" aria-expanded="true" aria-controls="second-half-1X2">
-                    <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                    <span>Second half 1X2</span>
-                </button>
-            </h2>
-            <div id="second-half-1X2" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                <div data-market-type="Second Half 1X2" class="accordion-body bg-navy-blue row g-1 p-1">
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Second half - Home Win">
-                            <div class="text-yellow prediction">1</div>
-                            <div class="odds-value">${getOdds('second_half_1X2', 'home')}</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Second half - Draw">
-                            <div class="text-yellow prediction">X</div>
-                            <div class="odds-value">${getOdds('second_half_1X2', 'draw')}</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Second half - Away Win">
-                            <div class="text-yellow prediction">2</div>
-                            <div class="odds-value">${getOdds('second_half_1X2', 'away')}</div>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    `; 
-
-    const correctScore = document.createElement('div');
-    correctScore.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#correct-score" aria-expanded="true" aria-controls="correct-score">
-                    <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                    <span>Correct Score</span>
-                </button>
-            </h2>
-            <div id="correct-score" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                <div data-market-type="Correct Score" class="accordion-body bg-navy-blue row g-1 p-1">
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction">0:0</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction">0:1</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction">0:2</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction">0:3</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction">0:4</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction">1:0</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction">1:1</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction">1:2</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction">1:3</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction">1:4</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction">2:0</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction">2:1</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction">2:2</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction">2:3</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction">2:4</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction">3:0</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction">3:1</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction">3:2</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction">3:3</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction">3:4</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction">4:0</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction">4:1</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction">4:2</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction">4:3</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction">4:4</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction">4:5</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction">Other</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    `; 
-
-    const totalGoalRange = document.createElement('div');
-    totalGoalRange.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#total-goal-range" aria-expanded="true" aria-controls="total-goal-range">
-                    <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                    <span>Total Goal Range</span>
-                </button>
-            </h2>
-            <div id="total-goal-range" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                <div data-market-type="Total Goal Range" class="accordion-body bg-navy-blue row g-1 p-1">
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction">0</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction">1-2</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction">1-3</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction">1-4</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction">1-5</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction">1-6</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction">2-3</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction">2-4</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction">2-5</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction">2-6</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction">3-4</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction">3-5</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction">3-6</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction">4-5</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction">4-6</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-6 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - 7+">
-                            <div class="text-yellow prediction">5-6</div>
-                            <div class="odds-value">1.65</div>
-                        </button>
-                    </div>
-                    <div class="col-6 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - No goals">
-                            <div class="text-yellow prediction">7+</div>
-                            <div class="odds-value">2.98</div>
-                        </button>
-                    </div>                    
-                </div>
-            </div>
-            </div>
-        </div>
-        
-    `; 
-
-    const whoWillWin = document.createElement('div');
-    whoWillWin.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#who-will-win" aria-expanded="true" aria-controls="who-will-win">
-                    <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                    <span>Who will win? (If Draw, Money back)</span>
-                </button>
-            </h2>
-            <div id="who-will-win" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                <div data-market-type="Who Will Win" class="accordion-body bg-navy-blue row g-1 p-1">
-                    <div class="col-6 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Who will win - Home">
-                            <div class="text-yellow prediction">1</div>
-                            <div class="odds-value">1.48</div> 
-                        </button>
-                    </div>
-                    <div class="col-6 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Who will win - Away">
-                            <div class="text-yellow prediction">2</div>
-                            <div class="odds-value">1.57</div> 
-                        </button>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    `;
-
-    const teamToScoreFirst = document.createElement('div');
-    teamToScoreFirst.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-                <h2 class="accordion-header">
-                    <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#Team-to-score-first" aria-expanded="true" aria-controls="Team-to-score-first">
-                        <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                        <span>Team to score first</span>
-                    </button>
-                </h2>
-                <div id="Team-to-score-first" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                    <div data-market-type="Team To Score First" class="accordion-body bg-navy-blue row g-1 p-1">
-                        <div class="col-4 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                                <div class="text-yellow prediction">1</div>
-                                <div class="odds-value">2.01</div> 
-                            </button>
-                        </div>
-                        <div class="col-4 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                                <div class="text-yellow prediction">None</div>
-                                <div class="odds-value">6.80</div> 
-                            </button>
-                        </div>
-                        <div class="col-4 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                                <div class="text-yellow prediction">2</div>
-                                <div class="odds-value">2.29</div> 
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-
-    const first10mins1X2 = document.createElement('div');
-    first10mins1X2.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#first-10min-1X2" aria-expanded="true" aria-controls="first-10min-1X2">
-                    <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                    <span>First 10 minutes 1X2</span>
-                </button>
-            </h2>
-            <div id="first-10min-1X2" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                <div data-market-tyep="First 10 mins 1X2" class="accordion-body bg-navy-blue row g-1 p-1">
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First 10 min 1X2 - Home Win">
-                            <div class="text-yellow prediction">1</div>
-                            <div class="odds-value">2.68</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First 10 min 1X2 - Draw">
-                            <div class="text-yellow prediction">X</div>
-                            <div class="odds-value">1.65</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First 10 min 1X2 - Away Win">
-                            <div class="text-yellow prediction">2</div>
-                            <div class="odds-value">2.98</div>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    `;
-
-    const multiGoals = document.createElement('div');
-    multiGoals.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#Multigoals" aria-expanded="true" aria-controls="Multigoals">
-                    <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                    <span>Multigoals</span>
-                </button>
-            </h2>
-            <div id="Multigoals" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                <div data-market-type="Multigoals" class="accordion-body bg-navy-blue row g-1 p-1">
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - 1-2">
-                            <div class="text-yellow prediction">1-2</div>
-                            <div class="odds-value">2.68</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - 1-3">
-                            <div class="text-yellow prediction">1-3</div>
-                            <div class="odds-value">1.65</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - 1-4">
-                            <div class="text-yellow prediction">1-4</div>
-                            <div class="odds-value">2.98</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - 1-5">
-                            <div class="text-yellow prediction">1-5</div>
-                            <div class="odds-value">2.68</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - 1-6">
-                            <div class="text-yellow prediction">1-6</div>
-                            <div class="odds-value">1.65</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - 2-3">
-                            <div class="text-yellow prediction">2-3</div>
-                            <div class="odds-value">2.98</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - 2-4">
-                            <div class="text-yellow prediction">2-4</div>
-                            <div class="odds-value">2.68</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - 2-5">
-                            <div class="text-yellow prediction">2-5</div>
-                            <div class="odds-value">1.65</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - 2-6">
-                            <div class="text-yellow prediction">2-6</div>
-                            <div class="odds-value">2.98</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - 3-4">
-                            <div class="text-yellow prediction">3-4</div>
-                            <div class="odds-value">2.68</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - 3-5">
-                            <div class="text-yellow prediction">3-5</div>
-                            <div class="odds-value">1.65</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - 3-6">
-                            <div class="text-yellow prediction">3-6</div>
-                            <div class="odds-value">2.98</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - 4-5">
-                            <div class="text-yellow prediction">4-5</div>
-                            <div class="odds-value">2.68</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - 4-6">
-                            <div class="text-yellow prediction">4-6</div>
-                            <div class="odds-value">1.65</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - 5-6">
-                            <div class="text-yellow prediction">5-6</div>
-                            <div class="odds-value">2.98</div>
-                        </button>
-                    </div>
-                    <div class="col-6 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - 7+">
-                            <div class="text-yellow prediction">7+</div>
-                            <div class="odds-value">1.65</div>
-                        </button>
-                    </div>
-                    <div class="col-6 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - No goals">
-                            <div class="text-yellow prediction">No goals</div>
-                            <div class="odds-value">2.98</div>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    `;
-
-    const homeTeamGoals = document.createElement('div');
-    homeTeamGoals.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-                <h2 class="accordion-header">
-                    <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#HometeamGoals" aria-expanded="true" aria-controls="HometeamGoals">
-                        <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                        <span>${extras.home_team} goals</span>
-                    </button>
-                </h2>
-            <div id="HometeamGoals" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                <div data-market-type="Home Team Goals" class="accordion-body bg-navy-blue p-1">
-                    
-                    <div class="row g-2 mb-2">
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team over - 0.5">
-                                <div class="text-yellow prediction">Over 0.5</div>
-                                <div class="odds-value">1.10</div>
-                            </button>
-                        </div>
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team under - 0.5">
-                                <div class="text-yellow prediction">Under 0.5</div>
-                                <div class="odds-value">9.56</div> 
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="row g-2 mb-2">
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team over - 1.5">
-                                <div class="text-yellow prediction">Over 1.5</div>
-                                <div class="odds-value">1.10</div>
-                            </button>
-                        </div>
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team under - 1.5">
-                                <div class="text-yellow prediction">Under 1.5</div>
-                                <div class="odds-value">9.56</div> 
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="row g-2 mb-2">
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team over - 2.5">
-                                <div class="text-yellow prediction">Over 2.5</div>
-                                <div class="odds-value">1.10</div>
-                            </button>
-                        </div>
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team under - 2.5">
-                                <div class="text-yellow prediction">Under 2.5</div>
-                                <div class="odds-value">9.56</div> 
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    `;
-
-    const awayTeamGoals = document.createElement('div');
-    awayTeamGoals.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-                <h2 class="accordion-header">
-                    <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#AwayteamGoals" aria-expanded="true" aria-controls="AwayteamGoals">
-                        <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                        <span>${extras.away_team} goals</span>
-                    </button>
-                </h2>
-            <div id="AwayteamGoals" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                <div data-market-type="Away Team Goals" class="accordion-body bg-navy-blue p-1">
-                    
-                    <div class="row g-2 mb-2">
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Away team over - 0.5">
-                                <div class="text-yellow prediction">Over 0.5</div>
-                                <div class="odds-value">1.10</div>
-                            </button>
-                        </div>
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Away team under - 0.5">
-                                <div class="text-yellow prediction">Under 0.5</div>
-                                <div class="odds-value">9.56</div> 
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="row g-2 mb-2">
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Away team over - 1.5">
-                                <div class="text-yellow prediction">Over 1.5</div>
-                                <div class="odds-value">1.10</div>
-                            </button>
-                        </div>
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Away team under - 1.5">
-                                <div class="text-yellow prediction">Under 1.5</div>
-                                <div class="odds-value">9.56</div> 
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="row g-2 mb-2">
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Away team over - 2.5">
-                                <div class="text-yellow prediction">Over 2.5</div>
-                                <div class="odds-value">1.10</div>
-                            </button>
-                        </div>
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Away team under - 2.5">
-                                <div class="text-yellow prediction">Under 2.5</div>
-                                <div class="odds-value">9.56</div> 
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    `;
-
-    const homeTeamMultigoals = document.createElement('div');
-    homeTeamMultigoals.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#HomeTeamMultigoals" aria-expanded="true" aria-controls="HomeTeamMultigoals">
-                    <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                    <span>${extras.home_team} multigoals</span>
-                </button>
-            </h2>
-            <div id="HomeTeamMultigoals" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                <div data-market-type="Home Team Multigoals" class="accordion-body bg-navy-blue row g-1 p-1">
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team multigoals - 1-2">
-                            <div class="text-yellow prediction">1-2</div>
-                            <div class="odds-value">2.68</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team multigoals - 1-3">
-                            <div class="text-yellow prediction">1-3</div>
-                            <div class="odds-value">1.65</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team multigoals - 2-3">
-                            <div class="text-yellow prediction">2-3</div>
-                            <div class="odds-value">2.98</div>
-                        </button>
-                    </div>
-                    <div class="col-6 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team multigoals - 4+">
-                            <div class="text-yellow prediction">4+</div>
-                            <div class="odds-value">1.65</div>
-                        </button>
-                    </div>
-                    <div class="col-6 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - No goals">
-                            <div class="text-yellow prediction">No goals</div>
-                            <div class="odds-value">27.05</div>
-                        </button>
-                    </div>                                          
-                </div>
-            </div>
-            </div>
-        </div>
-    `;
-
-    const awayTeamMultiGoals = document.createElement('div');
-    awayTeamMultiGoals.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#AwayTeamMultigoals" aria-expanded="true" aria-controls="AwayTeamMultigoals">
-                    <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                    <span>${extras.away_team} multigoals</span>
-                </button>
-            </h2>
-            <div id="AwayTeamMultigoals" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                <div data-market-type="Away Team Multigoals" class="accordion-body bg-navy-blue row g-1 p-1">
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Away team multigoals - 1-2">
-                            <div class="text-yellow prediction">1-2</div>
-                            <div class="odds-value">2.68</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Away team multigoals - 1-3">
-                            <div class="text-yellow prediction">1-3</div>
-                            <div class="odds-value">1.65</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Away team multigoals - 2-3">
-                            <div class="text-yellow prediction">2-3</div>
-                            <div class="odds-value">2.98</div>
-                        </button>
-                    </div>
-                    <div class="col-6 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Away team multigoals - 4+">
-                            <div class="text-yellow prediction">4+</div>
-                            <div class="odds-value">1.65</div>
-                        </button>
-                    </div>
-                    <div class="col-6 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - No goals">
-                            <div class="text-yellow prediction">No goals</div>
-                            <div class="odds-value">27.05</div>
-                        </button>
-                    </div>                                          
-                </div>
-            </div>
-            </div>
-        </div>
-    `;
-
-    const firstHalfFirstGoal = document.createElement('div');
-    firstHalfFirstGoal.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#first-half-first-goal" aria-expanded="true" aria-controls="first-half-first-goal">
-                    <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                    <span>First half first goal</span>
-                </button>
-            </h2>
-            <div id="first-half-first-goal" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                <div data-market-type="First Half First Goal" class="accordion-body bg-navy-blue row g-1 p-1">
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half first goal - Home Team">
-                            <div class="text-yellow prediction">1</div>
-                            <div class="odds-value">2.98</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half DC - Home/Away">
-                            <div class="text-yellow prediction">No goal</div>
-                            <div class="odds-value">2.98</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half first goal - Away Team">
-                            <div class="text-yellow prediction">2</div>
-                            <div class="odds-value">2.98</div>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    `;
-
-    const firstHalfDoubleChance = document.createElement('div');
-    firstHalfDoubleChance.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#first-half-double-chance" aria-expanded="true" aria-controls="first-half-double-chance">
-                    <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                    <span>First half double chance</span>
-                </button>
-            </h2>
-            <div id="first-half-double-chance" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                <div data-market-type="First Half Dounle Chance" class="accordion-body bg-navy-blue row g-1 p-1">
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half DC - Home/Draw">
-                            <div class="text-yellow prediction">1X</div>
-                            <div class="odds-value">2.98</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half DC - Home/Away">
-                            <div class="text-yellow prediction">12</div>
-                            <div class="odds-value">2.98</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half DC - Draw/Away">
-                            <div class="text-yellow prediction">X2</div>
-                            <div class="odds-value">2.98</div>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    `;
-
-    const firstHalfHandicap = document.createElement('div');
-    firstHalfHandicap.innerHTML = `
-    <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#first-half-handicap" aria-expanded="true" aria-controls="first-half-handicap">
-                    <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                    <span>First half handicap</span>
-                </button>
-            </h2>
-            <div id="first-half-handicap" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                <div data-market-type="First Half Handicap" class="accordion-body bg-navy-blue row g-1 p-1">
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half handicap - 1 (0:1)">
-                            <div class="text-yellow prediction">1 (0:1)</div>
-                            <div class="odds-value">2.98</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half handicap - X (0:1)">
-                            <div class="text-yellow prediction">X (0:1)</div>
-                            <div class="odds-value">2.98</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half handicap - 2 (0:1)">
-                            <div class="text-yellow prediction">2 (0:1)</div>
-                            <div class="odds-value">2.98</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half handicap - 1 (0:2)">
-                            <div class="text-yellow prediction">1 (0:2)</div>
-                            <div class="odds-value">2.98</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half handicap - X (0:2)">
-                            <div class="text-yellow prediction">X (0:2)</div>
-                            <div class="odds-value">2.98</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half handicap - 2 (0:2)">
-                            <div class="text-yellow prediction">2 (0:2)</div>
-                            <div class="odds-value">2.98</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half handicap - 1 (1:0)">
-                            <div class="text-yellow prediction">1 (1:0)</div>
-                            <div class="odds-value">2.98</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half handicap - X (1:0)">
-                            <div class="text-yellow prediction">X (1:0)</div>
-                            <div class="odds-value">2.98</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half handicap - 2 (1:0)">
-                            <div class="text-yellow prediction">2 (1:0)</div>
-                            <div class="odds-value">2.98</div>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    `;
-
-    const firstHalfHomeTeamGoals = document.createElement('div');
-    firstHalfHomeTeamGoals.innerHTML = `
-         <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-                <h2 class="accordion-header">
-                    <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#FirstHalfHometeamGoals" aria-expanded="true" aria-controls="FirstHalfHometeamGoals">
-                        <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                        <span>First half ${extras.home_team} goals</span>
-                    </button>
-                </h2>
-            <div id="FirstHalfHometeamGoals" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                <div data-market-type="First Half Hometeam Goals" class="accordion-body bg-navy-blue p-1">
-                    
-                    <div class="row g-2 mb-2">
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half Home team over - 0.5">
-                                <div class="text-yellow prediction">Over 0.5</div>
-                                <div class="odds-value">1.10</div>
-                            </button>
-                        </div>
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half Home team under - 0.5">
-                                <div class="text-yellow prediction">Under 0.5</div>
-                                <div class="odds-value">9.56</div> 
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="row g-2 mb-2">
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half Home team over - 1.5">
-                                <div class="text-yellow prediction">Over 1.5</div>
-                                <div class="odds-value">1.10</div>
-                            </button>
-                        </div>
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half Home team under - 1.5">
-                                <div class="text-yellow prediction">Under 1.5</div>
-                                <div class="odds-value">9.56</div> 
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="row g-2 mb-2">
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half Home team over - 2.5">
-                                <div class="text-yellow prediction">Over 2.5</div>
-                                <div class="odds-value">1.10</div>
-                            </button>
-                        </div>
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half Home team under - 2.5">
-                                <div class="text-yellow prediction">Under 2.5</div>
-                                <div class="odds-value">9.56</div> 
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    `;
-
-    const firstHalfAwayTeamGoals = document.createElement('div');
-    firstHalfAwayTeamGoals.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-                <h2 class="accordion-header">
-                    <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#FirstHalfAwayteamGoals" aria-expanded="true" aria-controls="FirstHalfAwayteamGoals">
-                        <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                        <span>First half ${extras.away_team} goals</span>
-                    </button>
-                </h2>
-            <div id="FirstHalfAwayteamGoals" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                <div data-market-type="First Half Awayteam Goals" class="accordion-body bg-navy-blue p-1">
-                    
-                    <div class="row g-2 mb-2">
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half away team over - 0.5">
-                                <div class="text-yellow prediction">Over 0.5</div>
-                                <div class="odds-value">1.10</div>
-                            </button>
-                        </div>
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half away team under - 0.5">
-                                <div class="text-yellow prediction">Under 0.5</div>
-                                <div class="odds-value">9.56</div> 
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="row g-2 mb-2">
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half away team over - 1.5">
-                                <div class="text-yellow prediction">Over 1.5</div>
-                                <div class="odds-value">1.10</div>
-                            </button>
-                        </div>
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half away team under - 1.5">
-                                <div class="text-yellow prediction">Under 1.5</div>
-                                <div class="odds-value">9.56</div> 
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="row g-2 mb-2">
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half away team over - 2.5">
-                                <div class="text-yellow prediction">Over 2.5</div>
-                                <div class="odds-value">1.10</div>
-                            </button>
-                        </div>
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half away team under - 2.5">
-                                <div class="text-yellow prediction">Under 2.5</div>
-                                <div class="odds-value">9.56</div> 
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    `;
-
-    const whichTeamToScore = document.createElement('div');
-    whichTeamToScore.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#which-team-to-score" aria-expanded="true" aria-controls="which-team-to-score">
-                    <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                    <span>Which team to score</span>
-                </button>
-            </h2>
-            <div id="which-team-to-score" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                <div data-market-type="Which Team To Score" class="accordion-body bg-navy-blue row g-1 p-1">
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half DC - Home/Draw">
-                            <div class="text-yellow text-small prediction">Home only</div>
-                            <div class="odds-value">2.98</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half DC - Home/Away">
-                            <div class="text-yellow text-small prediction">None</div>
-                            <div class="odds-value">2.98</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half DC - Draw/Away">
-                            <div class="text-yellow text-small prediction">Away only</div>
-                            <div class="odds-value">2.98</div>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    `; 
-
-    const ftDoubleChanceAndOorU = document.createElement('div');
-    ftDoubleChanceAndOorU.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#fulltime-dc-and-o/u" aria-expanded="true" aria-controls="fulltime-dc-and-o/u">
-                    <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                    <span>Full time double chance & O/U</span>
-                </button>
-            </h2>
-            <div id="fulltime-dc-and-o/u" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                <div data-market-type="FT DC & O/U" class="accordion-body bg-navy-blue row g-1 p-1">
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">1X & O 1.5</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction text-small align-bottom" style="padding-top: 1px;">12 & O 1.5</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">X2 & O 1.5</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">1X & U 1.5</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">12 & U 1.5</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">X2 & U 1.5</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">1X & O 2.5</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">12 & O 2.5</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">X2 & O 2.5</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">1X & U 2.5</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">12 & U 2.5</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">X2 & U 2.5</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">1X & O 3.5</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">12 & O 3.5</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">X2 & O 3.5</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">1X & U 3.5</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">12 & U 3.5</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">X2 & U 3.5</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">1X & O 4.5</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">12 & O 4.5</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">X2 & O 4.5</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">1X & U 4.5</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">12 & U 4.5</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">X2 & U 4.5</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    `; 
-
-    const ftDoubleChanceAndBts = document.createElement('div');
-    ftDoubleChanceAndBts.innerHTML = `
-    <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-        <div class="accordion-item">
-        <h2 class="accordion-header">
-            <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#fulltime-dc-&-bts" aria-expanded="true" aria-controls="fulltime-dc-&-bts">
-                <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                <span>Full time double chance & bts</span>
-            </button>
-        </h2>
-        <div id="fulltime-dc-&-bts" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-            <div data-market-type="FT DC & BTS" class="accordion-body bg-navy-blue row g-1 p-1">
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">1X & Y</div>
-                        <div class="odds-value">2.01</div> 
-                    </button>
-                </div>
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">12 & Y</div>
-                        <div class="odds-value">6.80</div> 
-                    </button>
-                </div>
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">X2 & Y</div>
-                        <div class="odds-value">2.29</div> 
-                    </button>
-                </div>
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">1X & N</div>
-                        <div class="odds-value">2.01</div> 
-                    </button>
-                </div>
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">12 & N</div>
-                        <div class="odds-value">6.80</div> 
-                    </button>
-                </div>
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">X2 & N</div>
-                        <div class="odds-value">2.29</div> 
-                    </button>
-                </div>
-            </div>
-        </div>
-        </div>
-    </div>
-    `;
-
-    const ft1X2and0orU = document.createElement('div');
-    ft1X2and0orU.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#fulltime-1X2-and-o/u" aria-expanded="true" aria-controls="fulltime-1X2-and-o/u">
-                    <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                    <span>Full time 1X2 & O/U</span>
-                </button>
-            </h2>
-            <div id="fulltime-1X2-and-o/u" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                <div data-market-type="FT 1X2 & O/U" class="accordion-body bg-navy-blue row g-1 p-1">
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">1 & O 1.5</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction text-small align-bottom" style="padding-top: 1px;">X & O 1.5</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">2 & O 1.5</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">1 & U 1.5</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">X & U 1.5</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">2 & U 1.5</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">1 & O 2.5</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">X & O 2.5</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">2 & O 2.5</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">1 & U 2.5</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">X & U 2.5</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">2 & U 2.5</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">1 & O 3.5</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">X & O 3.5</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">2 & O 3.5</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">1 & U 3.5</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">X & U 3.5</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">2 & U 3.5</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">1 & O 4.5</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">X & O 4.5</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">2 & O 4.5</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">1 & U 4.5</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">X & U 4.5</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">2 & U 4.5</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    `;
-    
-    const  ft1X2andBts = document.createElement('div');
-    ft1X2andBts.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-        <div class="accordion-item">
-        <h2 class="accordion-header">
-            <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#fulltime-1X2-&-bts" aria-expanded="true" aria-controls="fulltime-1X2-&-bts">
-                <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                <span>Full time 1X2 & bts</span>
-            </button>
-        </h2>
-        <div id="fulltime-1X2-&-bts" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-            <div data-market-type="FT 1X2 & BTS" class="accordion-body bg-navy-blue row g-1 p-1">
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">1 & Y</div>
-                        <div class="odds-value">2.01</div> 
-                    </button>
-                </div>
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">X & Y</div>
-                        <div class="odds-value">6.80</div> 
-                    </button>
-                </div>
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">2 & Y</div>
-                        <div class="odds-value">2.29</div> 
-                    </button>
-                </div>
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">1 & N</div>
-                        <div class="odds-value">2.01</div> 
-                    </button>
-                </div>
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">X & N</div>
-                        <div class="odds-value">6.80</div> 
-                    </button>
-                </div>
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">2 & N</div>
-                        <div class="odds-value">2.29</div> 
-                    </button>
-                </div>
-            </div>
-        </div>
-        </div>
-    </div>
-    `;
-
-    const btsAndOorU2point5 = document.createElement('div');
-    btsAndOorU2point5.innerHTML = `
-    <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-        <div class="accordion-item">
-        <h2 class="accordion-header">
-            <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#bts-and-o-or-u-2.5" aria-expanded="true" aria-controls="bts-and-o-or-u-2.5">
-                <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                <span>Both teams to score & O/U 2.5</span>
-            </button>
-        </h2>
-        <div id="bts-and-o-or-u-2.5" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-            <div data-market-type="BTS & O/U 2.5" class="accordion-body bg-navy-blue row g-1 p-1">
-                <div class="col-6 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">Y & Over 2.5</div>
-                        <div class="odds-value">2.01</div> 
-                    </button>
-                </div>
-                <div class="col-6 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">Y & Under 2.5</div>
-                        <div class="odds-value">6.80</div> 
-                    </button>
                 </div>
-                <div class="col-6 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">N & Over 2.5</div>
-                        <div class="odds-value">2.29</div> 
-                    </button>
-                </div>
-                <div class="col-6 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">N & Under 2.5</div>
-                        <div class="odds-value">2.01</div> 
-                    </button>
-                </div>
-            </div>
-        </div>
-        </div>
-    </div>
-    `;
-
-    const htDoubleChanceAndBts = document.createElement('div');
-    htDoubleChanceAndBts.innerHTML = `
-    <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-        <div class="accordion-item">
-        <h2 class="accordion-header">
-            <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#halftime-dc-&-bts" aria-expanded="true" aria-controls="halftime-dc-&-bts">
-                <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                <span>Half time double chance & bts</span>
-            </button>
-        </h2>
-        <div id="halftime-dc-&-bts" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-            <div data-market-type="HT DC & BTS" class="accordion-body bg-navy-blue row g-1 p-1">
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">1X & Y</div>
-                        <div class="odds-value">2.01</div> 
-                    </button>
-                </div>
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">12 & Y</div>
-                        <div class="odds-value">6.80</div> 
-                    </button>
-                </div>
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">X2 & Y</div>
-                        <div class="odds-value">2.29</div> 
-                    </button>
-                </div>
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">1X & N</div>
-                        <div class="odds-value">2.01</div> 
-                    </button>
-                </div>
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">12 & N</div>
-                        <div class="odds-value">6.80</div> 
-                    </button>
-                </div>
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">X2 & N</div>
-                        <div class="odds-value">2.29</div> 
-                    </button>
-                </div>
-            </div>
-        </div>
-        </div>
-    </div>
-    `;
-
-    const ht1X2and0orU = document.createElement('div');
-    ht1X2and0orU.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#halftime-1X2-and-o/u" aria-expanded="true" aria-controls="halftime-1X2-and-o/u">
-                    <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                    <span>Half time 1X2 & O/U</span>
-                </button>
-            </h2>
-            <div id="halftime-1X2-and-o/u" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                <div data-market-type="HT 1X2 & O/U" class="accordion-body bg-navy-blue row g-1 p-1">
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">1 & O 1.5</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction text-small align-bottom" style="padding-top: 1px;">X & O 1.5</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">2 & O 1.5</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">1 & U 1.5</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">X & U 1.5</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">2 & U 1.5</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    `;
-
-    const  ht1X2andBts = document.createElement('div');
-    ht1X2andBts.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-        <div class="accordion-item">
-        <h2 class="accordion-header">
-            <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#halftime-1X2-&-bts" aria-expanded="true" aria-controls="halftime-1X2-&-bts">
-                <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                <span>Half time 1X2 & bts</span>
-            </button>
-        </h2>
-        <div id="halftime-1X2-&-bts" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-            <div data-market-type="HT 1X2 & BTS" class="accordion-body bg-navy-blue row g-1 p-1">
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">1 & Y</div>
-                        <div class="odds-value">2.01</div> 
-                    </button>
-                </div>
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">X & Y</div>
-                        <div class="odds-value">6.80</div> 
-                    </button>
-                </div>
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">2 & Y</div>
-                        <div class="odds-value">2.29</div> 
-                    </button>
-                </div>
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">1 & N</div>
-                        <div class="odds-value">2.01</div> 
-                    </button>
-                </div>
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">X & N</div>
-                        <div class="odds-value">6.80</div> 
-                    </button>
-                </div>
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">2 & N</div>
-                        <div class="odds-value">2.29</div> 
-                    </button>
-                </div>
-            </div>
-        </div>
-        </div>
-    </div>
-    `;
-
-    const secondHalhDoubleChanceAndBts = document.createElement('div');
-    secondHalhDoubleChanceAndBts.innerHTML = `
-    <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-        <div class="accordion-item">
-        <h2 class="accordion-header">
-            <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#2ndhalftime-dc-&-bts" aria-expanded="true" aria-controls="2ndhalftime-dc-&-bts">
-                <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                <span>2nd half double chance & bts</span>
-            </button>
-        </h2>
-        <div id="2ndhalftime-dc-&-bts" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-            <div data-market-type="2nd Half DC & BTS" class="accordion-body bg-navy-blue row g-1 p-1">
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">1X & Y</div>
-                        <div class="odds-value">2.01</div> 
-                    </button>
-                </div>
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">12 & Y</div>
-                        <div class="odds-value">6.80</div> 
-                    </button>
-                </div>
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">X2 & Y</div>
-                        <div class="odds-value">2.29</div> 
-                    </button>
-                </div>
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">1X & N</div>
-                        <div class="odds-value">2.01</div> 
-                    </button>
-                </div>
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">12 & N</div>
-                        <div class="odds-value">6.80</div> 
-                    </button>
-                </div>
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">X2 & N</div>
-                        <div class="odds-value">2.29</div> 
-                    </button>
-                </div>
-            </div>
-        </div>
-        </div>
-    </div>
-    `;
-
-    const secondHalf1X2and0orU = document.createElement('div');
-    secondHalf1X2and0orU.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#2ndhalf-1X2-and-o/u" aria-expanded="true" aria-controls="2ndhalf-1X2-and-o/u">
-                    <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                    <span>2nd half 1X2 & O/U</span>
-                </button>
-            </h2>
-            <div id="2ndhalf-1X2-and-o/u" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                <div data-market-type="2nd Half 1X2 & O/U" class="accordion-body bg-navy-blue row g-1 p-1">
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">1 & O 1.5</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction text-small align-bottom" style="padding-top: 1px;">X & O 1.5</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">2 & O 1.5</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">1 & U 1.5</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">X & U 1.5</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">2 & U 1.5</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    `;
-    const highestScoringHalfHomeTeam = document.createElement('div');
-    highestScoringHalfHomeTeam.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#highest-scoring-half-home-team" aria-expanded="true" aria-controls="highest-scoring-half-home-team">
-                    <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                    <span>Highest scoring half : ${extras.home_team}</span>
-                </button>
-            </h2>
-            <div id="highest-scoring-half-home-team" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                <div data-market-type="Highest Scoring Half Home Team" class="accordion-body bg-navy-blue row g-1 p-1">
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Home Win">
-                            <div class="text-yellow prediction">First</div>
-                            <div class="odds-value">${getOdds('highest_scoring_half', 'first')}</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Draw">
-                            <div class="text-yellow prediction">Equal</div>
-                            <div class="odds-value">${getOdds('highest_scoring_half', 'equal')}</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Away Win">
-                            <div class="text-yellow prediction">Second</div>
-                            <div class="odds-value">${getOdds('highest_scoring_half', 'second')}</div>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    `;
-
-    const highestScoringHalfAwayTeam = document.createElement('div');
-    highestScoringHalfAwayTeam.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#highest-scoring-half-away-team" aria-expanded="true" aria-controls="highest-scoring-half-away-team">
-                    <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                    <span>Highest scoring half : ${extras.away_team}</span>
-                </button>
-            </h2>
-            <div id="highest-scoring-half-away-team" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                <div data-market-type="Highest Scoring Half Away Team" class="accordion-body bg-navy-blue row g-1 p-1">
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Home Win">
-                            <div class="text-yellow prediction">First</div>
-                            <div class="odds-value">${getOdds('highest_scoring_half', 'first')}</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Draw">
-                            <div class="text-yellow prediction">Equal</div>
-                            <div class="odds-value">${getOdds('highest_scoring_half', 'equal')}</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Away Win">
-                            <div class="text-yellow prediction">Second</div>
-                            <div class="odds-value">${getOdds('highest_scoring_half', 'second')}</div>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    `;
-
-    const firstHalfTotalGoals = document.createElement('div');
-    firstHalfTotalGoals.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#first-half-total-goals" aria-expanded="true" aria-controls="first-half-total-goals">
-                    <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                    <span>First half total goals</span>
-                </button>
-            </h2>
-            <div id="first-half-total-goals" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                <div data-market-type="First Half Total Goals" class="accordion-body bg-navy-blue row g-1 p-1">
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Home Win">
-                            <div class="text-yellow prediction">0</div>
-                            <div class="odds-value">${getOdds('1X2', 'home')}</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Draw">
-                            <div class="text-yellow prediction">1</div>
-                            <div class="odds-value">${getOdds('1X2', 'draw')}</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Away Win">
-                            <div class="text-yellow prediction">2+</div>
-                            <div class="odds-value">${getOdds('1X2', 'away')}</div>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    `;
-
-    const secondHalfTotalGoals = document.createElement('div');
-    secondHalfTotalGoals.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#second-half-total-goals" aria-expanded="true" aria-controls="second-half-total-goals">
-                    <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                    <span>Second half total goals</span>
-                </button>
-            </h2>
-            <div id="second-half-total-goals" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                <div data-market-type="Second Half Total Goals" class="accordion-body bg-navy-blue row g-1 p-1">
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Home Win">
-                            <div class="text-yellow prediction">0</div>
-                            <div class="odds-value">${getOdds('first_half_goals', 'over_1.5')}</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Draw">
-                            <div class="text-yellow prediction">1</div>
-                            <div class="odds-value">${getOdds('first_half_goals', 'under_1.5')}</div>
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Away Win">
-                            <div class="text-yellow prediction">2+</div>
-                            <div class="odds-value">${getOdds('first_half_goals', 'over')}</div>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    `;
-
-    const secondHalfHomeTeamGoals = document.createElement('div');
-    secondHalfHomeTeamGoals.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-                <h2 class="accordion-header">
-                    <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#2nd-half-home-team-goals" aria-expanded="true" aria-controls="2nd-half-home-team-goals">
-                        <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                        <span>Second half ${extras.home_team} goals</span>
-                    </button>
-                </h2>
-            <div id="2nd-half-home-team-goals" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                <div data-market-type="2nd Half Home Team Goals" class="accordion-body bg-navy-blue p-1">
-                    
-                    <div class="row g-2 mb-2">
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team over - 0.5">
-                                <div class="text-yellow prediction">Over 0.5</div>
-                                <div class="odds-value">1.10</div>
-                            </button>
-                        </div>
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team under - 0.5">
-                                <div class="text-yellow prediction">Under 0.5</div>
-                                <div class="odds-value">9.56</div> 
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="row g-2 mb-2">
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team over - 1.5">
-                                <div class="text-yellow prediction">Over 1.5</div>
-                                <div class="odds-value">1.10</div>
-                            </button>
-                        </div>
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team under - 1.5">
-                                <div class="text-yellow prediction">Under 1.5</div>
-                                <div class="odds-value">9.56</div> 
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="row g-2 mb-2">
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team over - 2.5">
-                                <div class="text-yellow prediction">Over 2.5</div>
-                                <div class="odds-value">1.10</div>
-                            </button>
-                        </div>
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team under - 2.5">
-                                <div class="text-yellow prediction">Under 2.5</div>
-                                <div class="odds-value">9.56</div> 
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    `;
-
-    const secondHalfAwayTeamGoals = document.createElement('div');
-    secondHalfAwayTeamGoals.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-                <h2 class="accordion-header">
-                    <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#2nd-half-away-team-goals" aria-expanded="true" aria-controls="2nd-half-away-team-goals">
-                        <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                        <span>Second half ${extras.away_team} goals</span>
-                    </button>
-                </h2>
-            <div id="2nd-half-away-team-goals" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                <div data-market-type="2nd Half Away Team Goals" class="accordion-body bg-navy-blue p-1">
-                    
-                    <div class="row g-2 mb-2">
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team over - 0.5">
-                                <div class="text-yellow prediction">Over 0.5</div>
-                                <div class="odds-value">1.10</div>
-                            </button>
-                        </div>
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team under - 0.5">
-                                <div class="text-yellow prediction">Under 0.5</div>
-                                <div class="odds-value">9.56</div> 
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="row g-2 mb-2">
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team over - 1.5">
-                                <div class="text-yellow prediction">Over 1.5</div>
-                                <div class="odds-value">1.10</div>
-                            </button>
-                        </div>
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team under - 1.5">
-                                <div class="text-yellow prediction">Under 1.5</div>
-                                <div class="odds-value">9.56</div> 
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="row g-2 mb-2">
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team over - 2.5">
-                                <div class="text-yellow prediction">Over 2.5</div>
-                                <div class="odds-value">1.10</div>
-                            </button>
-                        </div>
-                        <div class="col-6 d-grid">
-                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team under - 2.5">
-                                <div class="text-yellow prediction">Under 2.5</div>
-                                <div class="odds-value">9.56</div> 
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    `;
-
-    const secondHalfCorrectScore = document.createElement('div');
-    secondHalfCorrectScore.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#secold-half-correct-score" aria-expanded="true" aria-controls="secold-half-correct-score">
-                    <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                    <span>Second half correct score</span>
-                </button>
-            </h2>
-            <div id="secold-half-correct-score" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                <div data-market-type="2nd Half Correct Score" class="accordion-body bg-navy-blue row g-1 p-1">
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction">1:0</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction">0:0</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction">0:1</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction">2:0</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction">1:1</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction">0:2</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction">2:1</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction">2:2</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction">1:2</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-12 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction">Other</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    `;
-
-    const homeWinToNill = document.createElement('div');
-    homeWinToNill.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#home-win-to-nill" aria-expanded="true" aria-controls="home-win-to-nill">
-                    <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                    <span>${extras.home_team} win to nill</span>
-                </button>
-            </h2>
-            <div id="home-win-to-nill" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                <div data-market-type="Home Win To Nill" class="accordion-body bg-navy-blue row g-1 p-1">
-                    <div class="col-6 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Home Win">
-                            <div class="text-yellow prediction">Yes</div>
-                            <div class="odds-value">${getOdds('1X2', 'vg')}</div>
-                        </button>
-                    </div>
-                    <div class="col-6 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Away Win">
-                            <div class="text-yellow prediction">No</div>
-                            <div class="odds-value">${getOdds('1X2', 'no')}</div>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    `;
-
-    const awayWinToNill = document.createElement('div');
-    awayWinToNill.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#away-win-to-nill" aria-expanded="true" aria-controls="away-win-to-nill">
-                    <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                    <span>${extras.away_team} win to nill</span>
-                </button>
-            </h2>
-            <div id="away-win-to-nill" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                <div data-market-type="Away Win To Nill" class="accordion-body bg-navy-blue row g-1 p-1">
-                    <div class="col-6 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Home Win">
-                            <div class="text-yellow prediction">Yes</div>
-                            <div class="odds-value">${getOdds('1X2', 'vg')}</div>
-                        </button>
-                    </div>
-                    <div class="col-6 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Away Win">
-                            <div class="text-yellow prediction">No</div>
-                            <div class="odds-value">${getOdds('1X2', 'no')}</div>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    `;
-
-    const oddOrOddHomeTeam = document.createElement('div');
-    oddOrOddHomeTeam.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#oddOrOddHomeTeam" aria-expanded="true" aria-controls="oddOrOddHomeTeam">
-                    <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                    <span>${extras.home_team} total goals odd/even</span>
-                </button>
-            </h2>
-            <div id="oddOrOddHomeTeam" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                <div data-market-type="Home Team Total Goals Odd/Even" class="accordion-body bg-navy-blue row g-1 p-1">
-                    <div class="col-6 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Home Win">
-                            <div class="text-yellow prediction">Odd</div>
-                            <div class="odds-value">${getOdds('1X2', 'home')}</div>
-                        </button>
-                    </div>
-                    <div class="col-6 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Away Win">
-                            <div class="text-yellow prediction">Even</div>
-                            <div class="odds-value">${getOdds('1X2', 'no')}</div>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    `;
-
-    const oddOrOddAwayTeam = document.createElement('div');
-    oddOrOddAwayTeam.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#oddOrOddAwayTeam" aria-expanded="true" aria-controls="oddOrOddAwayTeam">
-                    <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                    <span>${extras.away_team} total goals odd/even</span>
-                </button>
-            </h2>
-            <div id="oddOrOddAwayTeam" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                <div data-market-type="Away Team Total Goals Odd/Even" class="accordion-body bg-navy-blue row g-1 p-1">
-                    <div class="col-6 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Home Win">
-                            <div class="text-yellow prediction">Odd</div>
-                            <div class="odds-value">${getOdds('1X2', 'vg')}</div>
-                        </button>
-                    </div>
-                    <div class="col-6 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Away Win">
-                            <div class="text-yellow prediction">Even</div>
-                            <div class="odds-value">${getOdds('1X2', 'away')}</div>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    `;
-
-    const exactTotalGoals = document.createElement('div');
-    exactTotalGoals.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#exact-total-goals" aria-expanded="true" aria-controls="exact-total-goals">
-                    <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                    <span>Exact total goals</span>
-                </button>
-            </h2>
-            <div id="exact-total-goals" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                <div data-market-type="Exact Total Goals" class="accordion-body bg-navy-blue row g-1 p-1">
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction">0</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction">1</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction">2</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction">3</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction">4</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction">5+</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    `;
-
-    const btsFirstSecondhalf = document.createElement('div');
-    btsFirstSecondhalf.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#bts-1st-2nd-half" aria-expanded="true" aria-controls="bts-1st-2nd-half">
-                    <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                    <span>Both teams to score 1st half/2nd half</span>
-                </button>
-            </h2>
-            <div id="bts-1st-2nd-half" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                <div data-market-type="BTS 1st/2nd half" class="accordion-body bg-navy-blue row g-1 p-1">
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction">Y/Y</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction">Y/N</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction">N/Y</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-12 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction">N/N</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-    `;
-
-    const  secondHalf1X2andBts = document.createElement('div');
-    secondHalf1X2andBts.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-        <div class="accordion-item">
-        <h2 class="accordion-header">
-            <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#second-half-1X2-&-bts" aria-expanded="true" aria-controls="second-half-1X2-&-bts">
-                <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                <span>Second half 1X2 & bts</span>
-            </button>
-        </h2>
-        <div id="second-half-1X2-&-bts" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-            <div data-market-type="Second Half 1X2 & BTS" class="accordion-body bg-navy-blue row g-1 p-1">
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">1 & Y</div>
-                        <div class="odds-value">2.01</div> 
-                    </button>
-                </div>
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">X & Y</div>
-                        <div class="odds-value">6.80</div> 
-                    </button>
-                </div>
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">2 & Y</div>
-                        <div class="odds-value">2.29</div> 
-                    </button>
-                </div>
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">1 & N</div>
-                        <div class="odds-value">2.01</div> 
-                    </button>
-                </div>
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">X & N</div>
-                        <div class="odds-value">6.80</div> 
-                    </button>
-                </div>
-                <div class="col-4 d-grid">
-                    <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                        <div class="text-yellow prediction text-small" style="padding-top: 1px;">2 & N</div>
-                        <div class="odds-value">2.29</div> 
-                    </button>
-                </div>
-            </div>
-        </div>
-        </div>
-    </div>
-    `;
-
-    const halftimeFulltime = document.createElement('div');
-    halftimeFulltime.innerHTML = `
-        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
-            <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#Halftime/Fulltime" aria-expanded="true" aria-controls="Halftime/Fulltime">
-                    <span class="px-2"><i class="fa-solid fa-info"></i></span>
-                    <span>Exact total goals</span>
-                </button>
-            </h2>
-            <div id="Halftime/Fulltime" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                <div data-market-type="Halftime/Fulltime" class="accordion-body bg-navy-blue row g-1 p-1">
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction">1/1</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction">X/1</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction">2/1</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
-                            <div class="text-yellow prediction">1/X</div>
-                            <div class="odds-value">6.80</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction">X/X</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction">2/X</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
-                            <div class="text-yellow prediction">1/2</div>
-                            <div class="odds-value">2.29</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction">X/2</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                    <div class="col-4 d-grid">
-                        <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
-                            <div class="text-yellow prediction">2/2</div>
-                            <div class="odds-value">2.01</div> 
-                        </button>
-                    </div>
-                </div>
-            </div>
             </div>
-        </div>
-    `;
-
-    container.prepend(matchsum)
-    // container.prepend(matchSummary);
-
-    if(marketOdds['Match Winner']){
-        allMarkets.appendChild(fullTime);
-    }
-    if(marketOdds['Double Chance']){
-        allMarkets.appendChild(doubleChance);
-    }
-    if(marketOdds['both_teams_to_score']){
-        allMarkets.appendChild(btts);
-    }
-    if(marketOdds['highest_scoring_half']){ 
-        allMarkets.appendChild(highestScoringHalf);
-    }
-    if(marketOdds['over_under_1.5']){
-        allMarkets.appendChild(goals)
-    }
-    if(marketOdds['1X2']){ //update marketOdds['  ']
+        `;
         allMarkets.appendChild(first10mins1X2);
     }
-    if(marketOdds['first_half_1X2']){
-        allMarkets.appendChild(firstHalf1X2);
-    }
-    if(marketOdds['first_half_goals']){
-        allMarkets.appendChild(firstHalfGoals);
-    }
-    if(marketOdds['secondHalf1X2']){
-        allMarkets.appendChild(secondHalf1X2);
-    }
-    // update the marketOdds[' '] of each of the following
-    if(marketOdds['1X2']){
-        allMarkets.appendChild(correctScore);
-    }
-    if(marketOdds['1X2']){
-        allMarkets.appendChild(totalGoalRange);
-    }
-    if(marketOdds['1X2']){
-        allMarkets.appendChild(whoWillWin);
-    }
-    if(marketOdds['1X2']){
-        allMarkets.appendChild(teamToScoreFirst);
-    }
-    if(marketOdds['1X2']){
-        allMarkets.appendChild(multiGoals);
-    }
-    if(marketOdds['1X2']){
+
+    // const multiGoals = document.createElement('div');
+    // multiGoals.innerHTML = `
+    //     <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+    //         <div class="accordion-item">
+    //         <h2 class="accordion-header">
+    //             <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#Multigoals" aria-expanded="true" aria-controls="Multigoals">
+    //                 <span class="px-2"><i class="fa-solid fa-info"></i></span>
+    //                 <span>Multigoals</span>
+    //             </button>
+    //         </h2>
+    //         <div id="Multigoals" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+    //             <div data-market-type="Multigoals" class="accordion-body bg-navy-blue row g-1 p-1">
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - 1-2">
+    //                         <div class="text-yellow prediction">1-2</div>
+    //                         <div class="odds-value">2.68</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - 1-3">
+    //                         <div class="text-yellow prediction">1-3</div>
+    //                         <div class="odds-value">1.65</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - 1-4">
+    //                         <div class="text-yellow prediction">1-4</div>
+    //                         <div class="odds-value">2.98</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - 1-5">
+    //                         <div class="text-yellow prediction">1-5</div>
+    //                         <div class="odds-value">2.68</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - 1-6">
+    //                         <div class="text-yellow prediction">1-6</div>
+    //                         <div class="odds-value">1.65</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - 2-3">
+    //                         <div class="text-yellow prediction">2-3</div>
+    //                         <div class="odds-value">2.98</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - 2-4">
+    //                         <div class="text-yellow prediction">2-4</div>
+    //                         <div class="odds-value">2.68</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - 2-5">
+    //                         <div class="text-yellow prediction">2-5</div>
+    //                         <div class="odds-value">1.65</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - 2-6">
+    //                         <div class="text-yellow prediction">2-6</div>
+    //                         <div class="odds-value">2.98</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - 3-4">
+    //                         <div class="text-yellow prediction">3-4</div>
+    //                         <div class="odds-value">2.68</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - 3-5">
+    //                         <div class="text-yellow prediction">3-5</div>
+    //                         <div class="odds-value">1.65</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - 3-6">
+    //                         <div class="text-yellow prediction">3-6</div>
+    //                         <div class="odds-value">2.98</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - 4-5">
+    //                         <div class="text-yellow prediction">4-5</div>
+    //                         <div class="odds-value">2.68</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - 4-6">
+    //                         <div class="text-yellow prediction">4-6</div>
+    //                         <div class="odds-value">1.65</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - 5-6">
+    //                         <div class="text-yellow prediction">5-6</div>
+    //                         <div class="odds-value">2.98</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-6 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - 7+">
+    //                         <div class="text-yellow prediction">7+</div>
+    //                         <div class="odds-value">1.65</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-6 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - No goals">
+    //                         <div class="text-yellow prediction">No goals</div>
+    //                         <div class="odds-value">2.98</div>
+    //                     </button>
+    //                 </div>
+    //             </div>
+    //         </div>
+    //         </div>
+    //     </div>
+    // `;
+
+    
+    if(hasMarket(odds, "Home Team Over/Under")){
+        const homeTeamGoals = document.createElement('div'); 
+        homeTeamGoals.innerHTML = `
+            <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#HometeamGoals" aria-expanded="true" aria-controls="HometeamGoals">
+                            <span>${extras.teams?.home?.name} Over/Under</span>
+                        </button>
+                    </h2>
+                <div id="HometeamGoals" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                    <div data-market-type="Home Team Over/Under" class="accordion-body bg-navy-blue p-1">
+                        
+                        <div class="row g-2 mb-2">
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="over 0.5">
+                                    <div class="text-yellow prediction">Over 0.5</div>
+                                    <div class="odds-value">${displayOdd('Home Team Over/Under', 'over 0.5')}</div>
+                                </button>
+                            </div>
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="under 0.5">
+                                    <div class="text-yellow prediction">Under 0.5</div>
+                                    <div class="odds-value">${displayOdd('Home Team Over/Under', 'under 0.5')}</div> 
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-2">
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="over 1.5">
+                                    <div class="text-yellow prediction">Over 1.5</div>
+                                    <div class="odds-value">${displayOdd('Home Team Over/Under', 'over 1.5')}</div>
+                                </button>
+                            </div>
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="under 1.5">
+                                    <div class="text-yellow prediction">Under 1.5</div>
+                                    <div class="odds-value">${displayOdd('Home Team Over/Under', 'under 1.5')}</div> 
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-2">
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="over 2.5">
+                                    <div class="text-yellow prediction">Over 2.5</div>
+                                    <div class="odds-value">${displayOdd('Home Team Over/Under', 'over 2.5')}</div>
+                                </button>
+                            </div>
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="under 2.5">
+                                    <div class="text-yellow prediction">Under 2.5</div>
+                                    <div class="odds-value">${displayOdd('Home Team Over/Under', 'under 2.5')}</div> 
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        `;
         allMarkets.appendChild(homeTeamGoals);
     }
-    if(marketOdds['1X2']){
+
+    if(hasMarket(odds, "Away Team Over/Under")){
+        const awayTeamGoals = document.createElement('div'); 
+        awayTeamGoals.innerHTML = `
+            <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#awayteamGoals" aria-expanded="true" aria-controls="awayteamGoals">
+                            <span>${extras.teams?.away?.name} Over/Under</span>
+                        </button>
+                    </h2>
+                <div id="awayteamGoals" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                    <div data-market-type="Away Team Over/Under" class="accordion-body bg-navy-blue p-1">
+                        
+                        <div class="row g-2 mb-2">
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="over 0.5">
+                                    <div class="text-yellow prediction">Over 0.5</div>
+                                    <div class="odds-value">${displayOdd('Away Team Over/Under', 'over 0.5')}</div>
+                                </button>
+                            </div>
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="under 0.5">
+                                    <div class="text-yellow prediction">Under 0.5</div>
+                                    <div class="odds-value">${displayOdd('Away Team Over/Under', 'under 0.5')}</div> 
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-2">
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="over 1.5">
+                                    <div class="text-yellow prediction">Over 1.5</div>
+                                    <div class="odds-value">${displayOdd('Away Team Over/Under', 'over 1.5')}</div>
+                                </button>
+                            </div>
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="under 1.5">
+                                    <div class="text-yellow prediction">Under 1.5</div>
+                                    <div class="odds-value">${displayOdd('Away Team Over/Under', 'under 1.5')}</div> 
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-2">
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="over 2.5">
+                                    <div class="text-yellow prediction">Over 2.5</div>
+                                    <div class="odds-value">${displayOdd('Away Team Over/Under', 'over 2.5')}</div>
+                                </button>
+                            </div>
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="under 2.5">
+                                    <div class="text-yellow prediction">Under 2.5</div>
+                                    <div class="odds-value">${displayOdd('Away Team Over/Under', 'under 2.5')}</div> 
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        `;
         allMarkets.appendChild(awayTeamGoals);
     }
-    if(marketOdds['1X2']){
-        allMarkets.appendChild(homeTeamMultigoals);
-    }
-    if(marketOdds['1X2']){
-        allMarkets.appendChild(awayTeamMultiGoals);
-    }
-    if(marketOdds['1X2']){
-        allMarkets.appendChild(firstHalfFirstGoal);
-    }
-    if(marketOdds['1X2']){
+
+
+    // const homeTeamMultigoals = document.createElement('div');
+    // homeTeamMultigoals.innerHTML = `
+    //     <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+    //         <div class="accordion-item">
+    //         <h2 class="accordion-header">
+    //             <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#HomeTeamMultigoals" aria-expanded="true" aria-controls="HomeTeamMultigoals">
+    //                 <span class="px-2"><i class="fa-solid fa-info"></i></span>
+    //                 <span>${extras.home_team} multigoals</span>
+    //             </button>
+    //         </h2>
+    //         <div id="HomeTeamMultigoals" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+    //             <div data-market-type="Home Team Multigoals" class="accordion-body bg-navy-blue row g-1 p-1">
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team multigoals - 1-2">
+    //                         <div class="text-yellow prediction">1-2</div>
+    //                         <div class="odds-value">2.68</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team multigoals - 1-3">
+    //                         <div class="text-yellow prediction">1-3</div>
+    //                         <div class="odds-value">1.65</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team multigoals - 2-3">
+    //                         <div class="text-yellow prediction">2-3</div>
+    //                         <div class="odds-value">2.98</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-6 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team multigoals - 4+">
+    //                         <div class="text-yellow prediction">4+</div>
+    //                         <div class="odds-value">1.65</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-6 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - No goals">
+    //                         <div class="text-yellow prediction">No goals</div>
+    //                         <div class="odds-value">27.05</div>
+    //                     </button>
+    //                 </div>                                          
+    //             </div>
+    //         </div>
+    //         </div>
+    //     </div>
+    // `;
+
+    // const awayTeamMultiGoals = document.createElement('div');
+    // awayTeamMultiGoals.innerHTML = `
+    //     <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+    //         <div class="accordion-item">
+    //         <h2 class="accordion-header">
+    //             <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#AwayTeamMultigoals" aria-expanded="true" aria-controls="AwayTeamMultigoals">
+    //                 <span class="px-2"><i class="fa-solid fa-info"></i></span>
+    //                 <span>${extras.away_team} multigoals</span>
+    //             </button>
+    //         </h2>
+    //         <div id="AwayTeamMultigoals" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+    //             <div data-market-type="Away Team Multigoals" class="accordion-body bg-navy-blue row g-1 p-1">
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Away team multigoals - 1-2">
+    //                         <div class="text-yellow prediction">1-2</div>
+    //                         <div class="odds-value">2.68</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Away team multigoals - 1-3">
+    //                         <div class="text-yellow prediction">1-3</div>
+    //                         <div class="odds-value">1.65</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Away team multigoals - 2-3">
+    //                         <div class="text-yellow prediction">2-3</div>
+    //                         <div class="odds-value">2.98</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-6 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Away team multigoals - 4+">
+    //                         <div class="text-yellow prediction">4+</div>
+    //                         <div class="odds-value">1.65</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-6 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Multigoals - No goals">
+    //                         <div class="text-yellow prediction">No goals</div>
+    //                         <div class="odds-value">27.05</div>
+    //                     </button>
+    //                 </div>                                          
+    //             </div>
+    //         </div>
+    //         </div>
+    //     </div>
+    // `;
+
+    // const firstHalfFirstGoal = document.createElement('div');
+    // firstHalfFirstGoal.innerHTML = `
+    //     <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+    //         <div class="accordion-item">
+    //         <h2 class="accordion-header">
+    //             <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#first-half-first-goal" aria-expanded="true" aria-controls="first-half-first-goal">
+    //                 <span class="px-2"><i class="fa-solid fa-info"></i></span>
+    //                 <span>First half first goal</span>
+    //             </button>
+    //         </h2>
+    //         <div id="first-half-first-goal" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+    //             <div data-market-type="First Half First Goal" class="accordion-body bg-navy-blue row g-1 p-1">
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half first goal - Home Team">
+    //                         <div class="text-yellow prediction">1</div>
+    //                         <div class="odds-value">2.98</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half DC - Home/Away">
+    //                         <div class="text-yellow prediction">No goal</div>
+    //                         <div class="odds-value">2.98</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half first goal - Away Team">
+    //                         <div class="text-yellow prediction">2</div>
+    //                         <div class="odds-value">2.98</div>
+    //                     </button>
+    //                 </div>
+    //             </div>
+    //         </div>
+    //         </div>
+    //     </div>
+    // `;
+
+    if(hasMarket(odds, "Double Chance 1st Half")){
+        const firstHalfDoubleChance = document.createElement('div'); 
+        firstHalfDoubleChance.innerHTML = `
+            <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+                <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#first-half-double-chance" aria-expanded="true" aria-controls="first-half-double-chance">
+                        <span>Double Chance 1st Half</span>
+                    </button>
+                </h2>
+                <div id="first-half-double-chance" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                    <div data-market-type="Double Chance 1st Half" class="accordion-body bg-navy-blue row g-1 p-1">
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="1X">
+                                <div class="text-yellow prediction">1X</div>
+                                <div class="odds-value">${displayOdd('Double Chance 1st Half', '1X')}</div>
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="12">
+                                <div class="text-yellow prediction">12</div>
+                                <div class="odds-value">${displayOdd('Double Chance 1st Half', '12')}</div>
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="X2">
+                                <div class="text-yellow prediction">X2</div>
+                                <div class="odds-value">${displayOdd('Double Chance 1st Half', 'X2')}</div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        `;
         allMarkets.appendChild(firstHalfDoubleChance);
     }
-    if(marketOdds['1X2']){
-        allMarkets.appendChild(firstHalfHandicap);
-    }
-    if(marketOdds['1X2']){
-        allMarkets.appendChild(firstHalfHomeTeamGoals);
-    }
-    if(marketOdds['1X2']){
-        allMarkets.appendChild(firstHalfAwayTeamGoals);
-    }
-    if(marketOdds['1X2']){
-        allMarkets.appendChild(whichTeamToScore);
-    }
-    if(marketOdds['1X2']){
-        allMarkets.appendChild(ftDoubleChanceAndOorU);
-    }
-    if(marketOdds['1X2']){
-        allMarkets.appendChild(ftDoubleChanceAndBts);
-    }
-    if(marketOdds['1X2']){
+
+    // const firstHalfHandicap = document.createElement('div');
+    // firstHalfHandicap.innerHTML = `
+    // <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+    //         <div class="accordion-item">
+    //         <h2 class="accordion-header">
+    //             <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#first-half-handicap" aria-expanded="true" aria-controls="first-half-handicap">
+    //                 <span class="px-2"><i class="fa-solid fa-info"></i></span>
+    //                 <span>First half handicap</span>
+    //             </button>
+    //         </h2>
+    //         <div id="first-half-handicap" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+    //             <div data-market-type="First Half Handicap" class="accordion-body bg-navy-blue row g-1 p-1">
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half handicap - 1 (0:1)">
+    //                         <div class="text-yellow prediction">1 (0:1)</div>
+    //                         <div class="odds-value">2.98</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half handicap - X (0:1)">
+    //                         <div class="text-yellow prediction">X (0:1)</div>
+    //                         <div class="odds-value">2.98</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half handicap - 2 (0:1)">
+    //                         <div class="text-yellow prediction">2 (0:1)</div>
+    //                         <div class="odds-value">2.98</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half handicap - 1 (0:2)">
+    //                         <div class="text-yellow prediction">1 (0:2)</div>
+    //                         <div class="odds-value">2.98</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half handicap - X (0:2)">
+    //                         <div class="text-yellow prediction">X (0:2)</div>
+    //                         <div class="odds-value">2.98</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half handicap - 2 (0:2)">
+    //                         <div class="text-yellow prediction">2 (0:2)</div>
+    //                         <div class="odds-value">2.98</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half handicap - 1 (1:0)">
+    //                         <div class="text-yellow prediction">1 (1:0)</div>
+    //                         <div class="odds-value">2.98</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half handicap - X (1:0)">
+    //                         <div class="text-yellow prediction">X (1:0)</div>
+    //                         <div class="odds-value">2.98</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half handicap - 2 (1:0)">
+    //                         <div class="text-yellow prediction">2 (1:0)</div>
+    //                         <div class="odds-value">2.98</div>
+    //                     </button>
+    //                 </div>
+    //             </div>
+    //         </div>
+    //         </div>
+    //     </div>
+    // `;
+
+    // const firstHalfHomeTeamGoals = document.createElement('div');
+    // firstHalfHomeTeamGoals.innerHTML = `
+    //      <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+    //         <div class="accordion-item">
+    //             <h2 class="accordion-header">
+    //                 <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#FirstHalfHometeamGoals" aria-expanded="true" aria-controls="FirstHalfHometeamGoals">
+    //                     <span class="px-2"><i class="fa-solid fa-info"></i></span>
+    //                     <span>First half ${extras.home_team} goals</span>
+    //                 </button>
+    //             </h2>
+    //         <div id="FirstHalfHometeamGoals" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+    //             <div data-market-type="First Half Hometeam Goals" class="accordion-body bg-navy-blue p-1">
+                    
+    //                 <div class="row g-2 mb-2">
+    //                     <div class="col-6 d-grid">
+    //                         <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half Home team over - 0.5">
+    //                             <div class="text-yellow prediction">Over 0.5</div>
+    //                             <div class="odds-value">1.10</div>
+    //                         </button>
+    //                     </div>
+    //                     <div class="col-6 d-grid">
+    //                         <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half Home team under - 0.5">
+    //                             <div class="text-yellow prediction">Under 0.5</div>
+    //                             <div class="odds-value">9.56</div> 
+    //                         </button>
+    //                     </div>
+    //                 </div>
+
+    //                 <div class="row g-2 mb-2">
+    //                     <div class="col-6 d-grid">
+    //                         <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half Home team over - 1.5">
+    //                             <div class="text-yellow prediction">Over 1.5</div>
+    //                             <div class="odds-value">1.10</div>
+    //                         </button>
+    //                     </div>
+    //                     <div class="col-6 d-grid">
+    //                         <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half Home team under - 1.5">
+    //                             <div class="text-yellow prediction">Under 1.5</div>
+    //                             <div class="odds-value">9.56</div> 
+    //                         </button>
+    //                     </div>
+    //                 </div>
+
+    //                 <div class="row g-2 mb-2">
+    //                     <div class="col-6 d-grid">
+    //                         <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half Home team over - 2.5">
+    //                             <div class="text-yellow prediction">Over 2.5</div>
+    //                             <div class="odds-value">1.10</div>
+    //                         </button>
+    //                     </div>
+    //                     <div class="col-6 d-grid">
+    //                         <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half Home team under - 2.5">
+    //                             <div class="text-yellow prediction">Under 2.5</div>
+    //                             <div class="odds-value">9.56</div> 
+    //                         </button>
+    //                     </div>
+    //                 </div>
+    //             </div>
+    //         </div>
+    //         </div>
+    //     </div>
+    // `;
+
+    // const firstHalfAwayTeamGoals = document.createElement('div');
+    // firstHalfAwayTeamGoals.innerHTML = `
+    //     <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+    //         <div class="accordion-item">
+    //             <h2 class="accordion-header">
+    //                 <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#FirstHalfAwayteamGoals" aria-expanded="true" aria-controls="FirstHalfAwayteamGoals">
+    //                     <span class="px-2"><i class="fa-solid fa-info"></i></span>
+    //                     <span>First half ${extras.away_team} goals</span>
+    //                 </button>
+    //             </h2>
+    //         <div id="FirstHalfAwayteamGoals" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+    //             <div data-market-type="First Half Awayteam Goals" class="accordion-body bg-navy-blue p-1">
+                    
+    //                 <div class="row g-2 mb-2">
+    //                     <div class="col-6 d-grid">
+    //                         <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half away team over - 0.5">
+    //                             <div class="text-yellow prediction">Over 0.5</div>
+    //                             <div class="odds-value">1.10</div>
+    //                         </button>
+    //                     </div>
+    //                     <div class="col-6 d-grid">
+    //                         <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half away team under - 0.5">
+    //                             <div class="text-yellow prediction">Under 0.5</div>
+    //                             <div class="odds-value">9.56</div> 
+    //                         </button>
+    //                     </div>
+    //                 </div>
+
+    //                 <div class="row g-2 mb-2">
+    //                     <div class="col-6 d-grid">
+    //                         <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half away team over - 1.5">
+    //                             <div class="text-yellow prediction">Over 1.5</div>
+    //                             <div class="odds-value">1.10</div>
+    //                         </button>
+    //                     </div>
+    //                     <div class="col-6 d-grid">
+    //                         <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half away team under - 1.5">
+    //                             <div class="text-yellow prediction">Under 1.5</div>
+    //                             <div class="odds-value">9.56</div> 
+    //                         </button>
+    //                     </div>
+    //                 </div>
+
+    //                 <div class="row g-2 mb-2">
+    //                     <div class="col-6 d-grid">
+    //                         <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half away team over - 2.5">
+    //                             <div class="text-yellow prediction">Over 2.5</div>
+    //                             <div class="odds-value">1.10</div>
+    //                         </button>
+    //                     </div>
+    //                     <div class="col-6 d-grid">
+    //                         <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half away team under - 2.5">
+    //                             <div class="text-yellow prediction">Under 2.5</div>
+    //                             <div class="odds-value">9.56</div> 
+    //                         </button>
+    //                     </div>
+    //                 </div>
+    //             </div>
+    //         </div>
+    //         </div>
+    //     </div>
+    // `;
+
+    // const whichTeamToScore = document.createElement('div');
+    // whichTeamToScore.innerHTML = `
+    //     <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+    //         <div class="accordion-item">
+    //         <h2 class="accordion-header">
+    //             <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#which-team-to-score" aria-expanded="true" aria-controls="which-team-to-score">
+    //                 <span class="px-2"><i class="fa-solid fa-info"></i></span>
+    //                 <span>Which team to score</span>
+    //             </button>
+    //         </h2>
+    //         <div id="which-team-to-score" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+    //             <div data-market-type="Which Team To Score" class="accordion-body bg-navy-blue row g-1 p-1">
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half DC - Home/Draw">
+    //                         <div class="text-yellow text-small prediction">Home only</div>
+    //                         <div class="odds-value">2.98</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half DC - Home/Away">
+    //                         <div class="text-yellow text-small prediction">None</div>
+    //                         <div class="odds-value">2.98</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="First half DC - Draw/Away">
+    //                         <div class="text-yellow text-small prediction">Away only</div>
+    //                         <div class="odds-value">2.98</div>
+    //                     </button>
+    //                 </div>
+    //             </div>
+    //         </div>
+    //         </div>
+    //     </div>
+    // `; 
+
+    // const ftDoubleChanceAndOorU = document.createElement('div');
+    // ftDoubleChanceAndOorU.innerHTML = `
+    //     <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+    //         <div class="accordion-item">
+    //         <h2 class="accordion-header">
+    //             <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#fulltime-dc-and-o/u" aria-expanded="true" aria-controls="fulltime-dc-and-o/u">
+    //                 <span class="px-2"><i class="fa-solid fa-info"></i></span>
+    //                 <span>Full time double chance & O/U</span>
+    //             </button>
+    //         </h2>
+    //         <div id="fulltime-dc-and-o/u" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+    //             <div data-market-type="FT DC & O/U" class="accordion-body bg-navy-blue row g-1 p-1">
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
+    //                         <div class="text-yellow prediction text-small" style="padding-top: 1px;">1X & O 1.5</div>
+    //                         <div class="odds-value">2.01</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
+    //                         <div class="text-yellow prediction text-small align-bottom" style="padding-top: 1px;">12 & O 1.5</div>
+    //                         <div class="odds-value">6.80</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
+    //                         <div class="text-yellow prediction text-small" style="padding-top: 1px;">X2 & O 1.5</div>
+    //                         <div class="odds-value">2.29</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
+    //                         <div class="text-yellow prediction text-small" style="padding-top: 1px;">1X & U 1.5</div>
+    //                         <div class="odds-value">2.01</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
+    //                         <div class="text-yellow prediction text-small" style="padding-top: 1px;">12 & U 1.5</div>
+    //                         <div class="odds-value">6.80</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
+    //                         <div class="text-yellow prediction text-small" style="padding-top: 1px;">X2 & U 1.5</div>
+    //                         <div class="odds-value">2.29</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
+    //                         <div class="text-yellow prediction text-small" style="padding-top: 1px;">1X & O 2.5</div>
+    //                         <div class="odds-value">2.01</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
+    //                         <div class="text-yellow prediction text-small" style="padding-top: 1px;">12 & O 2.5</div>
+    //                         <div class="odds-value">6.80</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
+    //                         <div class="text-yellow prediction text-small" style="padding-top: 1px;">X2 & O 2.5</div>
+    //                         <div class="odds-value">2.29</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
+    //                         <div class="text-yellow prediction text-small" style="padding-top: 1px;">1X & U 2.5</div>
+    //                         <div class="odds-value">2.01</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
+    //                         <div class="text-yellow prediction text-small" style="padding-top: 1px;">12 & U 2.5</div>
+    //                         <div class="odds-value">6.80</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
+    //                         <div class="text-yellow prediction text-small" style="padding-top: 1px;">X2 & U 2.5</div>
+    //                         <div class="odds-value">2.29</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
+    //                         <div class="text-yellow prediction text-small" style="padding-top: 1px;">1X & O 3.5</div>
+    //                         <div class="odds-value">2.01</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
+    //                         <div class="text-yellow prediction text-small" style="padding-top: 1px;">12 & O 3.5</div>
+    //                         <div class="odds-value">6.80</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
+    //                         <div class="text-yellow prediction text-small" style="padding-top: 1px;">X2 & O 3.5</div>
+    //                         <div class="odds-value">2.29</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
+    //                         <div class="text-yellow prediction text-small" style="padding-top: 1px;">1X & U 3.5</div>
+    //                         <div class="odds-value">2.01</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
+    //                         <div class="text-yellow prediction text-small" style="padding-top: 1px;">12 & U 3.5</div>
+    //                         <div class="odds-value">6.80</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
+    //                         <div class="text-yellow prediction text-small" style="padding-top: 1px;">X2 & U 3.5</div>
+    //                         <div class="odds-value">2.29</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
+    //                         <div class="text-yellow prediction text-small" style="padding-top: 1px;">1X & O 4.5</div>
+    //                         <div class="odds-value">2.01</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
+    //                         <div class="text-yellow prediction text-small" style="padding-top: 1px;">12 & O 4.5</div>
+    //                         <div class="odds-value">6.80</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
+    //                         <div class="text-yellow prediction text-small" style="padding-top: 1px;">X2 & O 4.5</div>
+    //                         <div class="odds-value">2.29</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
+    //                         <div class="text-yellow prediction text-small" style="padding-top: 1px;">1X & U 4.5</div>
+    //                         <div class="odds-value">6.80</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
+    //                         <div class="text-yellow prediction text-small" style="padding-top: 1px;">12 & U 4.5</div>
+    //                         <div class="odds-value">2.29</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
+    //                         <div class="text-yellow prediction text-small" style="padding-top: 1px;">X2 & U 4.5</div>
+    //                         <div class="odds-value">2.01</div> 
+    //                     </button>
+    //                 </div>
+    //             </div>
+    //         </div>
+    //         </div>
+    //     </div>
+    // `; 
+
+    // const ftDoubleChanceAndBts = document.createElement('div');
+    // ftDoubleChanceAndBts.innerHTML = `
+    // <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+    //     <div class="accordion-item">
+    //     <h2 class="accordion-header">
+    //         <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#fulltime-dc-&-bts" aria-expanded="true" aria-controls="fulltime-dc-&-bts">
+    //             <span class="px-2"><i class="fa-solid fa-info"></i></span>
+    //             <span>Full time double chance & bts</span>
+    //         </button>
+    //     </h2>
+    //     <div id="fulltime-dc-&-bts" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+    //         <div data-market-type="FT DC & BTS" class="accordion-body bg-navy-blue row g-1 p-1">
+    //             <div class="col-4 d-grid">
+    //                 <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
+    //                     <div class="text-yellow prediction text-small" style="padding-top: 1px;">1X & Y</div>
+    //                     <div class="odds-value">2.01</div> 
+    //                 </button>
+    //             </div>
+    //             <div class="col-4 d-grid">
+    //                 <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
+    //                     <div class="text-yellow prediction text-small" style="padding-top: 1px;">12 & Y</div>
+    //                     <div class="odds-value">6.80</div> 
+    //                 </button>
+    //             </div>
+    //             <div class="col-4 d-grid">
+    //                 <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
+    //                     <div class="text-yellow prediction text-small" style="padding-top: 1px;">X2 & Y</div>
+    //                     <div class="odds-value">2.29</div> 
+    //                 </button>
+    //             </div>
+    //             <div class="col-4 d-grid">
+    //                 <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
+    //                     <div class="text-yellow prediction text-small" style="padding-top: 1px;">1X & N</div>
+    //                     <div class="odds-value">2.01</div> 
+    //                 </button>
+    //             </div>
+    //             <div class="col-4 d-grid">
+    //                 <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
+    //                     <div class="text-yellow prediction text-small" style="padding-top: 1px;">12 & N</div>
+    //                     <div class="odds-value">6.80</div> 
+    //                 </button>
+    //             </div>
+    //             <div class="col-4 d-grid">
+    //                 <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
+    //                     <div class="text-yellow prediction text-small" style="padding-top: 1px;">X2 & N</div>
+    //                     <div class="odds-value">2.29</div> 
+    //                 </button>
+    //             </div>
+    //         </div>
+    //     </div>
+    //     </div>
+    // </div>
+    // `;
+
+    if(hasMarket(odds, "1X2 & Over/Under")){
+        const ft1X2and0orU = document.createElement('div'); 
+        ft1X2and0orU.innerHTML = `
+            <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+                <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#fulltime-1X2-and-o/u" aria-expanded="true" aria-controls="fulltime-1X2-and-o/u">
+                        <span>1X2 & Over/Under</span>
+                    </button>
+                </h2>
+                <div id="fulltime-1X2-and-o/u" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                    <div data-market-type="1X2 & Over/Under" class="accordion-body bg-navy-blue row g-1 p-1">
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="1 & O 2.5">
+                                <div class="text-yellow prediction text-small" style="padding-top: 1px;">1 & O 2.5</div>
+                                <div class="odds-value">${displayOdd('1X2 & Over/Under', '1 & O 2.5')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="X & O 2.5">
+                                <div class="text-yellow prediction text-small" style="padding-top: 1px;">X & O 2.5</div>
+                                <div class="odds-value">${displayOdd('1X2 & Over/Under', 'X & O 2.5')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="2 & O 2.5">
+                                <div class="text-yellow prediction text-small" style="padding-top: 1px;">2 & O 2.5</div>
+                                <div class="odds-value">${displayOdd('1X2 & Over/Under', '2 & O 2.5')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="1 & U 2.5">
+                                <div class="text-yellow prediction text-small" style="padding-top: 1px;">1 & U 2.5</div>
+                                <div class="odds-value">${displayOdd('1X2 & Over/Under', '1 & U 2.5')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="X & U 2.5">
+                                <div class="text-yellow prediction text-small" style="padding-top: 1px;">X & U 2.5</div>
+                                <div class="odds-value">${displayOdd('1X2 & Over/Under', 'X & U 2.5')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="2 & U 2.5">
+                                <div class="text-yellow prediction text-small" style="padding-top: 1px;">2 & U 2.5</div>
+                                <div class="odds-value">${displayOdd('1X2 & Over/Under', '2 & U 2.5')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="1 & O 3.5">
+                                <div class="text-yellow prediction text-small" style="padding-top: 1px;">1 & O 3.5</div>
+                                <div class="odds-value">${displayOdd('1X2 & Over/Under', '1 & O 3.5')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="X & O 3.5">
+                                <div class="text-yellow prediction text-small" style="padding-top: 1px;">X & O 3.5</div>
+                                <div class="odds-value">${displayOdd('1X2 & Over/Under', 'X & O 3.5')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="2 & O 3.5">
+                                <div class="text-yellow prediction text-small" style="padding-top: 1px;">2 & O 3.5</div>
+                                <div class="odds-value">${displayOdd('1X2 & Over/Under', '2 & O 3.5')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="1 & U 3.5">
+                                <div class="text-yellow prediction text-small" style="padding-top: 1px;">1 & U 3.5</div>
+                                <div class="odds-value">${displayOdd('1X2 & Over/Under', '1 & U 3.5')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="X & U 3.5">
+                                <div class="text-yellow prediction text-small" style="padding-top: 1px;">X & U 3.5</div>
+                                <div class="odds-value">${displayOdd('1X2 & Over/Under', 'X & U 3.5')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="2 & U 3.5">
+                                <div class="text-yellow prediction text-small" style="padding-top: 1px;">2 & U 3.5</div>
+                                <div class="odds-value">${displayOdd('1X2 & Over/Under', '2 & U 3.5')}</div> 
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        `;
         allMarkets.appendChild(ft1X2and0orU);
     }
-    if(marketOdds['1X2']){
+
+
+    if(hasMarket(odds, "Goals Over/Under 1st Half")){
+        const goalsOorU1sthf = document.createElement('div'); 
+        goalsOorU1sthf.innerHTML = `
+            <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#goalsOorU1sthf" aria-expanded="true" aria-controls="goalsOorU1sthf">
+                            <span>Goals Over/Under 1st Half</span>
+                        </button>
+                    </h2>
+                <div id="goalsOorU1sthf" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                    <div data-market-type="Goals Over/Under 1st Half" class="accordion-body bg-navy-blue p-1">
+                        
+                        <div class="row g-2 mb-2">
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="over 0.5">
+                                    <div class="text-yellow prediction">Over 0.5</div>
+                                    <div class="odds-value">${displayOdd('Goals Over/Under 1st Half', 'over 0.5')}</div>
+                                </button>
+                            </div>
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="under 0.5">
+                                    <div class="text-yellow prediction">Under 0.5</div>
+                                    <div class="odds-value">${displayOdd('Goals Over/Under 1st Half', 'under 0.5')}</div> 
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-2">
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="over 1.5">
+                                    <div class="text-yellow prediction">Over 1.5</div>
+                                    <div class="odds-value">${displayOdd('Goals Over/Under 1st Half', 'over 1.5')}</div>
+                                </button>
+                            </div>
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="under 1.5">
+                                    <div class="text-yellow prediction">Under 1.5</div>
+                                    <div class="odds-value">${displayOdd('Goals Over/Under 1st Half', 'under 1.5')}</div> 
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-2">
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="over 2.5">
+                                    <div class="text-yellow prediction">Over 2.5</div>
+                                    <div class="odds-value">${displayOdd('Goals Over/Under 1st Half', 'over 2.5')}</div>
+                                </button>
+                            </div>
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="under 2.5">
+                                    <div class="text-yellow prediction">Under 2.5</div>
+                                    <div class="odds-value">${displayOdd('Goals Over/Under 1st Half', 'under 2.5')}</div> 
+                                </button>
+                            </div>
+                        </div>1
+                        <div class="row g-2 mb-2">
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="over 3.5">
+                                    <div class="text-yellow prediction">Over 3.5</div>
+                                    <div class="odds-value">${displayOdd('Goals Over/Under 1st Half', 'over 3.5')}</div>
+                                </button>
+                            </div>
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="under 3.5">
+                                    <div class="text-yellow prediction">Under 3.5</div>
+                                    <div class="odds-value">${displayOdd('Goals Over/Under 1st Half', 'under 3.5')}</div> 
+                                </button>
+                            </div>
+                        </div>1
+                    </div>
+                </div>
+                </div>
+            </div>
+        `;
+        allMarkets.appendChild(goalsOorU1sthf);
+    }
+
+
+    if(hasMarket(odds, "Goals Over/Under 2nd Half")){
+        const goalsOorU2ndhf = document.createElement('div'); 
+        goalsOorU2ndhf.innerHTML = `
+            <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#goalsOorU2ndhf" aria-expanded="true" aria-controls="goalsOorU2ndhf">
+                            <span>Goals Over/Under 2nd Half</span>
+                        </button>
+                    </h2>
+                <div id="goalsOorU2ndhf" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                    <div data-market-type="Goals Over/Under 2nd Half" class="accordion-body bg-navy-blue p-1">
+                        
+                        <div class="row g-2 mb-2">
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="over 0.5">
+                                    <div class="text-yellow prediction">Over 0.5</div>
+                                    <div class="odds-value">${displayOdd('Goals Over/Under 2nd Half', 'over 0.5')}</div>
+                                </button>
+                            </div>
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="under 0.5">
+                                    <div class="text-yellow prediction">Under 0.5</div>
+                                    <div class="odds-value">${displayOdd('Goals Over/Under 2nd Half', 'under 0.5')}</div> 
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-2">
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="over 1.5">
+                                    <div class="text-yellow prediction">Over 1.5</div>
+                                    <div class="odds-value">${displayOdd('Goals Over/Under 2nd Half', 'over 1.5')}</div>
+                                </button>
+                            </div>
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="under 1.5">
+                                    <div class="text-yellow prediction">Under 1.5</div>
+                                    <div class="odds-value">${displayOdd('Goals Over/Under 2nd Half', 'under 1.5')}</div> 
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-2">
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="over 2.5">
+                                    <div class="text-yellow prediction">Over 2.5</div>
+                                    <div class="odds-value">${displayOdd('Goals Over/Under 2nd Half', 'over 2.5')}</div>
+                                </button>
+                            </div>
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="under 2.5">
+                                    <div class="text-yellow prediction">Under 2.5</div>
+                                    <div class="odds-value">${displayOdd('Goals Over/Under 2nd Half', 'under 2.5')}</div> 
+                                </button>
+                            </div>
+                        </div>1
+                        <div class="row g-2 mb-2">
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="over 3.5">
+                                    <div class="text-yellow prediction">Over 3.5</div>
+                                    <div class="odds-value">${displayOdd('Goals Over/Under 2nd Half', 'over 3.5')}</div>
+                                </button>
+                            </div>
+                            <div class="col-6 d-grid">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="under 3.5">
+                                    <div class="text-yellow prediction">Under 3.5</div>
+                                    <div class="odds-value">${displayOdd('Goals Over/Under 2nd Half', 'under 3.5')}</div> 
+                                </button>
+                            </div>
+                        </div>1
+                    </div>
+                </div>
+                </div>
+            </div>
+        `;
+        allMarkets.appendChild(goalsOorU2ndhf);
+    }
+
+
+    if(hasMarket(odds, "1X2 & BTTS")){
+        const  ft1X2andBts = document.createElement('div');
+        ft1X2andBts.innerHTML = `
+            <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+            <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#fulltime-1X2-&-bts" aria-expanded="true" aria-controls="fulltime-1X2-&-bts">
+                    <span>1X2 & BTTS</span>
+                </button>
+            </h2>
+            <div id="fulltime-1X2-&-bts" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                <div data-market-type="1X2 & BTTS" class="accordion-body bg-navy-blue row g-1 p-1">
+                    <div class="col-4 d-grid">
+                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="1 & Y">
+                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">1 & Y</div>
+                            <div class="odds-value">${displayOdd('1X2 & BTTS', '1 & Y')}</div> 
+                        </button>
+                    </div>
+                    <div class="col-4 d-grid">
+                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="X & Y">
+                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">X & Y</div>
+                            <div class="odds-value">${displayOdd('1X2 & BTTS', 'X & Y')}</div> 
+                        </button>
+                    </div>
+                    <div class="col-4 d-grid">
+                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="2 & Y">
+                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">2 & Y</div>
+                            <div class="odds-value">${displayOdd('1X2 & BTTS', '2 & Y')}</div> 
+                        </button>
+                    </div>
+                    <div class="col-4 d-grid">
+                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="1 & N">
+                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">1 & N</div>
+                            <div class="odds-value">${displayOdd('1X2 & BTTS', '1 & N')}</div> 
+                        </button>
+                    </div>
+                    <div class="col-4 d-grid">
+                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="X & N">
+                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">X & N</div>
+                            <div class="odds-value">${displayOdd('1X2 & BTTS', 'X & N')}</div> 
+                        </button>
+                    </div>
+                    <div class="col-4 d-grid">
+                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="2 & N">
+                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">2 & N</div>
+                            <div class="odds-value">${displayOdd('1X2 & BTTS', '2 & N')}</div> 
+                        </button>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </div>
+        `;
         allMarkets.appendChild(ft1X2andBts);
     }
-    if(marketOdds['1X2']){
-        allMarkets.appendChild(btsAndOorU2point5);
+
+
+    if(hasMarket(odds, "BTTS & Over/Under")){
+        const btsAndOorU2point5 = document.createElement('div');
+        btsAndOorU2point5.innerHTML = `
+        <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+            <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#bts-and-o-or-u-2.5" aria-expanded="true" aria-controls="bts-and-o-or-u-2.5">
+                    <span>BTTS & Over/Under</span>
+                </button>
+            </h2>
+            <div id="bts-and-o-or-u-2.5" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                <div data-market-type="BTTS & Over/Under" class="accordion-body bg-navy-blue row g-1 p-1">
+                    <div class="col-6 d-grid">
+                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Y & O 2.5">
+                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">Y & O 2.5</div>
+                            <div class="odds-value">${displayOdd('BTTS & Over/Under', 'Y & O 2.5')}</div> 
+                        </button>
+                    </div>
+                    <div class="col-6 d-grid">
+                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Y & U 2.5">
+                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">Y & U 2.5</div>
+                            <div class="odds-value">${displayOdd('BTTS & Over/Under', 'Y & U 2.5')}</div> 
+                        </button>
+                    </div>
+                    <div class="col-6 d-grid">
+                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="N & O 2.5">
+                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">N & O 2.5</div>
+                            <div class="odds-value">${displayOdd('BTTS & Over/Under', 'N & O 2.5')}</div> 
+                        </button>
+                    </div>
+                    <div class="col-6 d-grid">
+                        <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="N & U 2.5">
+                            <div class="text-yellow prediction text-small" style="padding-top: 1px;">N & U 2.5</div>
+                            <div class="odds-value">${displayOdd('BTTS & Over/Under', 'N & U 2.5')}</div> 
+                        </button>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </div>
+        `;
+       allMarkets.appendChild(btsAndOorU2point5);
     }
-    if(marketOdds['1X2']){
-        allMarkets.appendChild(htDoubleChanceAndBts);
+
+    // const htDoubleChanceAndBts = document.createElement('div');
+    // htDoubleChanceAndBts.innerHTML = `
+    // <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+    //     <div class="accordion-item">
+    //     <h2 class="accordion-header">
+    //         <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#halftime-dc-&-bts" aria-expanded="true" aria-controls="halftime-dc-&-bts">
+    //             <span class="px-2"><i class="fa-solid fa-info"></i></span>
+    //             <span>Half time double chance & bts</span>
+    //         </button>
+    //     </h2>
+    //     <div id="halftime-dc-&-bts" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+    //         <div data-market-type="HT DC & BTS" class="accordion-body bg-navy-blue row g-1 p-1">
+    //             <div class="col-4 d-grid">
+    //                 <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
+    //                     <div class="text-yellow prediction text-small" style="padding-top: 1px;">1X & Y</div>
+    //                     <div class="odds-value">2.01</div> 
+    //                 </button>
+    //             </div>
+    //             <div class="col-4 d-grid">
+    //                 <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
+    //                     <div class="text-yellow prediction text-small" style="padding-top: 1px;">12 & Y</div>
+    //                     <div class="odds-value">6.80</div> 
+    //                 </button>
+    //             </div>
+    //             <div class="col-4 d-grid">
+    //                 <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
+    //                     <div class="text-yellow prediction text-small" style="padding-top: 1px;">X2 & Y</div>
+    //                     <div class="odds-value">2.29</div> 
+    //                 </button>
+    //             </div>
+    //             <div class="col-4 d-grid">
+    //                 <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
+    //                     <div class="text-yellow prediction text-small" style="padding-top: 1px;">1X & N</div>
+    //                     <div class="odds-value">2.01</div> 
+    //                 </button>
+    //             </div>
+    //             <div class="col-4 d-grid">
+    //                 <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
+    //                     <div class="text-yellow prediction text-small" style="padding-top: 1px;">12 & N</div>
+    //                     <div class="odds-value">6.80</div> 
+    //                 </button>
+    //             </div>
+    //             <div class="col-4 d-grid">
+    //                 <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
+    //                     <div class="text-yellow prediction text-small" style="padding-top: 1px;">X2 & N</div>
+    //                     <div class="odds-value">2.29</div> 
+    //                 </button>
+    //             </div>
+    //         </div>
+    //     </div>
+    //     </div>
+    // </div>
+    // `;
+
+    // const ht1X2and0orU = document.createElement('div');
+    // ht1X2and0orU.innerHTML = `
+    //     <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+    //         <div class="accordion-item">
+    //         <h2 class="accordion-header">
+    //             <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#halftime-1X2-and-o/u" aria-expanded="true" aria-controls="halftime-1X2-and-o/u">
+    //                 <span class="px-2"><i class="fa-solid fa-info"></i></span>
+    //                 <span>Half time 1X2 & O/U</span>
+    //             </button>
+    //         </h2>
+    //         <div id="halftime-1X2-and-o/u" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+    //             <div data-market-type="HT 1X2 & O/U" class="accordion-body bg-navy-blue row g-1 p-1">
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
+    //                         <div class="text-yellow prediction text-small" style="padding-top: 1px;">1 & O 1.5</div>
+    //                         <div class="odds-value">2.01</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
+    //                         <div class="text-yellow prediction text-small align-bottom" style="padding-top: 1px;">X & O 1.5</div>
+    //                         <div class="odds-value">6.80</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
+    //                         <div class="text-yellow prediction text-small" style="padding-top: 1px;">2 & O 1.5</div>
+    //                         <div class="odds-value">2.29</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
+    //                         <div class="text-yellow prediction text-small" style="padding-top: 1px;">1 & U 1.5</div>
+    //                         <div class="odds-value">2.01</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
+    //                         <div class="text-yellow prediction text-small" style="padding-top: 1px;">X & U 1.5</div>
+    //                         <div class="odds-value">6.80</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
+    //                         <div class="text-yellow prediction text-small" style="padding-top: 1px;">2 & U 1.5</div>
+    //                         <div class="odds-value">2.29</div> 
+    //                     </button>
+    //                 </div>
+    //             </div>
+    //         </div>
+    //         </div>
+    //     </div>
+    // `;
+
+    // const  ht1X2andBts = document.createElement('div');
+    // ht1X2andBts.innerHTML = `
+    //     <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+    //     <div class="accordion-item">
+    //     <h2 class="accordion-header">
+    //         <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#halftime-1X2-&-bts" aria-expanded="true" aria-controls="halftime-1X2-&-bts">
+    //             <span class="px-2"><i class="fa-solid fa-info"></i></span>
+    //             <span>Half time 1X2 & bts</span>
+    //         </button>
+    //     </h2>
+    //     <div id="halftime-1X2-&-bts" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+    //         <div data-market-type="HT 1X2 & BTS" class="accordion-body bg-navy-blue row g-1 p-1">
+    //             <div class="col-4 d-grid">
+    //                 <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
+    //                     <div class="text-yellow prediction text-small" style="padding-top: 1px;">1 & Y</div>
+    //                     <div class="odds-value">2.01</div> 
+    //                 </button>
+    //             </div>
+    //             <div class="col-4 d-grid">
+    //                 <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
+    //                     <div class="text-yellow prediction text-small" style="padding-top: 1px;">X & Y</div>
+    //                     <div class="odds-value">6.80</div> 
+    //                 </button>
+    //             </div>
+    //             <div class="col-4 d-grid">
+    //                 <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
+    //                     <div class="text-yellow prediction text-small" style="padding-top: 1px;">2 & Y</div>
+    //                     <div class="odds-value">2.29</div> 
+    //                 </button>
+    //             </div>
+    //             <div class="col-4 d-grid">
+    //                 <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
+    //                     <div class="text-yellow prediction text-small" style="padding-top: 1px;">1 & N</div>
+    //                     <div class="odds-value">2.01</div> 
+    //                 </button>
+    //             </div>
+    //             <div class="col-4 d-grid">
+    //                 <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
+    //                     <div class="text-yellow prediction text-small" style="padding-top: 1px;">X & N</div>
+    //                     <div class="odds-value">6.80</div> 
+    //                 </button>
+    //             </div>
+    //             <div class="col-4 d-grid">
+    //                 <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
+    //                     <div class="text-yellow prediction text-small" style="padding-top: 1px;">2 & N</div>
+    //                     <div class="odds-value">2.29</div> 
+    //                 </button>
+    //             </div>
+    //         </div>
+    //     </div>
+    //     </div>
+    // </div>
+    // `;
+
+    // const secondHalhDoubleChanceAndBts = document.createElement('div');
+    // secondHalhDoubleChanceAndBts.innerHTML = `
+    // <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+    //     <div class="accordion-item">
+    //     <h2 class="accordion-header">
+    //         <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#2ndhalftime-dc-&-bts" aria-expanded="true" aria-controls="2ndhalftime-dc-&-bts">
+    //             <span class="px-2"><i class="fa-solid fa-info"></i></span>
+    //             <span>2nd half double chance & bts</span>
+    //         </button>
+    //     </h2>
+    //     <div id="2ndhalftime-dc-&-bts" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+    //         <div data-market-type="2nd Half DC & BTS" class="accordion-body bg-navy-blue row g-1 p-1">
+    //             <div class="col-4 d-grid">
+    //                 <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
+    //                     <div class="text-yellow prediction text-small" style="padding-top: 1px;">1X & Y</div>
+    //                     <div class="odds-value">2.01</div> 
+    //                 </button>
+    //             </div>
+    //             <div class="col-4 d-grid">
+    //                 <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
+    //                     <div class="text-yellow prediction text-small" style="padding-top: 1px;">12 & Y</div>
+    //                     <div class="odds-value">6.80</div> 
+    //                 </button>
+    //             </div>
+    //             <div class="col-4 d-grid">
+    //                 <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
+    //                     <div class="text-yellow prediction text-small" style="padding-top: 1px;">X2 & Y</div>
+    //                     <div class="odds-value">2.29</div> 
+    //                 </button>
+    //             </div>
+    //             <div class="col-4 d-grid">
+    //                 <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
+    //                     <div class="text-yellow prediction text-small" style="padding-top: 1px;">1X & N</div>
+    //                     <div class="odds-value">2.01</div> 
+    //                 </button>
+    //             </div>
+    //             <div class="col-4 d-grid">
+    //                 <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
+    //                     <div class="text-yellow prediction text-small" style="padding-top: 1px;">12 & N</div>
+    //                     <div class="odds-value">6.80</div> 
+    //                 </button>
+    //             </div>
+    //             <div class="col-4 d-grid">
+    //                 <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
+    //                     <div class="text-yellow prediction text-small" style="padding-top: 1px;">X2 & N</div>
+    //                     <div class="odds-value">2.29</div> 
+    //                 </button>
+    //             </div>
+    //         </div>
+    //     </div>
+    //     </div>
+    // </div>
+    // `;
+
+    // const secondHalf1X2and0orU = document.createElement('div');
+    // secondHalf1X2and0orU.innerHTML = `
+    //     <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+    //         <div class="accordion-item">
+    //         <h2 class="accordion-header">
+    //             <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#2ndhalf-1X2-and-o/u" aria-expanded="true" aria-controls="2ndhalf-1X2-and-o/u">
+    //                 <span class="px-2"><i class="fa-solid fa-info"></i></span>
+    //                 <span>2nd half 1X2 & O/U</span>
+    //             </button>
+    //         </h2>
+    //         <div id="2ndhalf-1X2-and-o/u" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+    //             <div data-market-type="2nd Half 1X2 & O/U" class="accordion-body bg-navy-blue row g-1 p-1">
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
+    //                         <div class="text-yellow prediction text-small" style="padding-top: 1px;">1 & O 1.5</div>
+    //                         <div class="odds-value">2.01</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
+    //                         <div class="text-yellow prediction text-small align-bottom" style="padding-top: 1px;">X & O 1.5</div>
+    //                         <div class="odds-value">6.80</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
+    //                         <div class="text-yellow prediction text-small" style="padding-top: 1px;">2 & O 1.5</div>
+    //                         <div class="odds-value">2.29</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
+    //                         <div class="text-yellow prediction text-small" style="padding-top: 1px;">1 & U 1.5</div>
+    //                         <div class="odds-value">2.01</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
+    //                         <div class="text-yellow prediction text-small" style="padding-top: 1px;">X & U 1.5</div>
+    //                         <div class="odds-value">6.80</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
+    //                         <div class="text-yellow prediction text-small" style="padding-top: 1px;">2 & U 1.5</div>
+    //                         <div class="odds-value">2.29</div> 
+    //                     </button>
+    //                 </div>
+    //             </div>
+    //         </div>
+    //         </div>
+    //     </div>
+    // `;
+
+    // const highestScoringHalfHomeTeam = document.createElement('div');
+    // highestScoringHalfHomeTeam.innerHTML = `
+    //     <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+    //         <div class="accordion-item">
+    //         <h2 class="accordion-header">
+    //             <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#highest-scoring-half-home-team" aria-expanded="true" aria-controls="highest-scoring-half-home-team">
+    //                 <span class="px-2"><i class="fa-solid fa-info"></i></span>
+    //                 <span>Highest scoring half : ${extras.home_team}</span>
+    //             </button>
+    //         </h2>
+    //         <div id="highest-scoring-half-home-team" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+    //             <div data-market-type="Highest Scoring Half Home Team" class="accordion-body bg-navy-blue row g-1 p-1">
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Home Win">
+    //                         <div class="text-yellow prediction">First</div>
+    //                         <div class="odds-value">${getOdds('highest_scoring_half', 'first')}</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Draw">
+    //                         <div class="text-yellow prediction">Equal</div>
+    //                         <div class="odds-value">${getOdds('highest_scoring_half', 'equal')}</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Away Win">
+    //                         <div class="text-yellow prediction">Second</div>
+    //                         <div class="odds-value">${getOdds('highest_scoring_half', 'second')}</div>
+    //                     </button>
+    //                 </div>
+    //             </div>
+    //         </div>
+    //         </div>
+    //     </div>
+    // `;
+
+    // const highestScoringHalfAwayTeam = document.createElement('div');
+    // highestScoringHalfAwayTeam.innerHTML = `
+    //     <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+    //         <div class="accordion-item">
+    //         <h2 class="accordion-header">
+    //             <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#highest-scoring-half-away-team" aria-expanded="true" aria-controls="highest-scoring-half-away-team">
+    //                 <span class="px-2"><i class="fa-solid fa-info"></i></span>
+    //                 <span>Highest scoring half : ${extras.away_team}</span>
+    //             </button>
+    //         </h2>
+    //         <div id="highest-scoring-half-away-team" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+    //             <div data-market-type="Highest Scoring Half Away Team" class="accordion-body bg-navy-blue row g-1 p-1">
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Home Win">
+    //                         <div class="text-yellow prediction">First</div>
+    //                         <div class="odds-value">${getOdds('highest_scoring_half', 'first')}</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Draw">
+    //                         <div class="text-yellow prediction">Equal</div>
+    //                         <div class="odds-value">${getOdds('highest_scoring_half', 'equal')}</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Away Win">
+    //                         <div class="text-yellow prediction">Second</div>
+    //                         <div class="odds-value">${getOdds('highest_scoring_half', 'second')}</div>
+    //                     </button>
+    //                 </div>
+    //             </div>
+    //         </div>
+    //         </div>
+    //     </div>
+    // `;
+
+    // const firstHalfTotalGoals = document.createElement('div');
+    // firstHalfTotalGoals.innerHTML = `
+    //     <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+    //         <div class="accordion-item">
+    //         <h2 class="accordion-header">
+    //             <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#first-half-total-goals" aria-expanded="true" aria-controls="first-half-total-goals">
+    //                 <span class="px-2"><i class="fa-solid fa-info"></i></span>
+    //                 <span>First half total goals</span>
+    //             </button>
+    //         </h2>
+    //         <div id="first-half-total-goals" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+    //             <div data-market-type="First Half Total Goals" class="accordion-body bg-navy-blue row g-1 p-1">
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Home Win">
+    //                         <div class="text-yellow prediction">0</div>
+    //                         <div class="odds-value">${getOdds('1X2', 'home')}</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Draw">
+    //                         <div class="text-yellow prediction">1</div>
+    //                         <div class="odds-value">${getOdds('1X2', 'draw')}</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Away Win">
+    //                         <div class="text-yellow prediction">2+</div>
+    //                         <div class="odds-value">${getOdds('1X2', 'away')}</div>
+    //                     </button>
+    //                 </div>
+    //             </div>
+    //         </div>
+    //         </div>
+    //     </div>
+    // `;
+
+    // const secondHalfTotalGoals = document.createElement('div');
+    // secondHalfTotalGoals.innerHTML = `
+    //     <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+    //         <div class="accordion-item">
+    //         <h2 class="accordion-header">
+    //             <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#second-half-total-goals" aria-expanded="true" aria-controls="second-half-total-goals">
+    //                 <span class="px-2"><i class="fa-solid fa-info"></i></span>
+    //                 <span>Second half total goals</span>
+    //             </button>
+    //         </h2>
+    //         <div id="second-half-total-goals" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+    //             <div data-market-type="Second Half Total Goals" class="accordion-body bg-navy-blue row g-1 p-1">
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Home Win">
+    //                         <div class="text-yellow prediction">0</div>
+    //                         <div class="odds-value">${getOdds('first_half_goals', 'over_1.5')}</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Draw">
+    //                         <div class="text-yellow prediction">1</div>
+    //                         <div class="odds-value">${getOdds('first_half_goals', 'under_1.5')}</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Away Win">
+    //                         <div class="text-yellow prediction">2+</div>
+    //                         <div class="odds-value">${getOdds('first_half_goals', 'over')}</div>
+    //                     </button>
+    //                 </div>
+    //             </div>
+    //         </div>
+    //         </div>
+    //     </div>
+    // `;
+
+    // const secondHalfHomeTeamGoals = document.createElement('div');
+    // secondHalfHomeTeamGoals.innerHTML = `
+    //     <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+    //         <div class="accordion-item">
+    //             <h2 class="accordion-header">
+    //                 <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#2nd-half-home-team-goals" aria-expanded="true" aria-controls="2nd-half-home-team-goals">
+    //                     <span class="px-2"><i class="fa-solid fa-info"></i></span>
+    //                     <span>Second half ${extras.home_team} goals</span>
+    //                 </button>
+    //             </h2>
+    //         <div id="2nd-half-home-team-goals" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+    //             <div data-market-type="2nd Half Home Team Goals" class="accordion-body bg-navy-blue p-1">
+                    
+    //                 <div class="row g-2 mb-2">
+    //                     <div class="col-6 d-grid">
+    //                         <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team over - 0.5">
+    //                             <div class="text-yellow prediction">Over 0.5</div>
+    //                             <div class="odds-value">1.10</div>
+    //                         </button>
+    //                     </div>
+    //                     <div class="col-6 d-grid">
+    //                         <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team under - 0.5">
+    //                             <div class="text-yellow prediction">Under 0.5</div>
+    //                             <div class="odds-value">9.56</div> 
+    //                         </button>
+    //                     </div>
+    //                 </div>
+
+    //                 <div class="row g-2 mb-2">
+    //                     <div class="col-6 d-grid">
+    //                         <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team over - 1.5">
+    //                             <div class="text-yellow prediction">Over 1.5</div>
+    //                             <div class="odds-value">1.10</div>
+    //                         </button>
+    //                     </div>
+    //                     <div class="col-6 d-grid">
+    //                         <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team under - 1.5">
+    //                             <div class="text-yellow prediction">Under 1.5</div>
+    //                             <div class="odds-value">9.56</div> 
+    //                         </button>
+    //                     </div>
+    //                 </div>
+
+    //                 <div class="row g-2 mb-2">
+    //                     <div class="col-6 d-grid">
+    //                         <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team over - 2.5">
+    //                             <div class="text-yellow prediction">Over 2.5</div>
+    //                             <div class="odds-value">1.10</div>
+    //                         </button>
+    //                     </div>
+    //                     <div class="col-6 d-grid">
+    //                         <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team under - 2.5">
+    //                             <div class="text-yellow prediction">Under 2.5</div>
+    //                             <div class="odds-value">9.56</div> 
+    //                         </button>
+    //                     </div>
+    //                 </div>
+    //             </div>
+    //         </div>
+    //         </div>
+    //     </div>
+    // `;
+
+    // const secondHalfAwayTeamGoals = document.createElement('div');
+    // secondHalfAwayTeamGoals.innerHTML = `
+    //     <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+    //         <div class="accordion-item">
+    //             <h2 class="accordion-header">
+    //                 <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#2nd-half-away-team-goals" aria-expanded="true" aria-controls="2nd-half-away-team-goals">
+    //                     <span class="px-2"><i class="fa-solid fa-info"></i></span>
+    //                     <span>Second half ${extras.away_team} goals</span>
+    //                 </button>
+    //             </h2>
+    //         <div id="2nd-half-away-team-goals" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+    //             <div data-market-type="2nd Half Away Team Goals" class="accordion-body bg-navy-blue p-1">
+                    
+    //                 <div class="row g-2 mb-2">
+    //                     <div class="col-6 d-grid">
+    //                         <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team over - 0.5">
+    //                             <div class="text-yellow prediction">Over 0.5</div>
+    //                             <div class="odds-value">1.10</div>
+    //                         </button>
+    //                     </div>
+    //                     <div class="col-6 d-grid">
+    //                         <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team under - 0.5">
+    //                             <div class="text-yellow prediction">Under 0.5</div>
+    //                             <div class="odds-value">9.56</div> 
+    //                         </button>
+    //                     </div>
+    //                 </div>
+
+    //                 <div class="row g-2 mb-2">
+    //                     <div class="col-6 d-grid">
+    //                         <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team over - 1.5">
+    //                             <div class="text-yellow prediction">Over 1.5</div>
+    //                             <div class="odds-value">1.10</div>
+    //                         </button>
+    //                     </div>
+    //                     <div class="col-6 d-grid">
+    //                         <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team under - 1.5">
+    //                             <div class="text-yellow prediction">Under 1.5</div>
+    //                             <div class="odds-value">9.56</div> 
+    //                         </button>
+    //                     </div>
+    //                 </div>
+
+    //                 <div class="row g-2 mb-2">
+    //                     <div class="col-6 d-grid">
+    //                         <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team over - 2.5">
+    //                             <div class="text-yellow prediction">Over 2.5</div>
+    //                             <div class="odds-value">1.10</div>
+    //                         </button>
+    //                     </div>
+    //                     <div class="col-6 d-grid">
+    //                         <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Home team under - 2.5">
+    //                             <div class="text-yellow prediction">Under 2.5</div>
+    //                             <div class="odds-value">9.56</div> 
+    //                         </button>
+    //                     </div>
+    //                 </div>
+    //             </div>
+    //         </div>
+    //         </div>
+    //     </div>
+    // `;
+
+    // const secondHalfCorrectScore = document.createElement('div');
+    // secondHalfCorrectScore.innerHTML = `
+    //     <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+    //         <div class="accordion-item">
+    //         <h2 class="accordion-header">
+    //             <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#secold-half-correct-score" aria-expanded="true" aria-controls="secold-half-correct-score">
+    //                 <span class="px-2"><i class="fa-solid fa-info"></i></span>
+    //                 <span>Second half correct score</span>
+    //             </button>
+    //         </h2>
+    //         <div id="secold-half-correct-score" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+    //             <div data-market-type="2nd Half Correct Score" class="accordion-body bg-navy-blue row g-1 p-1">
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
+    //                         <div class="text-yellow prediction">1:0</div>
+    //                         <div class="odds-value">6.80</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
+    //                         <div class="text-yellow prediction">0:0</div>
+    //                         <div class="odds-value">2.29</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
+    //                         <div class="text-yellow prediction">0:1</div>
+    //                         <div class="odds-value">2.01</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
+    //                         <div class="text-yellow prediction">2:0</div>
+    //                         <div class="odds-value">6.80</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
+    //                         <div class="text-yellow prediction">1:1</div>
+    //                         <div class="odds-value">2.29</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
+    //                         <div class="text-yellow prediction">0:2</div>
+    //                         <div class="odds-value">2.01</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
+    //                         <div class="text-yellow prediction">2:1</div>
+    //                         <div class="odds-value">6.80</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
+    //                         <div class="text-yellow prediction">2:2</div>
+    //                         <div class="odds-value">2.29</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
+    //                         <div class="text-yellow prediction">1:2</div>
+    //                         <div class="odds-value">2.01</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-12 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
+    //                         <div class="text-yellow prediction">Other</div>
+    //                         <div class="odds-value">6.80</div> 
+    //                     </button>
+    //                 </div>
+    //             </div>
+    //         </div>
+    //         </div>
+    //     </div>
+    // `;
+
+    if(hasMarket(odds, "Win To Nil")){
+        const WinToNill = document.createElement('div');
+        WinToNill.innerHTML = `
+            <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+                <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#win-to-nil" aria-expanded="true" aria-controls="win-to-nil">
+                        <span class="px-2"><i class="fa-solid fa-info"></i></span>
+                        <span>Win To Nil</span>
+                    </button>
+                </h2>
+                <div id="win-to-nil" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                    <div data-market-type="Win To Nil" class="accordion-body bg-navy-blue row g-1 p-1">
+                        <div class="col-6 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="1">
+                                <div class="text-yellow prediction">Home</div>
+                                <div class="odds-value">${displayOdd('Win To Nil', '1')}</div>
+                            </button>
+                        </div>
+                        <div class="col-6 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="2">
+                                <div class="text-yellow prediction">Away</div>
+                                <div class="odds-value">${displayOdd('Win To Nil', '2')}</div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        `;
+        allMarkets.appendChild(WinToNill);
     }
-    if(marketOdds['1X2']){
-        allMarkets.appendChild(ht1X2and0orU);
+
+
+    // const homeWinToNill = document.createElement('div');
+    // homeWinToNill.innerHTML = `
+    //     <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+    //         <div class="accordion-item">
+    //         <h2 class="accordion-header">
+    //             <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#home-win-to-nill" aria-expanded="true" aria-controls="home-win-to-nill">
+    //                 <span class="px-2"><i class="fa-solid fa-info"></i></span>
+    //                 <span>${extras.home_team} win to nill</span>
+    //             </button>
+    //         </h2>
+    //         <div id="home-win-to-nill" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+    //             <div data-market-type="Home Win To Nill" class="accordion-body bg-navy-blue row g-1 p-1">
+    //                 <div class="col-6 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Home Win">
+    //                         <div class="text-yellow prediction">Yes</div>
+    //                         <div class="odds-value">${getOdds('1X2', 'vg')}</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-6 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Away Win">
+    //                         <div class="text-yellow prediction">No</div>
+    //                         <div class="odds-value">${getOdds('1X2', 'no')}</div>
+    //                     </button>
+    //                 </div>
+    //             </div>
+    //         </div>
+    //         </div>
+    //     </div>
+    // `;
+
+    // const awayWinToNill = document.createElement('div');
+    // awayWinToNill.innerHTML = `
+    //     <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+    //         <div class="accordion-item">
+    //         <h2 class="accordion-header">
+    //             <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#away-win-to-nill" aria-expanded="true" aria-controls="away-win-to-nill">
+    //                 <span class="px-2"><i class="fa-solid fa-info"></i></span>
+    //                 <span>${extras.away_team} win to nill</span>
+    //             </button>
+    //         </h2>
+    //         <div id="away-win-to-nill" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+    //             <div data-market-type="Away Win To Nill" class="accordion-body bg-navy-blue row g-1 p-1">
+    //                 <div class="col-6 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Home Win">
+    //                         <div class="text-yellow prediction">Yes</div>
+    //                         <div class="odds-value">${getOdds('1X2', 'vg')}</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-6 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Away Win">
+    //                         <div class="text-yellow prediction">No</div>
+    //                         <div class="odds-value">${getOdds('1X2', 'no')}</div>
+    //                     </button>
+    //                 </div>
+    //             </div>
+    //         </div>
+    //         </div>
+    //     </div>
+    // `;
+
+
+     if(hasMarket(odds, "Odd/Even FT")){Half
+        const oddOrEvenft = document.createElement('div');
+        oddOrEvenft.innerHTML = `
+            <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+                <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#odd-or-evenft" aria-expanded="true" aria-controls="odd-or-evenft">
+                        <span>Odd/Even FT</span>
+                    </button>
+                </h2>
+                <div id="odd-or-evenft" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                    <div data-market-type="Odd/Even FT" class="accordion-body bg-navy-blue row g-1 p-1">
+                        <div class="col-6 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="odd">
+                                <div class="text-yellow prediction">Odd</div>
+                                <div class="odds-value">${displayOdd('Odd/Even FT', 'odd')}</div>
+                            </button>
+                        </div>
+                        <div class="col-6 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="even">
+                                <div class="text-yellow prediction">Even</div>
+                                <div class="odds-value">${displayOdd('Odd/Even FT', 'even')}</div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        `;
+        allMarkets.appendChild(oddOrEvenft);
     }
-    if(marketOdds['1X2']){
-        allMarkets.appendChild(ht1X2andBts);
+
+     
+    if(hasMarket(odds, "Odd/Even 1st Half")){
+        const oddOrEven1stHalf = document.createElement('div');
+        oddOrEven1stHalf.innerHTML = `
+            <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+                <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#odd-or-even1sthalf" aria-expanded="true" aria-controls="odd-or-even1sthalf">
+                        <span>Odd/Even 1st Half</span>
+                    </button>
+                </h2>
+                <div id="odd-or-even1sthalf" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                    <div data-market-type="Odd/Even 1st Half" class="accordion-body bg-navy-blue row g-1 p-1">
+                        <div class="col-6 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="odd">
+                                <div class="text-yellow prediction">Odd</div>
+                                <div class="odds-value">${displayOdd('Odd/Even 1st Half', 'odd')}</div>
+                            </button>
+                        </div>
+                        <div class="col-6 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="even">
+                                <div class="text-yellow prediction">Even</div>
+                                <div class="odds-value">${displayOdd('Odd/Even 1st Half', 'even')}</div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        `;
+        allMarkets.appendChild(oddOrEven1stHalf);
     }
-    if(marketOdds['1X2']){
-        allMarkets.appendChild(secondHalhDoubleChanceAndBts);
+
+
+    if(hasMarket(odds, "Odd/Even 2nd Half")){
+        const oddOrEven2ndHalf = document.createElement('div');
+        oddOrEven2ndHalf.innerHTML = `
+            <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+                <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#odd-or-even2ndhalf" aria-expanded="true" aria-controls="odd-or-even2ndhalf">
+                        <span>Odd/Even 2nd Half</span>
+                    </button>
+                </h2>
+                <div id="odd-or-even2ndhalf" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                    <div data-market-type="Odd/Even 2nd Half" class="accordion-body bg-navy-blue row g-1 p-1">
+                        <div class="col-6 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="odd">
+                                <div class="text-yellow prediction">Odd</div>
+                                <div class="odds-value">${displayOdd('Odd/Even 2nd Half', 'odd')}</div>
+                            </button>
+                        </div>
+                        <div class="col-6 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="even">
+                                <div class="text-yellow prediction">Even</div>
+                                <div class="odds-value">${displayOdd('Odd/Even 2nd Half', 'even')}</div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        `;
+        allMarkets.appendChild(oddOrEven2ndHalf);
     }
-    if(marketOdds['1X2']){
-        allMarkets.appendChild(secondHalf1X2and0orU);
-    }
-    if(marketOdds['1X2']){
-        allMarkets.appendChild(secondHalf1X2andBts);
-    }
-    if(marketOdds['1X2']){
-        allMarkets.appendChild(highestScoringHalfHomeTeam);
-    }
-    if(marketOdds['1X2']){
-        allMarkets.appendChild(highestScoringHalfAwayTeam);
-    }
-    if(marketOdds['1X2']){
-        allMarkets.appendChild(firstHalfTotalGoals);
-    }
-    if(marketOdds['1X2']){
-        allMarkets.appendChild(secondHalfTotalGoals);
-    }
-    if(marketOdds['1X2']){
-        allMarkets.appendChild(secondHalfHomeTeamGoals);
-    }
-    if(marketOdds['1X2']){
-        allMarkets.appendChild(secondHalfAwayTeamGoals);
-    }
-    if(marketOdds['1X2']){
-        allMarkets.appendChild(secondHalfCorrectScore);
-    }
-    if(marketOdds['1X2']){
-        allMarkets.appendChild(homeWinToNill);
-    }
-    if(marketOdds['1X2']){
-        allMarkets.appendChild(awayWinToNill);
-    }
-    if(marketOdds['1X2']){
-        allMarkets.appendChild(oddOrOddHomeTeam);
-    }
-    if(marketOdds['1X2']){
-        allMarkets.appendChild(oddOrOddAwayTeam);
-    }
-    if(marketOdds['1X2']){
+
+    // const oddOrEvenAwayTeam = document.createElement('div');
+    // oddOrEvenAwayTeam.innerHTML = `
+    //     <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+    //         <div class="accordion-item">
+    //         <h2 class="accordion-header">
+    //             <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#oddOrOddAwayTeam" aria-expanded="true" aria-controls="oddOrOddAwayTeam">
+    //                 <span class="px-2"><i class="fa-solid fa-info"></i></span>
+    //                 <span>${extras.away_team} total goals odd/even</span>
+    //             </button>
+    //         </h2>
+    //         <div id="oddOrOddAwayTeam" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+    //             <div data-market-type="Away Team Total Goals Odd/Even" class="accordion-body bg-navy-blue row g-1 p-1">
+    //                 <div class="col-6 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Home Win">
+    //                         <div class="text-yellow prediction">Odd</div>
+    //                         <div class="odds-value">${getOdds('1X2', 'vg')}</div>
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-6 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="FT - Away Win">
+    //                         <div class="text-yellow prediction">Even</div>
+    //                         <div class="odds-value">${getOdds('1X2', 'away')}</div>
+    //                     </button>
+    //                 </div>
+    //             </div>
+    //         </div>
+    //         </div>
+    //     </div>
+    // `;
+
+
+    if(hasMarket(odds, "Exact Total Goals")){
+        const exactTotalGoals = document.createElement('div');
+        exactTotalGoals.innerHTML = `
+            <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+                <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#exact-total-goals" aria-expanded="true" aria-controls="exact-total-goals">
+                        <span>Exact Total Goals</span>
+                    </button>
+                </h2>
+                <div id="exact-total-goals" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                    <div data-market-type="Exact Total Goals" class="accordion-body bg-navy-blue row g-1 p-1">
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="0">
+                                <div class="text-yellow prediction">0</div>
+                                <div class="odds-value">${displayOdd('Exact Total Goals', '0')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="1">
+                                <div class="text-yellow prediction">1</div>
+                                <div class="odds-value">${displayOdd('Exact Total Goals', '1')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="2">
+                                <div class="text-yellow prediction">2</div>
+                                <div class="odds-value">${displayOdd('Exact Total Goals', '2')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="3">
+                                <div class="text-yellow prediction">3</div>
+                                <div class="odds-value">${displayOdd('Exact Total Goals', '3')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="4">
+                                <div class="text-yellow prediction">4</div>
+                                <div class="odds-value">${displayOdd('Exact Total Goals', '4')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="5">
+                                <div class="text-yellow prediction">5</div>
+                                <div class="odds-value">${displayOdd('Exact Total Goals', '5')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="6">
+                                <div class="text-yellow prediction">6</div>
+                                <div class="odds-value">${displayOdd('Exact Total Goals', '6')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="7+">
+                                <div class="text-yellow prediction">7+</div>
+                                <div class="odds-value">${displayOdd('Exact Total Goals', '7+')}</div> 
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        `;
         allMarkets.appendChild(exactTotalGoals);
     }
-    if(marketOdds['1X2']){
-        allMarkets.appendChild(btsFirstSecondhalf);
+
+    // const btsFirstSecondhalf = document.createElement('div');
+    // btsFirstSecondhalf.innerHTML = `
+    //     <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+    //         <div class="accordion-item">
+    //         <h2 class="accordion-header">
+    //             <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#bts-1st-2nd-half" aria-expanded="true" aria-controls="bts-1st-2nd-half">
+    //                 <span class="px-2"><i class="fa-solid fa-info"></i></span>
+    //                 <span>Both teams to score 1st half/2nd half</span>
+    //             </button>
+    //         </h2>
+    //         <div id="bts-1st-2nd-half" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+    //             <div data-market-type="BTS 1st/2nd half" class="accordion-body bg-navy-blue row g-1 p-1">
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
+    //                         <div class="text-yellow prediction">Y/Y</div>
+    //                         <div class="odds-value">6.80</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
+    //                         <div class="text-yellow prediction">Y/N</div>
+    //                         <div class="odds-value">2.29</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-4 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
+    //                         <div class="text-yellow prediction">N/Y</div>
+    //                         <div class="odds-value">2.01</div> 
+    //                     </button>
+    //                 </div>
+    //                 <div class="col-12 d-grid">
+    //                     <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
+    //                         <div class="text-yellow prediction">N/N</div>
+    //                         <div class="odds-value">6.80</div> 
+    //                     </button>
+    //                 </div>
+    //             </div>
+    //         </div>
+    //         </div>
+    //     </div>
+    // `;
+
+    // const  secondHalf1X2andBts = document.createElement('div');
+    // secondHalf1X2andBts.innerHTML = `
+    //     <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+    //     <div class="accordion-item">
+    //     <h2 class="accordion-header">
+    //         <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#second-half-1X2-&-bts" aria-expanded="true" aria-controls="second-half-1X2-&-bts">
+    //             <span class="px-2"><i class="fa-solid fa-info"></i></span>
+    //             <span>Second half 1X2 & bts</span>
+    //         </button>
+    //     </h2>
+    //     <div id="second-half-1X2-&-bts" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+    //         <div data-market-type="Second Half 1X2 & BTS" class="accordion-body bg-navy-blue row g-1 p-1">
+    //             <div class="col-4 d-grid">
+    //                 <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
+    //                     <div class="text-yellow prediction text-small" style="padding-top: 1px;">1 & Y</div>
+    //                     <div class="odds-value">2.01</div> 
+    //                 </button>
+    //             </div>
+    //             <div class="col-4 d-grid">
+    //                 <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
+    //                     <div class="text-yellow prediction text-small" style="padding-top: 1px;">X & Y</div>
+    //                     <div class="odds-value">6.80</div> 
+    //                 </button>
+    //             </div>
+    //             <div class="col-4 d-grid">
+    //                 <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
+    //                     <div class="text-yellow prediction text-small" style="padding-top: 1px;">2 & Y</div>
+    //                     <div class="odds-value">2.29</div> 
+    //                 </button>
+    //             </div>
+    //             <div class="col-4 d-grid">
+    //                 <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Home">
+    //                     <div class="text-yellow prediction text-small" style="padding-top: 1px;">1 & N</div>
+    //                     <div class="odds-value">2.01</div> 
+    //                 </button>
+    //             </div>
+    //             <div class="col-4 d-grid">
+    //                 <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - None">
+    //                     <div class="text-yellow prediction text-small" style="padding-top: 1px;">X & N</div>
+    //                     <div class="odds-value">6.80</div> 
+    //                 </button>
+    //             </div>
+    //             <div class="col-4 d-grid">
+    //                 <button class="odds-btn ps-2 pe-2 d-flex justify-content-between more-odds-btns" data-prediction="Team to score first - Away">
+    //                     <div class="text-yellow prediction text-small" style="padding-top: 1px;">2 & N</div>
+    //                     <div class="odds-value">2.29</div> 
+    //                 </button>
+    //             </div>
+    //         </div>
+    //     </div>
+    //     </div>
+    // </div>
+    // `;
+
+    if(hasMarket(odds, "Halftime/Fulltime")){
+        const halftimeFulltime = document.createElement('div'); 
+        halftimeFulltime.innerHTML = `
+            <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
+                <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button fw-500" type="button" data-bs-toggle="collapse" data-bs-target="#Halftime/Fulltime" aria-expanded="true" aria-controls="Halftime/Fulltime">
+                        <span>Halftime/Fulltime</span>
+                    </button>
+                </h2>
+                <div id="Halftime/Fulltime" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                    <div data-market-type="Halftime/Fulltime" class="accordion-body bg-navy-blue row g-1 p-1">
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="1/1">
+                                <div class="text-yellow prediction">1/1</div>
+                                <div class="odds-value">${displayOdd('Halftime/Fulltime', '1/1')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="X/1">
+                                <div class="text-yellow prediction">X/1</div>
+                                <div class="odds-value">${displayOdd('Halftime/Fulltime', 'X/1')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="2/1">
+                                <div class="text-yellow prediction">2/1</div>
+                                <div class="odds-value">${displayOdd('Halftime/Fulltime', '2/1')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="1/X">
+                                <div class="text-yellow prediction">1/X</div>
+                                <div class="odds-value">${displayOdd('Halftime/Fulltime', '1/X')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="X/X">
+                                <div class="text-yellow prediction">X/X</div>
+                                <div class="odds-value">${displayOdd('Halftime/Fulltime', 'X/X')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="2/X">
+                                <div class="text-yellow prediction">2/X</div>
+                                <div class="odds-value">${displayOdd('Halftime/Fulltime', '2/X')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="1/2">
+                                <div class="text-yellow prediction">1/2</div>
+                                <div class="odds-value">${displayOdd('Halftime/Fulltime', '1/2')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="X/2">
+                                <div class="text-yellow prediction">X/2</div>
+                                <div class="odds-value">${displayOdd('Halftime/Fulltime', 'X/2')}</div> 
+                            </button>
+                        </div>
+                        <div class="col-4 d-grid">
+                            <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="2/2">
+                                <div class="text-yellow prediction">2/2</div>
+                                <div class="odds-value">${displayOdd('Halftime/Fulltime', '2/2')}</div> 
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        `;
+           allMarkets.appendChild(halftimeFulltime);
     }
-    if(marketOdds['1X2']){
-        allMarkets.appendChild(halftimeFulltime);
-    }   
 }
  
 
 function basketballMoreOddsInnerHTML(data){
-    console.log(data)
-    const { match_id, country , league, venue,  date, time, extras , odds} = data;
-    let container = document.getElementById("all-odds-page");
-
-    // Extract relevant odds
-    let marketOdds = {};
-    odds.forEach(market => {
-        marketOdds[market.market_type] = market.odds;
-    });
-
-    // Helper function to safely get odds values
-    function getOdds(market, selection) {
-        return marketOdds[market] && marketOdds[market][selection] ? marketOdds[market][selection] : "N/A";
-    }
-
-    container.innerHTML = `
-        <h4 class="text-center">BASKETBALL MORE ODDS PAGE</h4>
-        <p class="text-center">${extras.home_team} vs ${extras.away_team}</p>
-        `;
+      
 }
 
 
@@ -5527,122 +5725,123 @@ function footballOddsDropdowns(data, containers){
 }
 
 
-function showLeaguesModal() {
-    // Remove existing modal if it exists
-    const existingModal = document.getElementById('leaguesModal');
-    if (existingModal) {
-        existingModal.remove();
-        document.querySelector('.modal-backdrop')?.remove();
-    }
-   
-    const modalHTML = document.createElement('span');
 
-    if(Sportleagues){
-        // const SportleaguesContainer = document.getElementById('sport-leagues-container');
-        let spt = `${currentSport}`;
-        const capitalizedSport = spt.charAt(0).toUpperCase() + spt.slice(1);
+function showLeaguesResponsive() {
+    const isSmallScreen = window.innerWidth < 992; // Bootstrap lg breakpoint
+    const containerId = 'countries-leagues-cont';
 
-        const total_sport_games = Sportleagues.total_games;
-        modalHTML.innerHTML = `<div class="modal fade" id="leaguesModal" tabindex="-1" aria-labelledby="leaguesModalLabel" aria-hidden="true">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <div class="modal-header text-black">
-                                            <h5 class="modal-title" id="leaguesModalLabel">Select leagues</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            <ul id="sport-leagues-games-list" class="modal-body my-accordion list-unstyled px-0"></ul>
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                            <button type="button" class="btn btn-primary" id="applyLeaguesBtn">Apply</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>`;
+    // Remove existing container if exists
+    const existing = document.getElementById(containerId);
+    if (existing) existing.remove();
 
+    const container = document.createElement('div');
+    container.id = containerId;
+    container.style.maxHeight = '80vh';
+    container.style.overflowY = 'auto';
+    container.classList.add('py-1', 'border-aqua');
 
-        const SportleaguesGamesList = modalHTML.querySelector(`#sport-leagues-games-list`);
+    if (Countries) {
+        const CountriesGamesList = document.createElement('ul');
+        CountriesGamesList.className = 'list-unstyled my-accordion';
 
-        for(const country in Sportleagues.countries){
-            const total_country_games = Sportleagues.countries[country].total_games;
+        for (const countryKey in Countries) {
+            const country = Countries[countryKey]; 
+            const {leagues, name, total_games, flag} = country
+
             const countryElement = document.createElement('li');
-            countryElement.className = 'sport-league text-truncate';
+            countryElement.className = 'sport-league mb-1 text-truncate';
             countryElement.innerHTML = `
                 <div class="accordion accordion-flush" id="accordionExample">
                     <div class="accordion-item custom-accordion">
                         <h2 class="accordion-header">
-                            <button class="accordion-button text-small" type="button" data-bs-toggle="collapse" data-bs-target="#${country}-leagues-list" aria-expanded="true" aria-controls="${country}-leagues-list">
-                                <div class="col-9 text-truncate"><span class="me-1">⭕</span>${country}</div>
-                                <div class="col-2 text-end">${total_country_games}</div>
+                            <button class="accordion-button text-small" type="button" 
+                                    data-bs-toggle="collapse" 
+                                    data-bs-target="#${name}-leagues-list" 
+                                    aria-expanded="true" 
+                                    aria-controls="${name}-leagues-list">
+                                <div class="col-9 text-truncate">
+                                    <span class="me-1">
+                                        <img src="${flag}" class="logo" alt="${name} flag" />
+                                    </span>${name}
+                                </div>
+                                <div class="col-2 text-end">${total_games}</div>
                             </button>
                         </h2>
-                        <ul id="${country}-leagues-list" class="accordion-collapse collapse list-unstyled" data-bs-parent="#accordionExample"></ul>
+                        <ul id="${name}-leagues-list" 
+                            class="accordion-collapse collapse list-unstyled" 
+                            data-bs-parent="#accordionExample">
+                        </ul>
                     </div>
-                    <hr class=" my-0">
+                    <hr class="my-0">
                 </div>`; 
 
-            const CountryLeagues = Sportleagues.countries[country].leagues;
-            const CountryLeaguesList = countryElement.querySelector(`#${country}-leagues-list`)
+            const countryLeaguesList = countryElement.querySelector('ul');
 
-            if(Array.isArray(CountryLeagues)){
-                CountryLeagues.forEach(League => {
-                    const {id, league, game_count} = League;
-                    const leagueElement = document.createElement('li');
-                    leagueElement.innerHTML = `
-                        <li class="sub-league row gx-0">
-                            <span class="col-10 text-truncate">
-                                <div class="row g-0 form-check">
-                                    <input data-league="${league}" data-country="${country}" class="form-check-input ms-1" type="checkbox" id="league-${id}">
-                                    <label class="form-check-label" for="league-${id}">${league}</label>
-                                </div>
-                            </span>
-                            <span class="col-2 text-start text-small">${game_count}</span>
-                        </li>`;
+            leagues.forEach(league => {       
+                const { id, name: league_name, game_count } = league;
+                const leagueElement = document.createElement('li');
+                leagueElement.className = 'sub-league row gx-0 align-items-center mb-1';
+                leagueElement.innerHTML = `
+                    <div class="col-10">
+                        <div class="form-check">
+                            <input data-league="${league_name}" data-country="${league_name}" 
+                                    class="form-check-input ms-1" 
+                                    type="checkbox" id="league-${id}">
+                            <label class="form-check-label" for="league-${id}">${league_name}</label>
+                        </div>
+                    </div>
+                    <div class="col-2 text-end text-small">${game_count}</div>
+                `;
+                countryLeaguesList.appendChild(leagueElement);
+            });
 
-                    CountryLeaguesList.appendChild(leagueElement);   
-                })
-            }
-            
-            SportleaguesGamesList.appendChild(countryElement);
-
-
-    }
-    }
-    
-    
-    // Add modal to body
-    document.body.appendChild(modalHTML);
-    
-    // Initialize modal
-    const modal = new bootstrap.Modal(document.getElementById('leaguesModal'), {
-        backdrop: true,
-        keyboard: true
-    });
-    
-    // Show modal
-    modal.show();
-    
-    // Handle apply button
-    document.getElementById('applyLeaguesBtn').addEventListener('click', function() {
-        const leagueIds = [];
-        document.querySelectorAll('#leaguesModal .form-check-input:checked').forEach(checkbox => {
-            let leagueId = Number( checkbox.id.split('-')[1]);
-            leagueIds.push(leagueId);
-        });
-
-        fetchGamesByLeagues(leagueIds);
-       
-        modal.hide();
-    });
-    
-    // Manually handle outside clicks if still not working
-    document.getElementById('leaguesModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            modal.hide();
+            CountriesGamesList.appendChild(countryElement);
         }
-    });
+
+        container.appendChild(CountriesGamesList);
+    }
+
+    // Append to body for small screens or a sidebar div for large screens
+    if (isSmallScreen) {
+        container.classList.add('modal', 'fade');
+        container.tabIndex = -1;
+
+        const modalDialog = document.createElement('div');
+        modalDialog.className = 'modal-dialog';
+        modalDialog.appendChild(container);
+
+        document.body.appendChild(modalDialog);
+
+        const bsModal = new bootstrap.Modal(container, { backdrop: true, keyboard: true });
+        bsModal.show();
+
+        // Apply button
+        const applyBtn = document.createElement('button');
+        applyBtn.className = 'btn btn-primary mt-2';
+        applyBtn.textContent = 'Apply';
+        applyBtn.addEventListener('click', () => {
+            const leagueIds = [];
+            container.querySelectorAll('.form-check-input:checked').forEach(checkbox => {
+                leagueIds.push(Number(checkbox.id.split('-')[1]));
+            });
+            fetchGamesByLeagues(leagueIds);
+            bsModal.hide();
+        });
+        container.appendChild(applyBtn);
+
+    } else {
+        // For large screens, append to a sidebar div
+        const sidebar = document.getElementById('countries-listed-per-sport');
+        if (sidebar) {
+            sidebar.innerHTML = ''; // clear previous
+            sidebar.appendChild(container);
+        } else {
+            document.body.appendChild(container); // fallback
+        }
+    }
 }
+
+
 
 
 function toggleAccordion(accordionId, arrowId){

@@ -948,14 +948,15 @@ async function fetchGamesBySport(sport, page = 1) {
             topLeaguesAccordionBody.innerHTML = `<div class="text-center my-1">No top leagues for ${sport}.</div>`;
         } else if (topLeagues.length > 0 && topLeaguesAccordionBody) {
             topLeagues.forEach(topLig => {
+                const {id, name, country, flag} = topLig
                 const topLigItem = document.createElement('a');
                 topLigItem.className = 'col-4 col-sm-3 text-decoration-none top-league-item m-1';
                 topLigItem.innerHTML = `
-                    <div class="card" data-league-id="${topLig.id}" data-country="${topLig.country}" data-league="${topLig.league}">
+                    <div class="card" data-league-id="${id}" data-country="${country}" data-league="${name}">
                         <div class="card-body row g-0 d-flex justify-content-between align-items-center px-2 py-0">
                             <div class="col-11">
-                                <div class="card-titte text-truncate text-small fw-bold" style="margin-bottom: -5px;">${topLig.league}</div>
-                                <div class="card-text text-truncate text-small">🤣 ${topLig.country}</div>
+                                <div class="card-titte text-truncate text-small fw-bold" style="margin-bottom: -5px;">${name}</div>
+                                <div class="card-text text-truncate text-small"><img src="${flag}" class="logo" alt="flag" /> ${country}</div>
                             </div>
                             <div class="col-1 h3 text-center"><strong><code>&gt;</code></strong></div>
                         </div>
@@ -1128,69 +1129,6 @@ function updateLiveOddsOnPage(matchPayload) {
     Object.keys(newOdds).forEach(marketType => {
         const oddsContainers = matchEl.querySelectorAll(`[data-market-type="${marketType}"]`);
         if (!oddsContainers) return;
-
-        // oddsContainers.forEach(cont => {
-        //     cont.querySelectorAll(".odds-btn").forEach(btn => {
-
-        //         const prediction = btn.dataset.prediction; // e.g., 'home', 'draw', 'away'
-        //         const oddsValue = btn.querySelector('.odds-value');
-        //         const newInfo = newOdds[marketType]?.[prediction];
-        //         if(oddsValue){
-        //             const oldInfo = matchPayload?.odds?.[marketType]?.[prediction];
-        //             if (newInfo) {
-        //                 // If odd changed, flash red/green
-        //                 if (oldInfo && oldInfo.odd !== newInfo.odd) {
-        //                     if (newInfo.odd > oldInfo.odd) {
-        //                         btn.classList.add("flash-green");
-        //                     } else {
-        //                         btn.classList.add("flash-red");
-        //                     }
-        //                     setTimeout(() => {
-        //                         btn.classList.remove("flash-green", "flash-red");
-        //                     }, 1000);
-        //                 }
-
-        //                 // Update text & state
-        //                 oddsValue.innerText = newInfo.odd;
-        //                 if (newInfo.suspended) {
-        //                     oddsValue.innerText = '-';
-        //                     btn.disabled = true;
-        //                     btn.classList.add("text-muted");
-        //                 } else {
-        //                     btn.disabled = false;
-        //                     btn.classList.remove("text-muted");
-        //                 }
-        //             }
-        //         }else{
-        //             const oldInfo = matchPayload?.odds?.[marketType]?.[prediction];
-        //             if (newInfo) {
-        //                 // If odd changed, flash red/green
-        //                 if (oldInfo && oldInfo.odd !== newInfo.odd) {
-        //                     if (newInfo.odd > oldInfo.odd) {
-        //                         btn.classList.add("flash-green");
-        //                     } else {
-        //                         btn.classList.add("flash-red");
-        //                     }
-        //                     setTimeout(() => {
-        //                         btn.classList.remove("flash-green", "flash-red");
-        //                     }, 1000);
-        //                 }
-
-        //                 // Update text & state
-        //                 btn.innerText = newInfo.odd;
-        //                 if (newInfo.suspended) {
-        //                     btn.innerText = '-';
-        //                     btn.disabled = true;
-        //                     btn.classList.add("text-muted");
-        //                 } else {
-        //                     btn.disabled = false;
-        //                     btn.classList.remove("text-muted");
-        //                 }
-        //             }
-        //         }
-
-        //     });
-        // });
     
         oddsContainers.forEach(cont => {
             cont.querySelectorAll(".odds-btn").forEach(btn => {
@@ -2037,7 +1975,7 @@ function footballMatchElementInnerHTML(game, sport, container){
     let date = dateObj.toLocaleDateString("en-GB");
     let time = dateObj.toLocaleTimeString("en-GB", {hour: "2-digit", minute: "2-digit"});
 
-    
+    console.log(game)
     let marketsCount = Object.keys(odds).length;  // number of markets
     // --- Core Helpers ---
     // Safely get full info object for a market + selection
@@ -5800,7 +5738,7 @@ function showLeaguesResponsive() {
     container.id = containerId;
     container.style.maxHeight = '80vh';
     container.style.overflowY = 'auto';
-    container.classList.add('p-1', 'border-aqua');
+    container.classList.add('py-1', 'border-aqua');
 
     if (Countries) {
         const CountriesGamesList = document.createElement('ul');
@@ -5811,7 +5749,7 @@ function showLeaguesResponsive() {
             const {leagues, name, total_games, flag} = country
 
             const countryElement = document.createElement('li');
-            countryElement.className = 'sport-league mb-2 text-truncate';
+            countryElement.className = 'sport-league mb-1 text-truncate';
             countryElement.innerHTML = `
                 <div class="accordion accordion-flush" id="accordionExample">
                     <div class="accordion-item custom-accordion">
@@ -5839,8 +5777,7 @@ function showLeaguesResponsive() {
 
             const countryLeaguesList = countryElement.querySelector('ul');
 
-            leagues.forEach(league => {
-                
+            leagues.forEach(league => {       
                 const { id, name: league_name, game_count } = league;
                 const leagueElement = document.createElement('li');
                 leagueElement.className = 'sub-league row gx-0 align-items-center mb-1';
@@ -5860,7 +5797,6 @@ function showLeaguesResponsive() {
 
             CountriesGamesList.appendChild(countryElement);
         }
-
 
         container.appendChild(CountriesGamesList);
     }
@@ -5895,7 +5831,7 @@ function showLeaguesResponsive() {
 
     } else {
         // For large screens, append to a sidebar div
-        const sidebar = document.getElementById('sport-leagues-container');
+        const sidebar = document.getElementById('countries-listed-per-sport');
         if (sidebar) {
             sidebar.innerHTML = ''; // clear previous
             sidebar.appendChild(container);
