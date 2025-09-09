@@ -1,6 +1,4 @@
-body{
-    color: whitesmoke;
-} 
+
 .top-nav-item-active{
     background-color: aqua;
     font-weight: bold;
@@ -163,6 +161,7 @@ body{
     background-clip: text;
     color: transparent;
 }
+
 .text-whitesmoke{
     color: whitesmoke;
 }
@@ -359,31 +358,58 @@ body{
     display: none;
 }
 
+
 /* Increase specificity if needed */
 #wg-api-football-games {
     --color-green: #1E90FF /* Ensure this targets the widget specifically */
 }
 
+.sticky-top {
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+}
 
+.sticky-bottom {
+  position: sticky;
+  bottom: 0;
+  z-index: 1030;
+}
+
+body{
+    color: whitesmoke;
+    padding-left: 0px;
+    margin-left: 0px;
+} 
+footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1030; /* keep above content */
+}
+main {
+    padding-bottom: 100px; 
+}
 @media (max-width: 700px){
     .top-nav-item{
         width: 4em;
     }
 }
 
-@media (max-width: 900px){
+/* @media (max-width: 900px){
     .w-31{
         padding: 0 .8em;
     }
     .container-fluid{
         margin-left: none;
         margin-right: none;
-        padding: 5px;
+        padding: 5px; 
     }
 }
 @media (min-width: 1200px){
     .w-31{
         padding: 0 1.1em;
     }
-}
+} */
 

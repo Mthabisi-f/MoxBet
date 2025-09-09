@@ -617,7 +617,7 @@ def sports(request):
 
 def more_odds(request):
     context = {}
-    return render(request, 'Moxbet/more-odds.html', context)
+    return render(request, 'more-odds.html', context)
 
 
 def registerPage(request):
@@ -805,7 +805,7 @@ def check_ticket(request):
         except:
             messages.error(request, 'Failed to check ticket')
     
-    return render(request, 'Moxbet/check_ticket.html', {'ticket': ticket})
+    return render(request, 'check_ticket.html', {'ticket': ticket})
         
 
 
@@ -852,4 +852,14 @@ def mybets(request):
 def betslip(request):
     context = {}
     return render(request, 'betslip.html', context)
+
+
+def search(request):
+    context = {}
+    return render(request, 'search.html', context)
+
+
+def profile(request):
+    context = {}
+    return render(request, 'profile.html', context)
 

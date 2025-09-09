@@ -1781,6 +1781,7 @@ async function fetchMoreOdds() {
     }
 }
 
+
 // Run the function when the page loads
 fetchMoreOdds();
 
@@ -1962,7 +1963,6 @@ function toggleDisplayNone(container_id){
        cont.classList.toggle('d-none');
     })
 }
-
 
 
 
@@ -5797,8 +5797,13 @@ function showLeaguesResponsive() {
 
             CountriesGamesList.appendChild(countryElement);
         }
-
-        container.appendChild(CountriesGamesList);
+        const heading = document.createElement('div');
+        heading.HTML = ` <div class="text-yellow text-center">Select leagues</div>`;
+        container.appendChild(heading);
+        const cont = document.createElement('div');
+        cont.className = ('boarder-aqua px-0');
+        cont.appendChild(CountriesGamesList);
+        container.appendChild(cont);
     }
 
     // Append to body for small screens or a sidebar div for large screens
@@ -5817,7 +5822,7 @@ function showLeaguesResponsive() {
 
         // Apply button
         const applyBtn = document.createElement('button');
-        applyBtn.className = 'btn btn-primary mt-2';
+        applyBtn.className = 'btn btn-yellow mt-2 mx-auto text-black';
         applyBtn.textContent = 'Apply';
         applyBtn.addEventListener('click', () => {
             const leagueIds = [];
@@ -5834,6 +5839,18 @@ function showLeaguesResponsive() {
         const sidebar = document.getElementById('countries-listed-per-sport');
         if (sidebar) {
             sidebar.innerHTML = ''; // clear previous
+            // Apply button
+            const applyBtn = document.createElement('button');
+            applyBtn.className = 'btn btn-yellow mt-2 mx-auto text-black';
+            applyBtn.textContent = 'Apply';
+            applyBtn.addEventListener('click', () => {
+                const leagueIds = [];
+                container.querySelectorAll('.form-check-input:checked').forEach(checkbox => {
+                    leagueIds.push(Number(checkbox.id.split('-')[1]));
+                });
+                fetchGamesByLeagues(leagueIds);
+            });
+            container.appendChild(applyBtn);
             sidebar.appendChild(container);
         } else {
             document.body.appendChild(container); // fallback

@@ -1,36 +1,83 @@
-<footer class="bg-dark-shade position-absolute bottom-0 d-md-none">
-    <div>
-        <div class="row g-0">
-            <div class="col-12 d-flex justify-content-between py-2 text-white ">
-                <div class="d-block text-center">
-                    <div><i class="fa-solid fa-home"></i></div>
-                    <div>Home</div>
-                </div>
-
-                <div class="d-block text-center">
-                    <div><i class="fa-solid fa-home"></i></div>
-                    <div>Live (27)</div>
-                </div>
-
-                <a href="{% url 'mybets' %}" class="text-decoration-none">
-                    <div class="d-block text-center">
-                        <div class="m-1"><span class="p-3 rounded-circle bg-warning text-black">10</span></div>
-                        
-                    </div>
-                </a>
-
-                <div class="d-block text-center">
-                    <a href="{% url 'betslip' %}" class="text-decoration-none d-block">
-                        <div><i class="fa-solid fa-home"></i></div>
-                        <div>MY Bets</div>
-                    </a>
-                </div>
-
-                <div class="d-block text-center">
-                    <div><i class="fa-regular fa-user"></i></div>
-                    <div class="text-whitesmoke">Profile</div>
-                </div>
-            </div>
+<div class="row g-2">
+       
+    <div class="col-6 col-lg-3 text-center">
+        <div class="fw-bold text-yellow">Security and Privacy</div>
+        <div class="list-unstyled">
+            <li>Privacy Policy</li>
+            <li>Terms and Conditions</li>
+            <li>Live betting</li>
+            <li>Results</li>
         </div>
     </div>
+    <div class="col-6 col-lg-3 text-center">
+        <div class="row">
+            <div class="fw-bold text-yellow text-center mb-2">Follow us on</div>
+            <i class="col-3 text-center fs-2 fa-brands fa-whatsapp p-2 text-success"></i>
+            <i class="col-3 text-center fs-2 fa-solid p-2 fa-brands fa-instagram text-danger"></i>
+            <i class="col-3 text-center fs-2 p-2 rounded-circle fa-brands fa-twitter text-primary"></i>
+            <i class="col-3 text-center fs-2 p-2 fa-brands fa-facebook text-primary"></i>
+            <div class="col-12 text-center copyright-year"></div>
+        </div>
+    </div>
+    
+</div>
+
+
+<footer>
+
+   <div class="row g-0 d-md-flex d-lg-none bg-navy-blue sticky-bottom text-center fixed-bottom">
+        <div class="col-12 d-flex justify-content-between py-2 text-white w-100">
+
+            <!-- Home -->
+            <a href="{% url 'sports' %}" class="text-decoration-none text-center flex-fill text-aqua">
+                <div><i class="fa-solid fa-home"></i></div>
+                <div>Home</div>
+            </a>
+
+            <!-- Search -->
+            <a href="{% url 'search' %}" class="text-decoration-none text-center flex-fill text-aqua">
+                <div><i class="fa-solid fa-search" ></i></div>
+                <div>Search</div>
+            </a>
+
+            <!-- Betslip (center with badge) -->
+            <a href="{% url 'betslip' %}" class="text-decoration-none text-center flex-fill position-relative text-aqua">
+                <div class="position-relative d-inline-block text-aqua">
+                    <i class="fa-solid fa-receipt fa-lg" ></i>
+                    <span id="numberOfSelectedGames" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark">
+                        0
+                    </span>
+                </div>
+                <div>Betslip</div>
+            </a>
+
+            <!-- My Bets -->
+            {% if user.is_authenticated %}
+            <a href="{% url 'mybets' %}" class="text-decoration-none text-center flex-fill text-aqua">
+                <div><i class="fa-solid fa-clipboard-list"></i></div>
+                <div>My Bets</div>
+            </a>
+            {% else %}
+            <a href="{% url 'live' %}" class="text-decoration-none text-center flex-fill text-aqua">
+                <div><i class="fa-solid fa-clipboard-list"></i></div>
+                <div>Live</div>
+            </a>
+            {% endif %}
+
+            <!-- Profile -->
+             {% if user.is_authenticated %}
+            <a href="{% url 'profile' %}" class="text-decoration-none text-center flex-fill text-aqua">
+                <div><i class="fa-regular fa-user"></i></div>
+                <div>Profile</div>
+            </a>
+            {% else %}
+            <a href="{% url 'login' %}" class="text-decoration-none text-center flex-fill text-aqua">
+                <div><i class="fa-solid fa-clipboard-list"></i></div>
+                <div>Login</div>
+            </a>
+            {% endif %}
+
+        </div>
+    </div>
+
 </footer>

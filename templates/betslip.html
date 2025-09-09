@@ -1,41 +1,39 @@
-<div class="betslip-container max-width-600 border-aqua">
-    
-    <div>
-        <div id="betslip-no-games-selected">
+<div class="betslip-container max-width-600">
+    <div id="betslip-no-games-selected">
 
-            <div class="container-fluid">
-                <div class="text-center text-yellow">Bookings</div>
-            </div>
-                
-            <form id="get-booking" action="{% url 'get_booking' %}" method="POST" class="form-group text-center">
-                {% csrf_token %}
-                <div class="row justify-content-center">
-                    <div class="col">
-                        <div class="">
-                            <div class="input-group">
-                                <span class="input-group-text rounded-0 border-aqua fw-bold px-1">B</span>
-                                <input type="number" step="1" min="1" name="Bcode" placeholder="Enter booking code here" aria-label="Bcode" aria-describedby="Bcode" class="form-control rounded-0 border-aqua">
-                                <button class="btn btn-yellow px-3 text-small rounded-0 border-aqua" type="submit" id="Bcode"><i class="bi bi-search"></i>Load</button>
-                            </div>
+        <div class="container-fluid">
+            <div class="text-center text-yellow">Bookings</div>
+        </div>
+            
+        <form id="get-booking" action="{% url 'get_booking' %}" method="POST" class="form-group text-center">
+            {% csrf_token %}
+            <div class="row justify-content-center">
+                <div class="col">
+                    <div class="">
+                        <div class="input-group">
+                            <span class="input-group-text rounded-0 border-aqua fw-bold px-1">B</span>
+                            <input type="number" step="1" min="1" name="Bcode" placeholder="Enter booking code here" aria-label="Bcode" aria-describedby="Bcode" class="form-control rounded-0 border-aqua">
+                            <button class="btn btn-yellow px-3 text-small rounded-0 border-aqua" type="submit" id="Bcode"><i class="bi bi-search"></i>Load</button>
                         </div>
                     </div>
-            </form>
+                </div>
+        </form>
 
-            <div class="errors text-small text-danger text-center">
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            </div>
-            
+        <div class="errors text-small text-danger text-center">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
         </div>
+        
     </div>
 
-    <div id="betslip-some-games-selected">
+    
+    <div id="betslip-some-games-selected" class="border-aqua">
         <div class="row container-fluid my-2">
             <div class="col-6 text-center">
                 <span class="position-relative text-yellow">
@@ -174,7 +172,7 @@
                 <input type="hidden" name="total_odds" id="total-odds">
                 <input type="hidden" name="potential_win" id="potential-win">
                 <input type="hidden" name="bet_type" id="bet-type">
-               
+            
 
                 <div class="betslip-summary mt-1">
                     <div class="row px-2">
@@ -220,7 +218,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header bg-yellow py-2">
-                <h5 class="modal-title">Bet Placed Successfully!</h5>
+                <h5 class="modal-title">Bet Placed Successfully!, it will expire in 24 hours.</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body row g-0 bg-sky-blue px-3">
