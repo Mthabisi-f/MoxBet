@@ -1040,7 +1040,7 @@ async function fetchGamesBySport(sport, page = 1) {
             }  
         }   
 
-        showLeaguesResponsive()
+        // showLeaguesResponsive()
 
     } catch (error) {
         console.error("Error fetching games:", error);
