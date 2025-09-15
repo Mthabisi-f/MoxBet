@@ -5906,21 +5906,6 @@ function addSelection(selection) {
     // Save to localStorage
     localStorage.setItem("betslipSelections", JSON.stringify(betslipSelections));
 
-    // Update DOM if gamesInATicket exists
-    if(gamesInATicket){
-        let matchFound = false;
-        gamesInATicket.querySelectorAll(".selected-game").forEach((game) => {
-            if (game.classList.contains(selection.matchId)) {
-                game.remove();
-                renderBetslip();
-                matchFound = true;
-            }
-        });
-
-        if (!matchFound) {
-            renderBetslip();
-        }
-    } 
 }
 
 
