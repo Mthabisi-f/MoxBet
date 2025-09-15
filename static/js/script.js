@@ -31,6 +31,32 @@ let minStake, maxWin, minWithdrawal, maxWithdrawal, minDeposit
 let currentSport = 'football';      
 const now = new Date();
 
+
+function saveBetslipToLocalStorage() {
+    const selections = [];
+    const games = gamesInATicket.querySelectorAll(".selected-game");
+
+    games.forEach(game => {
+        const data = game.querySelector("#li-element");
+        selections.push({
+            sport: data.getAttribute("data-sport"),
+            country: data.getAttribute("data-country"),
+            league: data.getAttribute("data-league"),
+            leagueId: data.getAttribute("data-league-id"),
+            datetime: data.getAttribute("data-datetime"),
+            prediction: data.getAttribute("data-prediction"),
+            oddsValue: data.getAttribute("data-odds-value"),
+            marketType: data.getAttribute("data-market-type"),
+            matchId: data.getAttribute("data-match-id"),
+            homeTeam: game.querySelector("[data-home-team]").getAttribute("data-home-team"),
+            awayTeam: game.querySelector("[data-away-team]").getAttribute("data-away-team")
+        });
+    });
+
+    localStorage.setItem("betslipSelections", JSON.stringify(selections));
+}
+
+
 document.addEventListener('DOMContentLoaded', function(){
     mainNavbar.querySelectorAll('.nav-item').forEach(navItem =>{
         navItem.addEventListener('click', function(){
@@ -216,7 +242,7 @@ if(removeAllSelections){
         numberOfSelectedGames.textContent = gamesInATicket.querySelectorAll(".selected-game").length;
         betslipSummaryCalculator();
     });
-    localStorage.removeItem("betslipSelections"); 
+    localStorage.removeItem("betslipSelections"); // Clear storage
 }
 
 
@@ -416,6 +442,18 @@ if(gamesDisplay){
                     gamesInATicket.appendChild(newGame);
                 }
 
+                // Check if this selection already exists in gamesInATicket
+                let existingGame = Array.from(gamesInATicket.querySelectorAll(".selected-game")).find(
+                    g => g.querySelector("#li-element").getAttribute("data-match-id") === matchId &&
+                        g.querySelector("#li-element").getAttribute("data-prediction") === prediction
+                );
+
+                if(existingGame){
+                    existingGame.remove(); // Remove old version
+                }
+
+                saveBetslipToLocalStorage(); // Save immediately after change
+
                 // After appending the game
                 if (gamesInATicket.querySelectorAll(".selected-game").length > 0) {
                     someGamesSelected.classList.remove('d-none');
@@ -428,7 +466,6 @@ if(gamesDisplay){
 
                 numberOfSelectedGames.textContent = gamesInATicket.querySelectorAll(".selected-game").length;
                 betslipSummaryCalculator();
-                saveBetslipToLocalStorage(); 
             }
         }    
        
@@ -5870,37 +5907,17 @@ function toggleAccordion(accordionId, arrowId){
 }
   
 
-// 🔹 Save current betslip to localStorage
-function saveBetslipToLocalStorage() {
-    const selections = [];
-    const games = gamesInATicket.querySelectorAll(".selected-game");
 
-    games.forEach(game => {
-        const data = game.querySelector("#li-element");
-        selections.push({
-            sport: data.getAttribute("data-sport"),
-            country: data.getAttribute("data-country"),
-            league: data.getAttribute("data-league"),
-            leagueId: data.getAttribute("data-league-id"),
-            datetime: data.getAttribute("data-datetime"),
-            prediction: data.getAttribute("data-prediction"),
-            oddsValue: data.getAttribute("data-odds-value"),
-            marketType: data.getAttribute("data-market-type"),
-            matchId: data.getAttribute("data-match-id"),
-            homeTeam: game.querySelector("[data-home-team]").getAttribute("data-home-team"),
-            awayTeam: game.querySelector("[data-away-team]").getAttribute("data-away-team")
-        });
-    });
-
-    localStorage.setItem("betslipSelections", JSON.stringify(selections));
-}
-
-// 🔹 Restore betslip from localStorage
 function loadBetslipFromLocalStorage() {
     const savedSelections = JSON.parse(localStorage.getItem("betslipSelections") || "[]");
 
-    if (savedSelections.length > 0) {
-        savedSelections.forEach(sel => {
+    savedSelections.forEach(sel => {
+        // Avoid duplicating on load
+        let exists = Array.from(gamesInATicket.querySelectorAll(".selected-game")).some(
+            g => g.querySelector("#li-element").getAttribute("data-match-id") === sel.matchId &&
+                 g.querySelector("#li-element").getAttribute("data-prediction") === sel.prediction
+        );
+        if(!exists){
             const newGame = createGameElement(
                 sel.oddsValue,
                 sel.marketType,
@@ -5915,27 +5932,28 @@ function loadBetslipFromLocalStorage() {
                 sel.league
             );
             gamesInATicket.appendChild(newGame);
+        }
 
-            // Reactivate button in the DOM if match exists
-            const match = document.querySelector(`[data-match-id="${sel.matchId}"]`);
-            if (match) {
-                const oddsBtn = match.querySelector(`[data-prediction="${sel.prediction}"]`);
-                if (oddsBtn) {
-                    oddsBtn.classList.add("odds-btn-active");
-                }
-            }
-        });
+        // Activate the button if the match exists in DOM
+        const match = document.querySelector(`[data-match-id="${sel.matchId}"]`);
+        if (match) {
+            const oddsBtn = match.querySelector(`[data-prediction="${sel.prediction}"]`);
+            if (oddsBtn) oddsBtn.classList.add("odds-btn-active");
+        }
+    });
 
+    // Update UI
+    if(savedSelections.length > 0){
         someGamesSelected.classList.remove('d-none');
         noGamesSelected.classList.add('d-none');
-        numberOfSelectedGames.textContent = gamesInATicket.querySelectorAll(".selected-game").length;
-        betslipSummaryCalculator();
     }
+    numberOfSelectedGames.textContent = gamesInATicket.querySelectorAll(".selected-game").length;
+    betslipSummaryCalculator();
 }
 
+// Call on DOM load
+document.addEventListener("DOMContentLoaded", loadBetslipFromLocalStorage);
 
-// for loading selected games from browser's local storage 
-document.addEventListener("DOMContentLoaded", loadBetslipFromLocalStorage); // <-- ADD THIS
 
 
 
