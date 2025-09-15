@@ -101,6 +101,7 @@ if(copyrightYear){
     })
 }
 
+
 if(gamesInATicket && gamesInATicket.innerHTML == ''){
     if(!someGamesSelected.classList.contains('d-none')){
         someGamesSelected.classList.add('d-none');
@@ -361,12 +362,15 @@ if(gamesDisplay){
             event.preventDefault();
             event.stopPropagation();
             
-            if(someGamesSelected.classList.contains('d-none')){
+            // Toggle visibility based on selected games
+            if(gamesInATicket.querySelectorAll(".selected-game").length > 0){
                 someGamesSelected.classList.remove('d-none');
-                window.alert(someGamesSelected.classList)
                 noGamesSelected.classList.add('d-none');
+            } else {
+                someGamesSelected.classList.add('d-none');
+                noGamesSelected.classList.remove('d-none');
             }
-        
+
             const button = event.target;
             const oddsValue = button.textContent;
             if (oddsValue) {
@@ -409,6 +413,16 @@ if(gamesDisplay){
                 if (!matchFound) {
                     gamesInATicket.appendChild(newGame);
                 }
+
+                // After appending the game
+                if (gamesInATicket.querySelectorAll(".selected-game").length > 0) {
+                    someGamesSelected.classList.remove('d-none');
+                    noGamesSelected.classList.add('d-none');
+                } else {
+                    someGamesSelected.classList.add('d-none');
+                    noGamesSelected.classList.remove('d-none');
+                }
+
 
                 numberOfSelectedGames.textContent = gamesInATicket.querySelectorAll(".selected-game").length;
                 betslipSummaryCalculator();
