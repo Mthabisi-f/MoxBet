@@ -5907,9 +5907,21 @@ function addSelection(selection) {
     localStorage.setItem("betslipSelections", JSON.stringify(betslipSelections));
 
     // Update DOM if gamesInATicket exists
-    if(gamesInATicket) renderBetslip();
-}
+    if(gamesInATicket){
+        let matchFound = false;
+        selectedGames.forEach((game) => {
+            if (game.classList.contains(selection.matchId)) {
+                game.remove();
+                renderBetslip();
+                matchFound = true;
+            }
+        });
 
+        if (!matchFound) {
+            renderBetslip();
+        }
+    } 
+}
 
 
 
@@ -5952,6 +5964,7 @@ function renderBetslip() {
             sel.sport, sel.datetime,
             sel.leagueId, sel.country, sel.league
         );
+        
         gamesInATicket.appendChild(newGame);
     });
 
