@@ -101,9 +101,12 @@ if(copyrightYear){
     })
 }
 
-// if(gamesInATicket && gamesInATicket.innerHTML == ''){
-//     someGamesSelected.classList.add('d-none');
-// }
+if(gamesInATicket && gamesInATicket.innerHTML == ''){
+    if(!someGamesSelected.classList.contains('d-none')){
+        someGamesSelected.classList.add('d-none');
+        noGamesSelected.classList.remove('d-none');
+    }
+}
 
 
 if(document.getElementById("successModal")){
@@ -360,6 +363,7 @@ if(gamesDisplay){
             
             if(someGamesSelected.classList.contains('d-none')){
                 someGamesSelected.classList.remove('d-none');
+                window.alert(someGamesSelected.classList)
                 noGamesSelected.classList.add('d-none');
             }
         
