@@ -2027,7 +2027,7 @@ function footballMatchElementInnerHTML(game, sport, container){
     matchElement.innerHTML = `
                 <div data-sport="${sport}" data-league-id="${league_id}" data-datetime="${datetime}" class="match-container bb-white pt-1 pb-1">
                     
-                    <div class="row g-0 d-none d-md-block">
+                    <div class="row g-0">
                         <div class="col-12">
                             <div class="row g-0 d-flex">
                                 <div class="col-6">
