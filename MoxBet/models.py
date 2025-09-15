@@ -13,7 +13,7 @@ class User(AbstractUser):
     country =  models.CharField(max_length=70, unique=False)
     currency =  models.CharField(max_length=5, unique=False, default="USD")
     balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    agent_code = models.CharField(max_length=10)
+    agent_code = models.CharField(max_length=10, default="1234")
     phone_number = models.CharField(max_length=15, blank=False)
     password = models.CharField(max_length=255, blank=False)
     date_joined = models.DateTimeField(default=timezone.now)
@@ -61,25 +61,6 @@ class Bookings(models.Model):
 
     def __str__(self):
         return f"Ticket {self.booking_code}"
-
-
-# Stores leagues data 
-class Leagues(models.Model):
-    league_json = models.JSONField()
-    league = models.CharField(max_length=100)
-    total_matches = models.IntegerField(default=0)
-    country = models.CharField(max_length=255, null=True, blank=True)
-    sport = models.CharField(max_length=64)
-    created_at = models.DateTimeField(default=timezone.now)
-    is_priority = models.BooleanField(default=False)
-
-    class Meta:
-        unique_together = ('league', 'country', 'sport')
-
-    def __str__(self):
-        return f"{self.league} ({self.sport})"
-
-
 
 
 class Agents(models.Model):
@@ -160,12 +141,17 @@ class WinBoost(models.Model):
     number_of_selections = models.IntegerField()
     win_boost_percentage = models.DecimalField(max_digits=10, decimal_places=2)
 
-class Results(models.Model):
-    extras = models.JSONField()
-    league_id = models.ForeignKey(Leagues, on_delete=models.CASCADE, db_column="league_id")
-    match_id = models.CharField(max_length=50, null=False, blank=False)
-    datetime = models.DateTimeField(blank=False, null=False)
-    sport = models.CharField(max_length=50, null=False, blank=False)
+
+class MoneyBack(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='moneybacks')
+    ticket = models.ForeignKey(Tickets, on_delete=models.CASCADE, related_name='moneybacks')
+    ticket_type = models.CharField(max_length=50, null=True, blank=True)
+    minimum_odds = models.FloatField()
+    amount_returned = models.DecimalField(max_digits=12, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Refund {self.amount_returned} for Ticket {self.ticket_id} by {self.user.username}"
 
 
 

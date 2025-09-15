@@ -1,6 +1,6 @@
 
 <header class="sticky-top bg-navy-blue shadow-sm">
-  <div class="container-fluid d-flex justify-content-between align-items-center py-1 py-lg-2">
+  <div class="d-flex justify-content-between align-items-center py-1 pe-1 py-lg-2">
 
     <!-- Left side: Menu + Logo -->
     <div class="d-flex align-items-center col-6 col-lg-4">
@@ -18,12 +18,7 @@
 
     <!-- Center: Search bar (visible lg and above only) -->
     <div class="d-none d-lg-block col-lg-4 px-3">
-      <form class="d-flex" role="search">
-        <div class="input-group">
-          <input class="form-control border-aqua" type="search" placeholder="Search Sports and Teams..." aria-label="Search">
-          <button class="btn btn-yellow border-aqua" type="submit">Search</button>
-        </div>
-      </form>
+      {% include 'search.html' %}
     </div>
 
     <!-- Right side: Auth or Balance buttons -->

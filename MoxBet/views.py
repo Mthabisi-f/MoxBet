@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.http import HttpRequest, JsonResponse, HttpResponseRedirect
-from .models import User, Transactions, WinBoost, Tickets, Leagues, Limits, Bookings
+from .models import User, Transactions, WinBoost, Tickets, Limits, Bookings
 from .forms import UserRegistrationForm
 from .redis_client import redis_client
 from django.contrib.auth import authenticate, login, logout
@@ -626,7 +626,8 @@ def registerPage(request):
         form =  UserRegistrationForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
-            user.username = user.username.upper()
+            user.username = user.username.strip().capitalize()
+            user.first_name = user.first_name.strip().capitalize()
             user.save()
             login(request, user)
             return redirect('sports')
@@ -644,7 +645,7 @@ def loginPage(request):
         return redirect('sports')
     
     if request.method == 'POST':
-        username = request.POST.get('username').upper()
+        username = request.POST.get('username', '').strip().capitalize()
         password = request.POST.get('password')
         #checking if the user exists
         try:
@@ -849,14 +850,14 @@ def mybets(request):
     return render(request, 'mybets.html', context)
 
 
-def betslip(request):
+def betslip_page(request):
     context = {}
-    return render(request, 'betslip.html', context)
+    return render(request, 'betslip_page.html', context)
 
 
-def search(request):
+def search_page(request):
     context = {}
-    return render(request, 'search.html', context)
+    return render(request, 'search_page.html', context)
 
 
 def profile(request):

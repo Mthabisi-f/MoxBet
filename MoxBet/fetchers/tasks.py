@@ -8,17 +8,16 @@ from django.core.cache import cache
 from .client import api_client, get
 from MoxBet.redis_client import redis_client
 import redis.asyncio as aioredis
-from MoxBet.models import Leagues, Results
 from asgiref.sync import sync_to_async
+from MoxBet.services.settlemet.sports import SportsSettlementHandler
 from channels.layers import get_channel_layer
 from .normalizers import (normalize_market, normalize_prediction, special_normalize_prediction)
 from .normalizers import SPORTS, INTERVALS, FINISHED_STATUSES
 
 
-
 async def fetch_matches_and_odds_bulk(client, sport, host):
     start_date = date.today()
-    end_date = start_date + timedelta(days=2)
+    end_date = start_date + timedelta(weeks=1)
     current = start_date
 
     while current <= end_date:
@@ -87,7 +86,6 @@ async def fetch_live_matches_and_odds(client, sport, host):
     print(f"[INFO] Updated {len(fixtures_data)} LIVE fixtures & {len(all_odds)} odds for {sport}")
 
 
-
 async def process_day(fixtures_data, all_odds, sport, live=False):
     if not all_odds:
         return
@@ -103,21 +101,6 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
         # Expiry rules
         status = nf["fixture"]["status"]["short"]
         expiry = 60 * 60 * 3
-        if status in ["1H", "2H", "HT", "BT", "ET", "P", "LIVE"]:
-            expiry = 60 * 60
-        elif status in FINISHED_STATUSES:
-            expiry = 60 * 60
-            # Store result in DB (we still keep Results in DB!)
-            # await sync_to_async(Results.objects.update_or_create, thread_sensitive=True)(
-            #     match_id=fixture_id,
-            #     sport=sport,
-            #     league_id=league_id,
-            #     defaults={
-            #         "datetime": nf["fixture"]["date"],
-            #         "extras": {k: v for k, v in nf.items() if k not in ["league", "fixture", "id"]},
-            #     }
-            # )
-
 
         odds_entry = odds_map.get(fixture_id)
         if not odds_entry:
@@ -182,10 +165,8 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
                 "data": payload
             }
         )
-       
 
-
-        # Store league info in Redis
+        # league that will be used in frontend
         league_info = {
             "id": league_id,
             "name": league_name,
@@ -206,12 +187,36 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
         await redis_client.sadd(f"country:{sport.lower()}:{country}", cache_key)
         match_date = nf["fixture"]["date"][:10]
         await redis_client.sadd(f"time:{sport}:{match_date}", cache_key)
-        if status in ["1H", "2H", "HT", "ET", "P", "LIVE"]:
+        if status in ["1H", "2H", "HT", "ET", "P", "BT", "LIVE"]:
             await redis_client.sadd(f"live:{sport.lower()}", cache_key)
+        
+        if status in FINISHED_STATUSES:
+            await redis_client.sadd(f"finished:{sport.lower()}", cache_key)
 
         print(f"[CACHED] {sport} fixture {fixture_id} ({status})")
 
 
+# @shared_task
+async def auto_settle_tickets():
+    from MoxBet.models import Tickets
+    tickets = Tickets.objects.filter(status__in=["Pending", "Refund"])
+    for ticket in tickets:
+        handler = SportsSettlementHandler(ticket)
+        handler.settle()
+
+
+# @shared_task
+async def get_finished_fixtures():
+    finished_keys = await redis_client.keys("finished:*")  # Get all finished match keys
+
+    async def fetch_match(k):
+        value = await redis_client.get(k)
+        if value:
+            return json.loads(value)
+        return None
+
+    matches = await asyncio.gather(*(fetch_match(k) for k in finished_keys))
+    return [m for m in matches if m]
 
 
 # generic periodic wrapper
@@ -230,27 +235,17 @@ async def run_all():
     async with api_client() as client:
         for sport, envkey in SPORTS.items():
             host = os.environ.get(envkey, os.environ.get("APISPORTS_HOST_FOOTBALL"))
+            
             # fixtures live
             jobs.append(asyncio.create_task(periodic(lambda c=client,s=sport,h=host: fetch_live_matches_and_odds(c,s,h), INTERVALS["fixtures_live"])))
+            
             # fixtures upcoming (new)
             jobs.append(asyncio.create_task(periodic(lambda c=client   , s=sport, h=host: fetch_matches_and_odds_bulk(c, s, h), INTERVALS["fixtures_upcoming"])))
-            # odds
-            # jobs.append(asyncio.create_task(periodic(lambda c=client,s=sport,h=host: fetch_odds_for_sport(c,s,h), INTERVALS["odds"])))
-            # standings
-            # jobs.append(asyncio.create_task(periodic(lambda c=client,s=sport,h=host: fetch_standings_for_sport(c,s,h), INTERVALS["standings"])))
-            # lineups
-            # jobs.append(asyncio.create_task(periodic(lambda c=client,s=sport,h=host: fetch_lineups_for_sport(c,s,h), INTERVALS["lineups"])))
-            # teams & players
-            # jobs.append(asyncio.create_task(periodic(lambda c=client,s=sport,h=host: fetch_teams_players_for_sport(c,s,h), INTERVALS["teams"])))
-            # injuries
-            # jobs.append(asyncio.create_task(periodic(lambda c=client,s=sport,h=host: fetch_injuries_for_sport(c,s,h), INTERVALS["injuries"])))
-            # competitions
-            # jobs.append(asyncio.create_task(periodic(lambda c=client,s=sport,h=host: fetch_competitions_for_sport(c,s,h), INTERVALS["competitions"])))
-            # transfers
-            # jobs.append(asyncio.create_task(periodic(lambda c=client,s=sport,h=host: fetch_transfers_for_sport(c,s,h), INTERVALS["transfers"])))
-            # predictions
-            # jobs.append(asyncio.create_task(periodic(lambda c=client,s=sport,h=host: fetch_predictions_for_sport(c,s,h), INTERVALS["predictions"])))
-
+            
+            # auto settletickets
+            jobs.append(asyncio.create_task(periodic(auto_settle_tickets, INTERVALS["auto_settle_tickets"])))
+ 
+           
         await asyncio.gather(*jobs)
 
 

@@ -21,6 +21,7 @@ SPORTS = {
 INTERVALS = {
     "fixtures_live":  15,
     "fixtures_upcoming": 3600,
+    "auto_settle_tickets": 20,
 }
 
 # short statuses for ninished fixtures
@@ -48,6 +49,7 @@ MARKET_TYPE_MAP = {
     "Away Team Score In 2nd Half": ["Away Team Score a Goal (2nd Half)"],
     "Home Team Score In 2nd Half": ["Home Team Score a Goal (2nd Half)"],
     "Double Chance 1st Half": ["Double Chance - First Half"],
+    
     "Correct Score 1st Half": ["Correct Score - First Half"],
     "Correct Score": ["Exact Score"],
     "Who Will Win": ["Home/Away"],

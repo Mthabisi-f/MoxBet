@@ -1,0 +1,48 @@
+<div class="row g-2"> 
+    <div class="container-fluid mybets-container max-width-700">
+        <div class="plead d-flex justify-content-between my-2 px-1">
+            <div>
+                <a href="{{request.META.HTTP_REFERER}}">
+                    <i class="fa-solid fa-arrow-left-long text-yellow"></i>
+                </a>
+            </div>
+            <div class="ms-3 text-yellow">My Bets</div>
+            <div><a href="{% url 'sports' %}" class="text-decoration-none text-yellow">Betslip</a></div>
+        </div>
+
+        <div class="mb-2 my-2">
+            <div id="status-filter" class="row g-0 fw-bold text-center">
+                <div id="Pending" class="col-6 status-filter-active">Pending</div>
+                <div id="Settled" class="col-6">Settled</div>
+            </div>
+        </div>
+
+        <div class="row gx-2">
+            <div class="col-5">
+                <form action="">
+                    <select id="tickets-type-filter" class="form-select">
+                        <option value="All">All</option>
+                        <option value="Sports" selected>Sports</option>
+                        <option value="Live">Live</option>
+                        <option value="Virtual">Virtual</option>
+                        <option value="Live">Live</option>
+                        <option value="Lucky-numbers">Lucky-numbers</option>
+                    </select>
+                </form>
+            </div>
+            <div class="col-5">
+                <form action="" >
+                    <select id="ticket-status-filter" class="form-select">
+                        <option value="Pending" selected>Pending</option>
+                    </select>
+                </form>
+            </div>
+            <div id="date-picker" class="col-2 text-center">
+                <span id="dateRangeLabel"><i class="fa-solid fa-calendar-days" style="font-size: 2rem;"></i></span>
+            </div>
+        </div>
+
+        <div id="tickets-display"></div>
+              
+    </div>
+</div> 
