@@ -5935,8 +5935,8 @@ function removeAllSelectionsInLocalStorage() {
 
 
 
-
 function renderBetslip() {
+
     if(!gamesInATicket) return;
 
     gamesInATicket.innerHTML = '';
