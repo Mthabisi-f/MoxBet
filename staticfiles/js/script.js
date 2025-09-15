@@ -101,9 +101,9 @@ if(copyrightYear){
     })
 }
 
-if(gamesInATicket && gamesInATicket.innerHTML == ''){
-    someGamesSelected.classList.add('d-none');
-}
+// if(gamesInATicket && gamesInATicket.innerHTML == ''){
+//     someGamesSelected.classList.add('d-none');
+// }
 
 
 if(document.getElementById("successModal")){
