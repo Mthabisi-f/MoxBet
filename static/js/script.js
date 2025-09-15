@@ -5905,7 +5905,6 @@ function addSelection(selection) {
 
     // Save to localStorage
     localStorage.setItem("betslipSelections", JSON.stringify(betslipSelections));
-
 }
 
 
@@ -5934,12 +5933,12 @@ function removeAllSelectionsInLocalStorage() {
 }
 
 
-// render in betslip
-function renderBetslip() {
 
+
+function renderBetslip() {
     if(!gamesInATicket) return;
 
-    gamesInATicket.innerHTML = '';
+    // gamesInATicket.innerHTML = '';
 
     betslipSelections.forEach(sel => {
         const newGame = createGameElement(
@@ -5949,8 +5948,21 @@ function renderBetslip() {
             sel.sport, sel.datetime,
             sel.leagueId, sel.country, sel.league
         );
-        
-        gamesInATicket.appendChild(newGame);
+        // Update DOM if gamesInATicket exists
+        if(gamesInATicket){
+            let matchFound = false;
+            gamesInATicket.querySelectorAll(".selected-game").forEach((game) => {
+                if (game.classList.contains(selection.matchId)) {
+                    game.remove();
+                    gamesInATicket.appendChild(newGame);
+                    matchFound = true;
+                }
+            });
+
+            if (!matchFound) {
+                gamesInATicket.appendChild(newGame);
+            }
+        } 
     });
 
     someGamesSelected.classList.toggle('d-none', betslipSelections.length === 0);
