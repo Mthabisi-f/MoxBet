@@ -220,7 +220,7 @@ if(removeAllSelections){
         numberOfSelectedGames.textContent = gamesInATicket.querySelectorAll(".selected-game").length;
         betslipSummaryCalculator();
     });
-    removeAllSelections()
+    removeAllSelectionsInLocalStorage()
 }
 
 
@@ -5922,7 +5922,7 @@ function removeSelection(matchId, prediction) {
 }
 
 
-function removeAllSelections() {
+function removeAllSelectionsInLocalStorage() {
     // Clear the array
     betslipSelections = [];
 
