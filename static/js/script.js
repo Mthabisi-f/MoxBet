@@ -179,12 +179,12 @@ function createGameElement(oddsValue, marketType, homeTeam, awayTeam, prediction
             const oddsBtn = match.querySelector('.odds-btn-active');
             oddsBtn.classList.remove('odds-btn-active');
         }
-        if(gamesInATicket.innerHTML == ''){
-            if(!someGamesSelected.classList.contains('d-none')){
-                someGamesSelected.classList.add('d-none');
-                noGamesSelected.classList.remove('d-none');
-            }
-        }
+        // if(gamesInATicket.innerHTML == ''){
+        //     if(!someGamesSelected.classList.contains('d-none')){
+        //         someGamesSelected.classList.add('d-none');
+        //         noGamesSelected.classList.remove('d-none');
+        //     }
+        // }
     });
 
     return li;   
@@ -358,10 +358,10 @@ if(gamesDisplay){
             event.preventDefault();
             event.stopPropagation();
             
-            if(someGamesSelected.classList.contains('d-none')){
-                someGamesSelected.classList.remove('d-none');
-                noGamesSelected.classList.add('d-none');
-            }
+            // if(someGamesSelected.classList.contains('d-none')){
+            //     someGamesSelected.classList.remove('d-none');
+            //     noGamesSelected.classList.add('d-none');
+            // }
         
             const button = event.target;
             const oddsValue = button.textContent;
@@ -1988,7 +1988,6 @@ function footballMatchElementInnerHTML(game, sport, container){
     let date = dateObj.toLocaleDateString("en-GB");
     let time = dateObj.toLocaleTimeString("en-GB", {hour: "2-digit", minute: "2-digit"});
 
-    console.log(game)
     let marketsCount = Object.keys(odds).length;  // number of markets
     // --- Core Helpers ---
     // Safely get full info object for a market + selection
