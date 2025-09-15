@@ -2033,8 +2033,8 @@ function footballMatchElementInnerHTML(game, sport, container){
                                 <div class="col-6">
                                     <div class="text-small">
                                         <span class="text-truncate"><img src="${league.flag}" class="logo" alt="logo"/></span>&nbsp;
-                                        <span class="text-truncate data-country="${country}">${country}</span>&nbsp; 
-                                        <span class="text-truncate data-league="${league.name}" data-league-id="${league.id}">${league.name}</span>
+                                        <span class="text-truncate" data-country="${country}">${country}</span>&nbsp; 
+                                        <span class="text-truncate" data-league="${league.name}" data-league-id="${league.id}">${league.name}</span>
                                     </div>
                                 </div>
                                 <div class="col-6 text-small">
