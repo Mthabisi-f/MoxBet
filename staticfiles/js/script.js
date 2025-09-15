@@ -2048,8 +2048,8 @@ function footballMatchElementInnerHTML(game, sport, container){
                             </div>
                             <div class="row g-0">
                                 <div class="col-4 col-md-3 col-lg-2">
-                                    <div class="text-truncate">${extras.teams?.home?.name}</div>
-                                    <div class="text-truncate">${extras.teams?.away?.name}</div>
+                                    <div data-home-team="${extras.teams?.home?.name}" class="text-truncate">${extras.teams?.home?.name}</div>
+                                    <div data-away-team="${extras.teams?.away?.name}" class="text-truncate">${extras.teams?.away?.name}</div>
                                 </div>
                                 <div class="col-2 col-md-1 text-center text-aqua"> 
                                     <div data-home-score="${extras.goals?.home ?? ''}">${extras.goals?.home ?? ''}</div>
@@ -2073,7 +2073,7 @@ function footballMatchElementInnerHTML(game, sport, container){
                                     <button class="odds-btn big-screen-odds-btn" data-prediction="X2">${displayOdd('Double Chance', 'X2')}</button>
                                 </div>
                             </div>
-                            <div style="margin-top: -5px;" class="row g-0 col-3 text-truncate">
+                            <div style="margin-top: -5px;" class="row g-0 col-6 text-truncate">
                                 <div data-match-id="${match_id}"  class="text-small italic"><span data-match-date="${date}">${status.elapsed ?  `Live ${status.short}` : `${date}`}</span> <span data-match-time="${time}" class="text-yellow">${status.elapsed ?? `${time}`}</span> ${status.elapsed ? '' : `id : ${match_id}`}</div>
                             </div>
                         </div>                        

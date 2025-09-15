@@ -14,24 +14,7 @@
 .text-small{
     font-size: small;
 }
-.small-screen-odds-btn{
-    background-color: #1E90FF;
-    border: 1px solid yellow;
-    border-radius: 4px;
-    width: 36%;
-    text-decoration: none;
-    color: black;
-    align-items: center;
-}
-.small-screen-draw-odds-btn{
-    border: 1px solid yellow;
-    border-radius: 4px;
-    width: 27%;
-    background-color: #1E90FF;
-    text-decoration: none;
-    color: black;
-    align-items: center;
-}
+
 .big-screen-odds-btn{
     background-color: transparent;
     border: 1px solid yellow; /* #1E90FF */
@@ -386,7 +369,7 @@ html, body {
     margin: 0;
     padding: 0;
     overflow-x: hidden; 
-    overflow-y: hidden;    
+    overflow-y: auto;    
 }
 
 
@@ -399,9 +382,7 @@ footer {
     width: 100%;
     z-index: 1030; /* keep above content */
 }
-/* main {
-    padding-bottom: 100px; 
-} */
+
 @media (max-width: 700px){
     .top-nav-item{
         width: 4em;
