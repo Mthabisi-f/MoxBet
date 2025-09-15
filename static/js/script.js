@@ -5909,7 +5909,7 @@ function addSelection(selection) {
     // Update DOM if gamesInATicket exists
     if(gamesInATicket){
         let matchFound = false;
-        selectedGames.forEach((game) => {
+        gamesInATicket.querySelectorAll(".selected-game").forEach((game) => {
             if (game.classList.contains(selection.matchId)) {
                 game.remove();
                 renderBetslip();
