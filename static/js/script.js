@@ -2073,7 +2073,7 @@ function footballMatchElementInnerHTML(game, sport, container){
                                     <button class="odds-btn big-screen-odds-btn" data-prediction="X2">${displayOdd('Double Chance', 'X2')}</button>
                                 </div>
                             </div>
-                            <div style="margin-top: -5px;" class="row g-0 col-3 text-truncate">
+                            <div style="margin-top: -5px;" class="row g-0 col-6 text-truncate">
                                 <div data-match-id="${match_id}"  class="text-small italic"><span data-match-date="${date}">${status.elapsed ?  `Live ${status.short}` : `${date}`}</span> <span data-match-time="${time}" class="text-yellow">${status.elapsed ?? `${time}`}</span> ${status.elapsed ? '' : `id : ${match_id}`}</div>
                             </div>
                         </div>                        
