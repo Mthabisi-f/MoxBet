@@ -2048,8 +2048,8 @@ function footballMatchElementInnerHTML(game, sport, container){
                             </div>
                             <div class="row g-0">
                                 <div class="col-4 col-md-3 col-lg-2">
-                                    <div class="text-truncate">${extras.teams?.home?.name}</div>
-                                    <div class="text-truncate">${extras.teams?.away?.name}</div>
+                                    <div data-home-team="${extras.teams?.home?.name}" class="text-truncate">${extras.teams?.home?.name}</div>
+                                    <div data-away-team="${extras.teams?.away?.name}" class="text-truncate">${extras.teams?.away?.name}</div>
                                 </div>
                                 <div class="col-2 col-md-1 text-center text-aqua"> 
                                     <div data-home-score="${extras.goals?.home ?? ''}">${extras.goals?.home ?? ''}</div>
