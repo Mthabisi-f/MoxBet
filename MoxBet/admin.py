@@ -25,8 +25,4 @@ class TicketAdmin(admin.ModelAdmin):
             settle_ticket(ticket)
         self.message_user(request, f"Settled {queryset.count()} tickets")
 
-# @admin.register(MarketTypeMapping)
-class MarketAdmin(admin.ModelAdmin):
-    list_display = ('sport', 'backend_market', 'settlement_function')
-
 

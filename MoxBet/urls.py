@@ -1,4 +1,5 @@
 from django.urls import path
+from django.contrib import admin
 from . import views, context_processors
 
 urlpatterns = [
@@ -32,4 +33,7 @@ urlpatterns = [
     path('win-boost/', views.win_boost, name='win_boost'),
     path('more-odds/',  views.more_odds, name='more_odds'),
     path('check-ticket/',  views.check_ticket, name='check_ticket'),
+
+    # ✅ Django admin
+    path('secure-admin/', admin.site.urls),
 ]
