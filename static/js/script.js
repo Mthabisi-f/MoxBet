@@ -180,6 +180,7 @@ function createGameElement(oddsValue, marketType, homeTeam, awayTeam, prediction
     const removeBtn = li.querySelector(".btn-close");
     removeBtn.addEventListener("click", function(){
         li.remove();
+        removeSelection(matchId, prediction);
         numberOfSelectedGames.textContent = gamesInATicket.querySelectorAll(".selected-game").length;
         betslipSummaryCalculator();
         const match = gamesDisplay.querySelector(`[data-match-id="${matchId}"]`);
@@ -194,7 +195,6 @@ function createGameElement(oddsValue, marketType, homeTeam, awayTeam, prediction
             }
         }
     });
-    removeSelection(matchId, prediction);
 
     return li;   
 }
@@ -5934,7 +5934,6 @@ function removeAllSelectionsInLocalStorage() {
 
 
 
-
 function renderBetslip() {
     if(!gamesInATicket) return;
 
@@ -5948,11 +5947,15 @@ function renderBetslip() {
             sel.sport, sel.datetime,
             sel.leagueId, sel.country, sel.league
         );
+
+        // clear before re-render
+        gamesInATicket.innerHTML = '';
+
         // Update DOM if gamesInATicket exists
         if(gamesInATicket){
             let matchFound = false;
             gamesInATicket.querySelectorAll(".selected-game").forEach((game) => {
-                if (game.classList.contains(selection.matchId)) {
+                if (game.classList.contains(sel.matchId)) {
                     game.remove();
                     gamesInATicket.appendChild(newGame);
                     matchFound = true;
