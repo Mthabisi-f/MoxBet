@@ -152,7 +152,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 league: league,
                                 leagueId: leagueId,
                                 datetime: datetime,
-                                prediction: button.dataset.prediction,
+                                prediction: prediction,
                                 oddsValue: oddsValue,
                                 marketType: marketType,
                                 matchId: matchId,
