@@ -5932,7 +5932,8 @@ function renderBetslip() {
         gamesInATicket.innerHTML = ''; // clear container
 
         someGamesSelected.classList.remove('d-none');
-        noGamesSelected.classList.add('d-none');
+        noGamesSelected.classList.add('d-none'); // hvuguli
+
 
         betslipSelections.forEach(sel => {
             const newGame = createGameElement(

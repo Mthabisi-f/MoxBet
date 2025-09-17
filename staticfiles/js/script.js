@@ -5914,7 +5914,6 @@ function removeSelection(matchId, prediction) {
         s => !(s.matchId === matchId && s.prediction === prediction)
     );
     localStorage.setItem("betslipSelections", JSON.stringify(betslipSelections));
-    // if(gamesInATicket) renderBetslip();
 }
 
 
@@ -5924,12 +5923,6 @@ function removeAllSelectionsInLocalStorage() {
 
     // Remove from localStorage
     localStorage.removeItem("betslipSelections");
-
-    // // Clear the DOM
-    // renderBetslip();
-
-    // // Optionally deactivate all odds buttons in the DOM
-    // document.querySelectorAll('.odds-btn-active').forEach(btn => btn.classList.remove('odds-btn-active'));
 }
 
 
@@ -5939,7 +5932,8 @@ function renderBetslip() {
         gamesInATicket.innerHTML = ''; // clear container
 
         someGamesSelected.classList.remove('d-none');
-        noGamesSelected.classList.add('d-none');
+        noGamesSelected.classList.add('d-none'); // hvuguli
+
 
         betslipSelections.forEach(sel => {
             const newGame = createGameElement(
@@ -5967,53 +5961,9 @@ function renderBetslip() {
 }
 
 
-// function renderBetslip() {
-    
-//     if(betslipSelections.length > 0){
-//         gamesInATicket.innerHTML = '';   // ✅ clear 
-
-//         someGamesSelected.classList.remove('d-none');
-//         noGamesSelected.classList.add('d-none');
-      
-//         betslipSelections.forEach(sel => {
-//             const newGame = createGameElement(
-//                 sel.oddsValue, sel.marketType,
-//                 sel.homeTeam, sel.awayTeam,
-//                 sel.prediction, sel.matchId,
-//                 sel.sport, sel.datetime,
-//                 sel.leagueId, sel.country, sel.league
-//             );
-
-//             // Update DOM if gamesInATicket exists
-//             if(gamesInATicket){
-//                 let matchFound = false;
-//                 gamesInATicket.querySelectorAll(".selected-game").forEach((game) => {
-//                     if (game.classList.contains(sel.matchId)) {
-//                         game.remove();
-//                         gamesInATicket.appendChild(newGame);
-//                         matchFound = true;
-//                     }
-//                 });
-
-//                 if (!matchFound) {
-//                     gamesInATicket.appendChild(newGame);
-//                 }
-//             } 
-//         });
-
-//         numberOfSelectedGames.textContent = betslipSelections.length;
-//         betslipSummaryCalculator();
-//     }else{
-//         window.alert("No selections in local storage")
-//     }
-
-// }
-
-
-// Call on DOM load
 
 document.addEventListener("DOMContentLoaded", function() {
-    betslipSelections = JSON.parse(localStorage.getItem("betslipSelections") || "[]");
+    // betslipSelections = JSON.parse(localStorage.getItem("betslipSelections") || "[]");
     renderBetslip();
 });
 
