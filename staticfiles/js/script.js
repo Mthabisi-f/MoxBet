@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const moreOddsPage = document.getElementById('all-odds-page');
     const filterGamesBy = document.getElementById('filter-games-by');
     const livePage = document.getElementById('live-page');
-    const userBalance = document.getElementById('user_balance');
+    // const userBalance = document.getElementById('user_balance');
     const limits = document.getElementById('limits');
     const copyrightYear =  document.querySelectorAll('.copyright-year');
     const minStakeDisplay = document.getElementById("min-stake-display");
@@ -26,8 +26,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const bookBetBtn = document.getElementById("book-bet-btn");
     const spinner = document.createElement('div');
     const path = window.location.pathname;
-    let successModal, bookingModal, currencySymbol, data, Countries, functionName
-    let api_key, dropDownName, oddsDescName ;
+    let successModal, bookingModal, currencySymbol, data, Countries, api_key 
     let minStake, maxWin, minWithdrawal, maxWithdrawal, minDeposit
     let betslipSelections = JSON.parse(localStorage.getItem("betslipSelections") || "[]");
 
