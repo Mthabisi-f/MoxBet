@@ -5933,48 +5933,85 @@ function removeAllSelectionsInLocalStorage() {
 }
 
 
-
 function renderBetslip() {
-    if(!gamesInATicket) return;
+    if (betslipSelections.length > 0) {
+        window.alert('Selections found in local storage')
+        gamesInATicket.innerHTML = ''; // clear container
 
-    gamesInATicket.innerHTML = '';   // ✅ clear once before loop
-
-    betslipSelections.forEach(sel => {
-        const newGame = createGameElement(
-            sel.oddsValue, sel.marketType,
-            sel.homeTeam, sel.awayTeam,
-            sel.prediction, sel.matchId,
-            sel.sport, sel.datetime,
-            sel.leagueId, sel.country, sel.league
-        );
-
-        // Update DOM if gamesInATicket exists
-        if(gamesInATicket){
-            let matchFound = false;
-            gamesInATicket.querySelectorAll(".selected-game").forEach((game) => {
-                if (game.classList.contains(sel.matchId)) {
-                    game.remove();
-                    gamesInATicket.appendChild(newGame);
-                    matchFound = true;
-                }
-            });
-
-            if (!matchFound) {
-                gamesInATicket.appendChild(newGame);
-            }
-        } 
-    });
-
-    if(betslipSelections.length > 0){
         someGamesSelected.classList.remove('d-none');
         noGamesSelected.classList.add('d-none');
+
+        betslipSelections.forEach(sel => {
+            const newGame = createGameElement(
+                sel.oddsValue, sel.marketType,
+                sel.homeTeam, sel.awayTeam,
+                sel.prediction, sel.matchId,
+                sel.sport, sel.datetime,
+                sel.leagueId, sel.country, sel.league
+            );
+
+            gamesInATicket.appendChild(newGame);
+        });
+
         numberOfSelectedGames.textContent = betslipSelections.length;
         betslipSummaryCalculator();
+    } else {
+        window.alert('No selections in local storage');
+        gamesInATicket.innerHTML = '';
+        if(!someGamesSelected.classList.contains('d-none')){
+            someGamesSelected.classList.add('d-none');
+            noGamesSelected.classList.remove('d-none');
+        }
+        numberOfSelectedGames.textContent = 0;
     }
 }
 
 
+// function renderBetslip() {
+    
+//     if(betslipSelections.length > 0){
+//         gamesInATicket.innerHTML = '';   // ✅ clear 
+
+//         someGamesSelected.classList.remove('d-none');
+//         noGamesSelected.classList.add('d-none');
+      
+//         betslipSelections.forEach(sel => {
+//             const newGame = createGameElement(
+//                 sel.oddsValue, sel.marketType,
+//                 sel.homeTeam, sel.awayTeam,
+//                 sel.prediction, sel.matchId,
+//                 sel.sport, sel.datetime,
+//                 sel.leagueId, sel.country, sel.league
+//             );
+
+//             // Update DOM if gamesInATicket exists
+//             if(gamesInATicket){
+//                 let matchFound = false;
+//                 gamesInATicket.querySelectorAll(".selected-game").forEach((game) => {
+//                     if (game.classList.contains(sel.matchId)) {
+//                         game.remove();
+//                         gamesInATicket.appendChild(newGame);
+//                         matchFound = true;
+//                     }
+//                 });
+
+//                 if (!matchFound) {
+//                     gamesInATicket.appendChild(newGame);
+//                 }
+//             } 
+//         });
+
+//         numberOfSelectedGames.textContent = betslipSelections.length;
+//         betslipSummaryCalculator();
+//     }else{
+//         window.alert("No selections in local storage")
+//     }
+
+// }
+
+
 // Call on DOM load
+
 document.addEventListener("DOMContentLoaded", function() {
     betslipSelections = JSON.parse(localStorage.getItem("betslipSelections") || "[]");
     renderBetslip();
