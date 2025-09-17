@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Betslip Selections Demo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #2a5298);
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .card {
+            background: rgba(30, 40, 100, 0.8);
+            border-radius: 10px;
+            border: 1px solid #4a5fc9;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        .card-header {
+            background: rgba(40, 60, 150, 0.7);
+            border-bottom: 1px solid #5a7de0;
+            font-weight: bold;
+        }
+        .btn-primary {
+            background: linear-gradient(to right, #4a5fc9, #6a8af0);
+            border: none;
+        }
+        .btn-danger {
+            background: linear-gradient(to right, #ff6b6b, #ff8e8e);
+            border: none;
+        }
+        .match-card {
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .match-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+        .odds-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid #5a7de0;
+            border-radius: 5px;
+            color: white;
+            padding: 5px 10px;
+            margin: 2px;
+            transition: all 0.2s;
+        }
+        .odds-btn:hover, .odds-btn-active {
+            background: linear-gradient(to right, #4a5fc9, #6a8af0);
+        }
+        .selected-game {
+            background: rgba(40, 60, 150, 0.5);
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid #6a8af0;
+        }
+        .debug-panel {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .stake-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid #5a7de0;
+            color: white;
+            padding: 8px;
+            border-radius: 5px;
+            width: 100%;
+        }
+        .betslip-summary {
+            background: rgba(40, 60, 150, 0.5);
+            border-radius: 5px;
+            padding: 15px;
+        }
+        h2 {
+            border-bottom: 2px solid #6a8af0;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-4">Betslip Selections Demo</h1>
+        
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Available Matches</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row" id="matches-container">
+                            <!-- Matches will be generated here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h3>Debug Information</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="debug-panel">
+                            <p><strong>LocalStorage Key:</strong> <span id="debug-key">betslipSelections</span></p>
+                            <p><strong>LocalStorage Value:</strong> <span id="debug-value"></span></p>
+                            <p><strong>Number of Selections:</strong> <span id="debug-count">0</span></p>
+                            <p><strong>Status:</strong> <span id="debug-status" class="text-warning">Loading...</span></p>
+                        </div>
+                        <div class="mt-3">
+                            <button class="btn btn-info me-2" id="refresh-debug">Refresh Debug Info</button>
+                            <button class="btn btn-warning me-2" id="clear-storage">Clear LocalStorage</button>
+                            <button class="btn btn-success" id="test-add">Test Add Selection</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Your Betslip</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="stake-input" class="form-label">Stake Amount:</label>
+                            <input type="number" class="stake-input" id="stake-input" value="10.00" min="5" step="0.01">
+                        </div>
+                        
+                        <div id="betslip-container">
+                            <div id="no-games" class="text-center p-4">
+                                <i class="fas fa-ticket-alt fa-3x mb-3"></i>
+                                <p>No selections yet. Click on odds to add selections to your betslip.</p>
+                            </div>
+                            <div id="has-games" class="d-none">
+                                <div id="selections-container">
+                                    <!-- Selected games will appear here -->
+                                </div>
+                                <div class="betslip-summary mt-3">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Total Odds:</span>
+                                        <span id="total-odds">1.00</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Potential Win:</span>
+                                        <span id="potential-win">10.00</span>
+                                    </div>
+                                    <button class="btn btn-primary w-100 mt-3">Place Bet</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize variables
+            let betslipSelections = JSON.parse(localStorage.getItem("betslipSelections") || "[]");
+            const matchesContainer = document.getElementById('matches-container');
+            const selectionsContainer = document.getElementById('selections-container');
+            const noGamesElement = document.getElementById('no-games');
+            const hasGamesElement = document.getElementById('has-games');
+            const stakeInput = document.getElementById('stake-input');
+            const totalOddsElement = document.getElementById('total-odds');
+            const potentialWinElement = document.getElementById('potential-win');
+            
+            // Debug elements
+            const debugValue = document.getElementById('debug-value');
+            const debugCount = document.getElementById('debug-count');
+            const debugStatus = document.getElementById('debug-status');
+            
+            // Sample matches data
+            const matches = [
+                { id: 1, homeTeam: "Arsenal", awayTeam: "Chelsea", date: "2023-10-15", time: "15:00", league: "Premier League" },
+                { id: 2, homeTeam: "Barcelona", awayTeam: "Real Madrid", date: "2023-10-16", time: "20:00", league: "La Liga" },
+                { id: 3, homeTeam: "Bayern Munich", awayTeam: "Dortmund", date: "2023-10-17", time: "18:30", league: "Bundesliga" },
+                { id: 4, homeTeam: "PSG", awayTeam: "Marseille", date: "2023-10-18", time: "19:00", league: "Ligue 1" }
+            ];
+            
+            // Initialize the page
+            initializeMatches();
+            updateDebugInfo();
+            restoreSelections();
+            updateBetslipSummary();
+            
+            // Initialize matches display
+            function initializeMatches() {
+                matchesContainer.innerHTML = '';
+                
+                matches.forEach(match => {
+                    const matchCard = document.createElement('div');
+                    matchCard.className = 'col-md-6 mb-3';
+                    matchCard.innerHTML = `
+                        <div class="card match-card">
+                            <div class="card-body">
+                                <h5>${match.homeTeam} vs ${match.awayTeam}</h5>
+                                <p class="mb-1">${match.league}</p>
+                                <p class="text-warning">${match.date} ${match.time}</p>
+                                <div class="d-flex justify-content-between">
+                                    <button class="odds-btn" data-match-id="${match.id}" data-selection="home">1.85</button>
+                                    <button class="odds-btn" data-match-id="${match.id}" data-selection="draw">3.40</button>
+                                    <button class="odds-btn" data-match-id="${match.id}" data-selection="away">4.20</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    matchesContainer.appendChild(matchCard);
+                });
+                
+                // Add event listeners to odds buttons
+                document.querySelectorAll('.odds-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const matchId = this.dataset.matchId;
+                        const selection = this.dataset.selection;
+                        const odds = this.textContent;
+                        
+                        const match = matches.find(m => m.id == matchId);
+                        addSelection(match, selection, odds);
+                    });
+                });
+            }
+            
+            // Add selection to betslip
+            function addSelection(match, selection, odds) {
+                // Check if selection already exists
+                const existingIndex = betslipSelections.findIndex(s => 
+                    s.matchId == match.id && s.selection === selection
+                );
+                
+                if (existingIndex >= 0) {
+                    // Update existing selection
+                    betslipSelections[existingIndex].odds = odds;
+                } else {
+                    // Add new selection
+                    betslipSelections.push({
+                        matchId: match.id,
+                        homeTeam: match.homeTeam,
+                        awayTeam: match.awayTeam,
+                        selection: selection,
+                        odds: odds,
+                        league: match.league,
+                        date: match.date,
+                        time: match.time
+                    });
+                }
+                
+                // Save to localStorage
+                localStorage.setItem("betslipSelections", JSON.stringify(betslipSelections));
+                
+                // Update UI
+                restoreSelections();
+                updateBetslipSummary();
+                updateDebugInfo();
+                
+                // Visual feedback
+                const button = document.querySelector(`.odds-btn[data-match-id="${match.id}"][data-selection="${selection}"]`);
+                button.classList.add('odds-btn-active');
+                setTimeout(() => {
+                    button.classList.remove('odds-btn-active');
+                }, 300);
+            }
+            
+            // Remove selection from betslip
+            function removeSelection(matchId, selection) {
+                betslipSelections = betslipSelections.filter(s => 
+                    !(s.matchId == matchId && s.selection === selection)
+                );
+                
+                // Save to localStorage
+                localStorage.setItem("betslipSelections", JSON.stringify(betslipSelections));
+                
+                // Update UI
+                restoreSelections();
+                updateBetslipSummary();
+                updateDebugInfo();
+            }
+            
+            // Restore selections from localStorage
+            function restoreSelections() {
+                selectionsContainer.innerHTML = '';
+                
+                if (betslipSelections.length > 0) {
+                    noGamesElement.classList.add('d-none');
+                    hasGamesElement.classList.remove('d-none');
+                    
+                    betslipSelections.forEach(selection => {
+                        const selectionElement = document.createElement('div');
+                        selectionElement.className = 'selected-game';
+                        selectionElement.innerHTML = `
+                            <div class="d-flex justify-content-between">
+                                <strong>${selection.homeTeam} vs ${selection.awayTeam}</strong>
+                                <span class="text-warning">${selection.odds}</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>${selection.selection.toUpperCase()}</span>
+                                <button class="btn btn-sm btn-danger remove-btn" data-match-id="${selection.matchId}" data-selection="${selection.selection}">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <small class="text-muted">${selection.league} - ${selection.date}</small>
+                        `;
+                        selectionsContainer.appendChild(selectionElement);
+                    });
+                    
+                    // Add event listeners to remove buttons
+                    document.querySelectorAll('.remove-btn').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const matchId = this.dataset.matchId;
+                            const selection = this.dataset.selection;
+                            removeSelection(matchId, selection);
+                        });
+                    });
+                } else {
+                    noGamesElement.classList.remove('d-none');
+                    hasGamesElement.classList.add('d-none');
+                }
+            }
+            
+            // Update betslip summary
+            function updateBetslipSummary() {
+                let totalOdds = 1;
+                betslipSelections.forEach(selection => {
+                    totalOdds *= parseFloat(selection.odds);
+                });
+                
+                const stake = parseFloat(stakeInput.value) || 0;
+                const potentialWin = stake * totalOdds;
+                
+                totalOddsElement.textContent = totalOdds.toFixed(2);
+                potentialWinElement.textContent = potentialWin.toFixed(2);
+            }
+            
+            // Update debug information
+            function updateDebugInfo() {
+                const storedValue = localStorage.getItem("betslipSelections");
+                debugValue.textContent = storedValue || 'Empty';
+                debugCount.textContent = betslipSelections.length;
+                
+                if (betslipSelections.length > 0) {
+                    debugStatus.textContent = 'Selections found and restored';
+                    debugStatus.className = 'text-success';
+                } else {
+                    debugStatus.textContent = 'No selections in storage';
+                    debugStatus.className = 'text-warning';
+                }
+            }
+            
+            // Event listeners
+            stakeInput.addEventListener('input', updateBetslipSummary);
+            
+            document.getElementById('refresh-debug').addEventListener('click', function() {
+                betslipSelections = JSON.parse(localStorage.getItem("betslipSelections") || "[]");
+                updateDebugInfo();
+                restoreSelections();
+                updateBetslipSummary();
+            });
+            
+            document.getElementById('clear-storage').addEventListener('click', function() {
+                localStorage.removeItem("betslipSelections");
+                betslipSelections = [];
+                updateDebugInfo();
+                restoreSelections();
+                updateBetslipSummary();
+            });
+            
+            document.getElementById('test-add').addEventListener('click', function() {
+                const randomMatch = matches[Math.floor(Math.random() * matches.length)];
+                const selections = ['home', 'draw', 'away'];
+                const randomSelection = selections[Math.floor(Math.random() * selections.length)];
+                const randomOdds = (Math.random() * 5 + 1).toFixed(2);
+                
+                addSelection(randomMatch, randomSelection, randomOdds);
+            });
+        });
+    </script>
+</body>
+</html>
