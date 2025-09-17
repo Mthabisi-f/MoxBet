@@ -6006,13 +6006,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // }
 
 
-//     function removeAllSelectionsInLocalStorage() {
-//         // Clear the array
-//         betslipSelections = [];
+    function removeAllSelectionsInLocalStorage() {
+        // Clear the array
+        betslipSelections = [];
 
-//         // Remove from localStorage
-//         localStorage.removeItem("betslipSelections");
-//     }
+        // Remove from localStorage
+        localStorage.removeItem("betslipSelections");
+    }
 
 
 //     function renderBetslip() {
