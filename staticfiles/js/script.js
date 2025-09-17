@@ -30,25 +30,24 @@ document.addEventListener('DOMContentLoaded', function() {
     let api_key, dropDownName, oddsDescName ;
     let minStake, maxWin, minWithdrawal, maxWithdrawal, minDeposit
     let betslipSelections = JSON.parse(localStorage.getItem("betslipSelections") || "[]");
+
     let currentSport = 'football';      
     const now = new Date();
 
 
-    document.addEventListener('DOMContentLoaded', function(){
-        mainNavbar.querySelectorAll('.nav-item').forEach(navItem =>{
-            navItem.addEventListener('click', function(){
-                if(navItem.classList.contains('top-nav-item-active')){
-                    return;
-                }
-                else{
-                    const activeBtns = mainNavbar.querySelectorAll('.top-nav-btn-active')
-                    activeBtns.forEach(activeBtn => {
-                        activeBtn.classList.remove('top-nav-btn-active');
-                    });
-                    navItem.classList.add('top-nav-item-active');
-                }
-            });
-        })
+    mainNavbar.querySelectorAll('.nav-item').forEach(navItem =>{
+        navItem.addEventListener('click', function(){
+            if(navItem.classList.contains('top-nav-item-active')){
+                return;
+            }
+            else{
+                const activeBtns = mainNavbar.querySelectorAll('.top-nav-btn-active')
+                activeBtns.forEach(activeBtn => {
+                    activeBtn.classList.remove('top-nav-btn-active');
+                });
+                navItem.classList.add('top-nav-item-active');
+            }
+        });
     })
 
 
