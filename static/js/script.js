@@ -5914,7 +5914,7 @@ function removeSelection(matchId, prediction) {
         s => !(s.matchId === matchId && s.prediction === prediction)
     );
     localStorage.setItem("betslipSelections", JSON.stringify(betslipSelections));
-    if(gamesInATicket) renderBetslip();
+    // if(gamesInATicket) renderBetslip();
 }
 
 
@@ -5925,11 +5925,11 @@ function removeAllSelectionsInLocalStorage() {
     // Remove from localStorage
     localStorage.removeItem("betslipSelections");
 
-    // Clear the DOM
-    renderBetslip();
+    // // Clear the DOM
+    // renderBetslip();
 
-    // Optionally deactivate all odds buttons in the DOM
-    document.querySelectorAll('.odds-btn-active').forEach(btn => btn.classList.remove('odds-btn-active'));
+    // // Optionally deactivate all odds buttons in the DOM
+    // document.querySelectorAll('.odds-btn-active').forEach(btn => btn.classList.remove('odds-btn-active'));
 }
 
 
@@ -5937,7 +5937,7 @@ function removeAllSelectionsInLocalStorage() {
 function renderBetslip() {
     if(!gamesInATicket) return;
 
-    // gamesInATicket.innerHTML = '';
+    gamesInATicket.innerHTML = '';   // ✅ clear once before loop
 
     betslipSelections.forEach(sel => {
         const newGame = createGameElement(
@@ -5947,9 +5947,6 @@ function renderBetslip() {
             sel.sport, sel.datetime,
             sel.leagueId, sel.country, sel.league
         );
-
-        // clear before re-render
-        gamesInATicket.innerHTML = '';
 
         // Update DOM if gamesInATicket exists
         if(gamesInATicket){
@@ -5968,10 +5965,12 @@ function renderBetslip() {
         } 
     });
 
-    someGamesSelected.classList.toggle('d-none', betslipSelections.length === 0);
-    noGamesSelected.classList.toggle('d-none', betslipSelections.length > 0);
-    numberOfSelectedGames.textContent = betslipSelections.length;
-    betslipSummaryCalculator();
+    if(betslipSelections.length > 0){
+        someGamesSelected.classList.remove('d-none');
+        noGamesSelected.classList.add('d-none');
+        numberOfSelectedGames.textContent = betslipSelections.length;
+        betslipSummaryCalculator();
+    }
 }
 
 

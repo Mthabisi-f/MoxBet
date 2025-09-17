@@ -180,6 +180,7 @@ function createGameElement(oddsValue, marketType, homeTeam, awayTeam, prediction
     const removeBtn = li.querySelector(".btn-close");
     removeBtn.addEventListener("click", function(){
         li.remove();
+        removeSelection(matchId, prediction);
         numberOfSelectedGames.textContent = gamesInATicket.querySelectorAll(".selected-game").length;
         betslipSummaryCalculator();
         const match = gamesDisplay.querySelector(`[data-match-id="${matchId}"]`);
@@ -194,7 +195,6 @@ function createGameElement(oddsValue, marketType, homeTeam, awayTeam, prediction
             }
         }
     });
-    removeSelection(matchId, prediction);
 
     return li;   
 }
@@ -5914,7 +5914,7 @@ function removeSelection(matchId, prediction) {
         s => !(s.matchId === matchId && s.prediction === prediction)
     );
     localStorage.setItem("betslipSelections", JSON.stringify(betslipSelections));
-    if(gamesInATicket) renderBetslip();
+    // if(gamesInATicket) renderBetslip();
 }
 
 
@@ -5925,20 +5925,19 @@ function removeAllSelectionsInLocalStorage() {
     // Remove from localStorage
     localStorage.removeItem("betslipSelections");
 
-    // Clear the DOM
-    renderBetslip();
+    // // Clear the DOM
+    // renderBetslip();
 
-    // Optionally deactivate all odds buttons in the DOM
-    document.querySelectorAll('.odds-btn-active').forEach(btn => btn.classList.remove('odds-btn-active'));
+    // // Optionally deactivate all odds buttons in the DOM
+    // document.querySelectorAll('.odds-btn-active').forEach(btn => btn.classList.remove('odds-btn-active'));
 }
-
 
 
 
 function renderBetslip() {
     if(!gamesInATicket) return;
 
-    // gamesInATicket.innerHTML = '';
+    gamesInATicket.innerHTML = '';   // ✅ clear once before loop
 
     betslipSelections.forEach(sel => {
         const newGame = createGameElement(
@@ -5948,11 +5947,12 @@ function renderBetslip() {
             sel.sport, sel.datetime,
             sel.leagueId, sel.country, sel.league
         );
+
         // Update DOM if gamesInATicket exists
         if(gamesInATicket){
             let matchFound = false;
             gamesInATicket.querySelectorAll(".selected-game").forEach((game) => {
-                if (game.classList.contains(selection.matchId)) {
+                if (game.classList.contains(sel.matchId)) {
                     game.remove();
                     gamesInATicket.appendChild(newGame);
                     matchFound = true;
@@ -5965,10 +5965,12 @@ function renderBetslip() {
         } 
     });
 
-    someGamesSelected.classList.toggle('d-none', betslipSelections.length === 0);
-    noGamesSelected.classList.toggle('d-none', betslipSelections.length > 0);
-    numberOfSelectedGames.textContent = betslipSelections.length;
-    betslipSummaryCalculator();
+    if(betslipSelections.length > 0){
+        someGamesSelected.classList.remove('d-none');
+        noGamesSelected.classList.add('d-none');
+        numberOfSelectedGames.textContent = betslipSelections.length;
+        betslipSummaryCalculator();
+    }
 }
 
 
