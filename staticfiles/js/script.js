@@ -90,10 +90,6 @@ document.addEventListener('DOMContentLoaded', function() {
     `;
 
 
-    if(window.location.pathname.includes('/sports/')){
-        fetchGamesBySport(currentSport);
-    }
-
 
     if(copyrightYear){
         copyrightYear.forEach(cprty => {
@@ -1580,174 +1576,6 @@ document.addEventListener('DOMContentLoaded', function() {
     fetchMoreOdds();
 
 
-    if(window.location.pathname.includes('/mybets/')){              
-
-        const statusFilter = document.getElementById('status-filter');
-        const ticketTypeFilter = document.getElementById('tickets-type-filter');
-        const ticketStatusFilter = document.getElementById('ticket-status-filter');
-        const datePicker = document.getElementById('date-picker');
-        const ticketsDisplay = document.getElementById('tickets-display');
-        let status_fil = 'Pending';
-        const dateRangeLabel = document.getElementById('dateRangeLabel');
-
-        statusFilter.addEventListener('click', function(event){
-            activeBtn = event.target;
-            if(activeBtn.id == 'Pending'){
-                status_fil = 'Pending';
-                ticketStatusFilter.innerHTML = '';
-                ticketStatusFilter.innerHTML = `<option value="Pending" selected>Pending</option>`;
-            }else if(activeBtn.id == 'Settled'){
-                status_fil = 'Settled';
-                ticketStatusFilter.innerHTML = '';
-                ticketStatusFilter.innerHTML = `
-                            <option value="All" selected>All</option>
-                            <option value="Won">Won</option>
-                            <option value="Lost">Lost</option>
-                            <option value="Refund">Refund</option>
-                            <option value="Canceled">Canceled</option>
-                    `;
-            }
-            statusFilter.querySelector('.status-filter-active').classList.remove('status-filter-active');
-            statusFilter.querySelector(`#${status_fil}`).classList.add('status-filter-active');
-            fetchAndDisplayTickets();
-        })
-
-        
-        // spinner.style.display = 'none';
-        ticketsDisplay.appendChild(spinner);
-
-        let dateFrom = '';
-        let dateTo = '';
-
-        // Listen for changes
-        const filters = [ticketTypeFilter, ticketStatusFilter, datePicker];
-        filters.forEach(filter => {
-            if (filter) {
-                filter.addEventListener('change', () => {
-                    fetchAndDisplayTickets();
-                });
-            }
-        });
-
-        const today = new Date();
-        const sixMonthsAgo = new Date();
-        sixMonthsAgo.setMonth(today.getMonth() - 6);
-
-        flatpickr(datePicker, {
-            mode: 'range',
-            dateFormat: "Y-m-d",
-            minDate: sixMonthsAgo,
-            maxDate: today,
-            onClose: function(selectedDates){
-                if(selectedDates.length === 2){
-                    dateFrom = selectedDates[0].toISOString().slice(0, 10);
-                    dateTo = selectedDates[1].toISOString().slice(0, 10);
-                    // document.getElementById('dateRangeLabel').textContent = `${dateFrom}  to ${dateTo}`;
-                    fetchAndDisplayTickets();
-                }
-            }
-        });
-
-        fetchAndDisplayTickets();
-
-        async function fetchAndDisplayTickets(){ 
-            ticketsDisplay.innerHTML = '';
-            ticketsDisplay.appendChild(spinner);
-            const ticket_tp_fil = ticketTypeFilter.value;
-            const ticket_sts_fil = ticketStatusFilter.value; 
-            
-            const url = `/fetch-tickets/?${status_fil ? 'status_fil=' + encodeURIComponent(status_fil): ''}&ticket_tp_fil=${encodeURIComponent(ticket_tp_fil)}&ticket_sts_fil=${encodeURIComponent(ticket_sts_fil)}&date_from=${encodeURIComponent(dateFrom)}&date_to=${encodeURIComponent(dateTo)}`;
-
-            try {
-                let response = await fetch(url);
-                const ticketsData = await response.json();
-                const tickets = ticketsData.tickets;
-
-                if(tickets.length > 0 && document.getElementById('tickets-display')){
-                    ticketsDisplay.innerHTML = '';
-                    tickets.forEach(ticket =>{
-                        const {id, status, created_at, total_odds, stake, potential_win} = ticket;
-
-                        const selections = ticket.selections;
-                    
-                        let dateObj = new Date(created_at);
-                        let date = dateObj.toLocaleDateString("en-GB");
-                        let time = dateObj.toLocaleTimeString("en-GB", {hour: "2-digit", minute: "2-digit"});
-
-                        const tktElement = document.createElement('div');
-                        tktElement.innerHTML = `<div class="row g-0 border-aqua  mt-2 rounded-4">
-                                                    <div class="col-9 p-2">
-                                                        <div class="row g-0 text-small text-yellow">
-                                                            <div class="col-4 text-center text-truncate">Id : ${id}</div>
-                                                            <div class="col-4 text-center text-truncate">${time} | ${date}</div>
-                                                            <div class="col-4 text-center text-truncate">${selections.length} Selections</div>
-                                                        </div>
-                                                        <div class="TicketId-${id} d-none ticket-selections-container">
-                                                            ${selections.map(selection => `
-                                                            <hr class="m-1">
-                                                            <div class="selection-content bg-aqua text-black p-2" style="border-top-left-radius: 0.7rem; border-bottom-left-radius: 0.7rem;">
-                                                                <div class="row g-0">
-                                                                    <div class="text-truncate mb-5px">${selection.country} - ${selection.league}</div>
-                                                                    <div class="text-truncate mb-5px">${selection.home_team} - ${selection.away_team}</div>
-                                                                    <div class="col-9 fw-bold text-truncate mb-5px">${selection.market_type} - ${selection.prediction}</div><div class="col-3 text-truncate text-end mb-5px">${selection.results ? `<span>${selection.results["home_score"]}-${selection.results["away_score"]} </span>` : ''}</div> 
-                                                                    <div class="text-small">${new Date(selection.date_time).toLocaleTimeString("en-GB", {hour: "2-digit", minute: "2-digit"})}&nbsp;&nbsp;${new Date(selection.date_time).toLocaleDateString("en-GB")}</div>
-                                                                </div>
-                                                            </div>`).join("")}
-                                                        </div>
-                                                        <hr class="m-1">
-                                                        <div class="row g-0">
-                                                            <div class="col-4 text-center">
-                                                                <div style="margin-bottom: -5px; font-style: italic;">Stake</div>
-                                                                <div class="text-small">${currencySymbol}&nbsp;${stake}</div>
-                                                            </div>
-                                                            <div class="col-4 text-center">
-                                                                <div style="margin-bottom: -5px; font-style: italic;">Total Odds</div>
-                                                                <div class="text-small">${total_odds}</div>
-                                                            </div>
-                                                            <div class="col-4 text-center">
-                                                                <div style="margin-bottom: -5px; font-style: italic;">Win boost</div>
-                                                                <div class="text-small">${currencySymbol}&nbsp;20.77</div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-3 p-2 text-center" style="border-left: 1px solid aqua;">
-                                                        <div class="row g-0 text-small text-yellow" onclick="toggleDisplayNone('TicketId-${id}')">
-                                                            <div class="col-9 text-center">${selections.filter(s => s.status !== 'Pending').length}/${selections.length} settled</div>
-                                                            <div class="col-3 text-center"><i id="chevron-${id}" class="fa-solid fa-chevron-up"></i></div>
-                                                        </div>
-                                                        <div class="TicketId-${id} d-none">
-                                                            ${selections.map(selection => `
-                                                            <hr class="m-1">
-                                                            <div class="selection-content bg-aqua text-black p-2" style="border-top-right-radius: 0.7rem; border-bottom-right-radius: 0.7rem;">
-                                                                <div class="row g-0">
-                                                                    <div style="margin-bottom: -5px; visibility: hidden;">Status:</div>
-                                                                    <div class="${selection.status}" style="margin-bottom: -5px; font-style: italic;">${selection.status}</div>
-                                                                    <div class="fw-bold" style="margin-bottom: -5px;">${selection.match_odds}</div>
-                                                                    <div class="text-small" style="visibility: hidden;">&nbsp;&nbsp;</div>
-                                                                </div>
-                                                            </div>`).join("")}
-                                                        </div>
-                                                        <hr class="m-1">
-                                                        <div class="row g-0" onclick="toggleDisplayNone('TicketId-${id}')">
-                                                            <div style="margin-bottom: -5px; font-style: italic;" class="${status}">${status}</div>
-                                                            <div class="text-small">${currencySymbol}&nbsp;${potential_win}</div>
-                                                        </div>
-                                                    </div>
-                                                    </div>`;
-                                                
-                        ticketsDisplay.appendChild(tktElement);
-                        
-                    })
-                }else if(tickets.length == 0 && ticketsDisplay){
-                    ticketsDisplay.innerHTML = `<p class="text-center my-5 p-5 text-aqua">No ${status_fil} ${ticket_tp_fil} tickets found</p>`;
-                }
-            
-            }catch(error){
-                console.log('Error fetching tickets data :', error);
-            }
-        }
-    }
-
 
     function toggleDisplayNone(container_id){
         selections_container = document.querySelectorAll(`.${container_id}`);
@@ -1915,7 +1743,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
 
     // Functions that must be globally defined 
-    window.fetchGamesBySport = async function(sport, page = 1) {
+    async function fetchGamesBySport(sport, page = 1) {
         gamesDisplay.appendChild(spinner);
 
         let url = `/api/fetch-games/?sport=${sport}&page=${page}`;
@@ -2098,6 +1926,178 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
+    if(window.location.pathname.includes('/sports/')){
+        fetchGamesBySport(currentSport);
+    }
+
+    if(window.location.pathname.includes('/mybets/')){              
+
+        const statusFilter = document.getElementById('status-filter');
+        const ticketTypeFilter = document.getElementById('tickets-type-filter');
+        const ticketStatusFilter = document.getElementById('ticket-status-filter');
+        const datePicker = document.getElementById('date-picker');
+        const ticketsDisplay = document.getElementById('tickets-display');
+        let status_fil = 'Pending';
+        const dateRangeLabel = document.getElementById('dateRangeLabel');
+
+        statusFilter.addEventListener('click', function(event){
+            activeBtn = event.target;
+            if(activeBtn.id == 'Pending'){
+                status_fil = 'Pending';
+                ticketStatusFilter.innerHTML = '';
+                ticketStatusFilter.innerHTML = `<option value="Pending" selected>Pending</option>`;
+            }else if(activeBtn.id == 'Settled'){
+                status_fil = 'Settled';
+                ticketStatusFilter.innerHTML = '';
+                ticketStatusFilter.innerHTML = `
+                            <option value="All" selected>All</option>
+                            <option value="Won">Won</option>
+                            <option value="Lost">Lost</option>
+                            <option value="Refund">Refund</option>
+                            <option value="Canceled">Canceled</option>
+                    `;
+            }
+            statusFilter.querySelector('.status-filter-active').classList.remove('status-filter-active');
+            statusFilter.querySelector(`#${status_fil}`).classList.add('status-filter-active');
+            fetchAndDisplayTickets();
+        })
+
+        
+        // spinner.style.display = 'none';
+        ticketsDisplay.appendChild(spinner);
+
+        let dateFrom = '';
+        let dateTo = '';
+
+        // Listen for changes
+        const filters = [ticketTypeFilter, ticketStatusFilter, datePicker];
+        filters.forEach(filter => {
+            if (filter) {
+                filter.addEventListener('change', () => {
+                    fetchAndDisplayTickets();
+                });
+            }
+        });
+
+        const today = new Date();
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(today.getMonth() - 6);
+
+        flatpickr(datePicker, {
+            mode: 'range',
+            dateFormat: "Y-m-d",
+            minDate: sixMonthsAgo,
+            maxDate: today,
+            onClose: function(selectedDates){
+                if(selectedDates.length === 2){
+                    dateFrom = selectedDates[0].toISOString().slice(0, 10);
+                    dateTo = selectedDates[1].toISOString().slice(0, 10);
+                    // document.getElementById('dateRangeLabel').textContent = `${dateFrom}  to ${dateTo}`;
+                    fetchAndDisplayTickets();
+                }
+            }
+        });
+
+        fetchAndDisplayTickets();
+
+        async function fetchAndDisplayTickets(){ 
+            ticketsDisplay.innerHTML = '';
+            ticketsDisplay.appendChild(spinner);
+            const ticket_tp_fil = ticketTypeFilter.value;
+            const ticket_sts_fil = ticketStatusFilter.value; 
+            
+            const url = `/fetch-tickets/?${status_fil ? 'status_fil=' + encodeURIComponent(status_fil): ''}&ticket_tp_fil=${encodeURIComponent(ticket_tp_fil)}&ticket_sts_fil=${encodeURIComponent(ticket_sts_fil)}&date_from=${encodeURIComponent(dateFrom)}&date_to=${encodeURIComponent(dateTo)}`;
+
+            try {
+                let response = await fetch(url);
+                const ticketsData = await response.json();
+                const tickets = ticketsData.tickets;
+
+                if(tickets.length > 0 && document.getElementById('tickets-display')){
+                    ticketsDisplay.innerHTML = '';
+                    tickets.forEach(ticket =>{
+                        const {id, status, created_at, total_odds, stake, potential_win} = ticket;
+
+                        const selections = ticket.selections;
+                    
+                        let dateObj = new Date(created_at);
+                        let date = dateObj.toLocaleDateString("en-GB");
+                        let time = dateObj.toLocaleTimeString("en-GB", {hour: "2-digit", minute: "2-digit"});
+
+                        const tktElement = document.createElement('div');
+                        tktElement.innerHTML = `<div class="row g-0 border-aqua  mt-2 rounded-4">
+                                                    <div class="col-9 p-2">
+                                                        <div class="row g-0 text-small text-yellow">
+                                                            <div class="col-4 text-center text-truncate">Id : ${id}</div>
+                                                            <div class="col-4 text-center text-truncate">${time} | ${date}</div>
+                                                            <div class="col-4 text-center text-truncate">${selections.length} Selections</div>
+                                                        </div>
+                                                        <div class="TicketId-${id} d-none ticket-selections-container">
+                                                            ${selections.map(selection => `
+                                                            <hr class="m-1">
+                                                            <div class="selection-content bg-aqua text-black p-2" style="border-top-left-radius: 0.7rem; border-bottom-left-radius: 0.7rem;">
+                                                                <div class="row g-0">
+                                                                    <div class="text-truncate mb-5px">${selection.country} - ${selection.league}</div>
+                                                                    <div class="text-truncate mb-5px">${selection.home_team} - ${selection.away_team}</div>
+                                                                    <div class="col-9 fw-bold text-truncate mb-5px">${selection.market_type} - ${selection.prediction}</div><div class="col-3 text-truncate text-end mb-5px">${selection.results ? `<span>${selection.results["home_score"]}-${selection.results["away_score"]} </span>` : ''}</div> 
+                                                                    <div class="text-small">${new Date(selection.date_time).toLocaleTimeString("en-GB", {hour: "2-digit", minute: "2-digit"})}&nbsp;&nbsp;${new Date(selection.date_time).toLocaleDateString("en-GB")}</div>
+                                                                </div>
+                                                            </div>`).join("")}
+                                                        </div>
+                                                        <hr class="m-1">
+                                                        <div class="row g-0">
+                                                            <div class="col-4 text-center">
+                                                                <div style="margin-bottom: -5px; font-style: italic;">Stake</div>
+                                                                <div class="text-small">${currencySymbol}&nbsp;${stake}</div>
+                                                            </div>
+                                                            <div class="col-4 text-center">
+                                                                <div style="margin-bottom: -5px; font-style: italic;">Total Odds</div>
+                                                                <div class="text-small">${total_odds}</div>
+                                                            </div>
+                                                            <div class="col-4 text-center">
+                                                                <div style="margin-bottom: -5px; font-style: italic;">Win boost</div>
+                                                                <div class="text-small">${currencySymbol}&nbsp;20.77</div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-3 p-2 text-center" style="border-left: 1px solid aqua;">
+                                                        <div class="row g-0 text-small text-yellow" onclick="toggleDisplayNone('TicketId-${id}')">
+                                                            <div class="col-9 text-center">${selections.filter(s => s.status !== 'Pending').length}/${selections.length} settled</div>
+                                                            <div class="col-3 text-center"><i id="chevron-${id}" class="fa-solid fa-chevron-up"></i></div>
+                                                        </div>
+                                                        <div class="TicketId-${id} d-none">
+                                                            ${selections.map(selection => `
+                                                            <hr class="m-1">
+                                                            <div class="selection-content bg-aqua text-black p-2" style="border-top-right-radius: 0.7rem; border-bottom-right-radius: 0.7rem;">
+                                                                <div class="row g-0">
+                                                                    <div style="margin-bottom: -5px; visibility: hidden;">Status:</div>
+                                                                    <div class="${selection.status}" style="margin-bottom: -5px; font-style: italic;">${selection.status}</div>
+                                                                    <div class="fw-bold" style="margin-bottom: -5px;">${selection.match_odds}</div>
+                                                                    <div class="text-small" style="visibility: hidden;">&nbsp;&nbsp;</div>
+                                                                </div>
+                                                            </div>`).join("")}
+                                                        </div>
+                                                        <hr class="m-1">
+                                                        <div class="row g-0" onclick="toggleDisplayNone('TicketId-${id}')">
+                                                            <div style="margin-bottom: -5px; font-style: italic;" class="${status}">${status}</div>
+                                                            <div class="text-small">${currencySymbol}&nbsp;${potential_win}</div>
+                                                        </div>
+                                                    </div>
+                                                    </div>`;
+                                                
+                        ticketsDisplay.appendChild(tktElement);
+                        
+                    })
+                }else if(tickets.length == 0 && ticketsDisplay){
+                    ticketsDisplay.innerHTML = `<p class="text-center my-5 p-5 text-aqua">No ${status_fil} ${ticket_tp_fil} tickets found</p>`;
+                }
+            
+            }catch(error){
+                console.log('Error fetching tickets data :', error);
+            }
+        }
+    }
+
 
     window.footballOddsDescription = function(container){
         container.innerHTML = `   
@@ -2166,7 +2166,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                             </div>
                                         </div> `;
     }
-
 
 
     window.footballMatchElementInnerHTML = function(game, sport, container){
