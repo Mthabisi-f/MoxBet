@@ -5977,8 +5977,8 @@ document.addEventListener('DOMContentLoaded', function() {
             //     });
             // });
         } else {
-            noGamesElement.classList.remove('d-none');
-            hasGamesElement.classList.add('d-none');
+            noGamesSelected.classList.remove('d-none');
+            someGamesSelected.classList.add('d-none');
         }
     }
             
