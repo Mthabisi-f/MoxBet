@@ -387,6 +387,9 @@ footer {
     .top-nav-item{
         width: 4em;
     }
+    .text-linear-grad{
+        font-size: 1rem;
+    }
 }
 
 

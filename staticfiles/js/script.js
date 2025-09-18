@@ -5,13 +5,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const noGamesSelected = document.getElementById('betslip-no-games-selected');
     const someGamesSelected = document.getElementById('betslip-some-games-selected');
     const gamesInATicket = document.querySelector('.games-in-a-ticket-list');
-    const gamesDisplay = document.getElementById('games-dipslay');
+    const gamesDisplay = document.querySelectorAll('.games-dipslay');
+    const gamesDisplayMoreOdds = document.getElementById('games-display-all-odds'); 
+    const gamesDisplaySports = document.getElementById('games-dipslay-sports');
+    const gamesDisplayLive = document.getElementById('games-dipslay-live');
+    const gamesDisplayBtns = document.getElementById('games-display-btns');
     const oddsDescription = document.getElementById('odds-description');
     const allEventsContainer = document.getElementById('all-events-container');
-    const gamesDisplayBtns = document.getElementById('games-display-btns');
     const mainNavbar = document.getElementById('main-navbar');
     const sportNavbar = document.getElementById('sport-navbar');
-    const moreOddsPage = document.getElementById('all-odds-page');
     const filterGamesBy = document.getElementById('filter-games-by');
     const livePage = document.getElementById('live-page');
     const userBalance = document.getElementById('user_balance');
@@ -173,13 +175,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const removeBtn = li.querySelector(".btn-close");
         removeBtn.addEventListener("click", function(){
             li.remove();
-            removeSelection(matchId, prediction);
+            removeSelection(matchId);
             numberOfSelectedGames.forEach(el => {
                 el.textContent = gamesInATicket.querySelectorAll(".selected-game").length || betslipSelections.length;
             });
 
             betslipSummaryCalculator();
-            const match = gamesDisplay.querySelector(`[data-match-id="${matchId}"]`);
+            const match = gamesDisplaySports.querySelector(`[data-match-id="${matchId}"]`);
             if(match){
                 const oddsBtn = match.querySelector('.odds-btn-active');
                 oddsBtn.classList.remove('odds-btn-active');
@@ -220,7 +222,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
-    // If betslip is empty
+    // If betslip is empty (for booki ng codes and more)
     if(noGamesSelected){
         document.getElementById('get-booking').addEventListener('submit', function(e){
             e.preventDefault();
@@ -237,7 +239,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if(data.success && data.updated_selections){
-                    selections = data.updated_selections;
+                    const selections = data.updated_selections;
 
                     if(someGamesSelected.classList.contains('d-none')){
                         someGamesSelected.classList.remove('d-none');
@@ -271,28 +273,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         });
 
                         if (!matchFound) {
-                            gamesInATicket.appendChild(newGame);
-                            
-                            const containers = gamesDisplay.querySelectorAll(`[data-match-id="${matchId}"]`);
-                            
-                            containers.forEach(container =>{
-                                                                                
-                                const buttons = container.querySelectorAll(`[data-prediction="${prediction}"]`);
-                                if(buttons){
-                                    buttons.forEach(btn => {
-                                        const mk_type = btn.closest('[data-market-type]');
-                                        if(mk_type && mk_type.getAttribute('data-market-type') === marketType){
-                                            const activeBtns = mk_type.querySelectorAll('.odds-btn-active');
-                                            activeBtns.forEach(btn => {
-                                                btn.classList.remove('odds-btn-active');
-                                            });
-                                            btn.classList.add('odds-btn-active');
-                                        }
-                                    })
-
-                                }
-                                
-                            });                        
+                            gamesInATicket.appendChild(newGame);                       
                         }
 
                         numberOfSelectedGames.textContent = gamesInATicket.querySelectorAll(".selected-game").length;
@@ -356,82 +337,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Handle Clicking on Odds Button
     if(gamesDisplay){
-        gamesDisplay.addEventListener("click", function (event) {
-            if (event.target.classList.contains("odds-btn")) {
-                event.preventDefault();
-                event.stopPropagation();
-                
-                // Toggle visibility based on selected games
-                if(gamesInATicket.querySelectorAll(".selected-game").length > 0){
-                    someGamesSelected.classList.remove('d-none');
-                    noGamesSelected.classList.add('d-none');
-                } else {
-                    someGamesSelected.classList.add('d-none');
-                    noGamesSelected.classList.remove('d-none');
-                }
-
-                const button = event.target;
-                const oddsValue = button.textContent;
-                if (oddsValue) {
-                    const matchContainer = button.closest(".match-link");
-                    const marketType = button.closest('[data-market-type]').getAttribute("data-market-type");
-                    const selectedGames = gamesInATicket.querySelectorAll(".selected-game");
-                    const homeTeam = matchContainer.querySelector("[data-home-team]").getAttribute("data-home-team");
-                    const awayTeam = matchContainer.querySelector("[data-away-team]").getAttribute("data-away-team");
-                    const datetime = matchContainer.querySelector("[data-datetime]").getAttribute('data-datetime');
-                    const leagueId = matchContainer.querySelector("[data-league-id]").getAttribute('data-league-id');
-                    const matchId = matchContainer.querySelector("[data-match-id]").getAttribute("data-match-id");
-                    const country = matchContainer.querySelector("[data-country]").getAttribute("data-country");
-                    const league = matchContainer.querySelector("[data-league]").getAttribute("data-league");
-                    const sport = matchContainer.querySelector("[data-sport]").getAttribute("data-sport");
-                    const prediction = button.getAttribute("data-prediction");
-
-                
-                    const newGame = createGameElement(oddsValue, marketType, homeTeam, awayTeam, prediction, matchId, sport, datetime, leagueId, country, league);
-
-                    const selection = {
-                                sport: sport,
-                                country: country,
-                                league: league,
-                                leagueId: leagueId,
-                                datetime: datetime,
-                                prediction: button.dataset.prediction,
-                                oddsValue: oddsValue,
-                                marketType: marketType,
-                                matchId: matchId,
-                                homeTeam: homeTeam,
-                                awayTeam: awayTeam
-                            };
-
-                    addSelection(selection);
-
-                    const activeBtns = matchContainer.querySelectorAll('.odds-btn-active');
-                    if(activeBtns){
-                        activeBtns.forEach(btn=>{
-                            btn.classList.remove('odds-btn-active');
-                        })
-                    }
+        gamesDisplay.forEach(gd => {
+            gd.addEventListener("click", function (event) {
+                if (event.target.classList.contains("odds-btn")) {
+                    event.preventDefault();
+                    event.stopPropagation();
                     
-                    if(!button.classList.contains('odds-btn-active')){
-                        button.classList.add('odds-btn-active');
-                    }
-
-                    let matchFound = false;
-                    selectedGames.forEach((game) => {
-                        if (game.classList.contains(matchId)) {
-                            game.remove();
-                            gamesInATicket.appendChild(newGame);
-                            matchFound = true;
-                        }
-                    });
-
-                    if (!matchFound) {
-                        gamesInATicket.appendChild(newGame);
-                    }
-
-
-                    // After appending the game
-                    if (gamesInATicket.querySelectorAll(".selected-game").length > 0) {
+                    // Toggle visibility based on selected games
+                    if(gamesInATicket.querySelectorAll(".selected-game").length > 0){
                         someGamesSelected.classList.remove('d-none');
                         noGamesSelected.classList.add('d-none');
                     } else {
@@ -439,15 +352,110 @@ document.addEventListener('DOMContentLoaded', function() {
                         noGamesSelected.classList.remove('d-none');
                     }
 
-                    numberOfSelectedGames.forEach(el => {
-                        el.textContent = gamesInATicket.querySelectorAll(".selected-game").length || betslipSelections.length;
-                    });
-                    betslipSummaryCalculator();
-                }
-            }    
-        
+                    const button = event.target;
+                    const oddsValue = button.querySelector('.odds-value').textContent || button.textContent;
+                    if (oddsValue) {
+                        const matchContainer = button.closest(".match-link");
+                        const marketType = button.closest('[data-market-type]').getAttribute("data-market-type");
+                        const selectedGames = gamesInATicket.querySelectorAll(".selected-game");
+                        const homeTeam = matchContainer.querySelector("[data-home-team]").getAttribute("data-home-team");
+                        const awayTeam = matchContainer.querySelector("[data-away-team]").getAttribute("data-away-team");
+                        const datetime = matchContainer.querySelector("[data-datetime]").getAttribute('data-datetime');
+                        const leagueId = matchContainer.querySelector("[data-league-id]").getAttribute('data-league-id');
+                        const matchId = matchContainer.querySelector("[data-match-id]").getAttribute("data-match-id");
+                        const country = matchContainer.querySelector("[data-country]").getAttribute("data-country");
+                        const league = matchContainer.querySelector("[data-league]").getAttribute("data-league");
+                        const sport = matchContainer.querySelector("[data-sport]").getAttribute("data-sport");
+                        const prediction = button.getAttribute("data-prediction");
+
+                    
+                        const newGame = createGameElement(oddsValue, marketType, homeTeam, awayTeam, prediction, matchId, sport, datetime, leagueId, country, league);
+
+                        const selection = {
+                                    sport: sport,
+                                    country: country,
+                                    league: league,
+                                    league_d: leagueId,
+                                    date_time: datetime,
+                                    prediction: button.dataset.prediction,
+                                    odds_value: oddsValue,
+                                    market_type: marketType,
+                                    match_id: matchId,
+                                    home_team: homeTeam,
+                                    away_team: awayTeam
+                                };
+
+                        addSelection(selection);
+
+                        const activeBtns = matchContainer.querySelectorAll('.odds-btn-active');
+                        if(activeBtns){
+                            activeBtns.forEach(btn=>{
+                                btn.classList.remove('odds-btn-active');
+                            })
+                        }
+                        
+                        if(!button.classList.contains('odds-btn-active')){
+                            button.classList.add('odds-btn-active');
+                        }
+
+                        let matchFound = false;
+                        selectedGames.forEach((game) => {
+                            if (game.classList.contains(matchId)) {
+                                game.remove();
+                                gamesInATicket.appendChild(newGame);
+                                matchFound = true;
+                            }
+                        });
+
+                        if (!matchFound) {
+                            gamesInATicket.appendChild(newGame);
+                        }
+
+
+                        // After appending the game
+                        if (gamesInATicket.querySelectorAll(".selected-game").length > 0) {
+                            someGamesSelected.classList.remove('d-none');
+                            noGamesSelected.classList.add('d-none');
+                        } else {
+                            someGamesSelected.classList.add('d-none');
+                            noGamesSelected.classList.remove('d-none');
+                        }
+
+                        numberOfSelectedGames.forEach(el => {
+                            el.textContent = gamesInATicket.querySelectorAll(".selected-game").length || betslipSelections.length;
+                        });
+                        betslipSummaryCalculator();
+                    }
+                }    
+            
+            });
         });
     }
+
+
+    // activate all odds button whose selections are in local storage
+    // betslipContainer
+    betslipSelections.forEach(sel => {
+        const containerz = document.querySelectorAll(`[data-match-id="${sel.match_id}"]`);
+        containerz.forEach(container =>{                                               
+            const buttons = container.querySelectorAll(`[data-prediction="${sel.prediction}"]`);
+            if(buttons){
+                buttons.forEach(btn => {
+                    const mk_type = btn.closest('[data-market-type]');
+                    if(mk_type && mk_type.getAttribute('data-market-type') === sel.market_type){
+                        const activeBtns = mk_type.querySelectorAll('.odds-btn-active');
+                        activeBtns.forEach(btn => {
+                            btn.classList.remove('odds-btn-active');
+                        });
+                        btn.classList.add('odds-btn-active');
+                    }
+                })
+
+            }
+            
+        });
+    })
+
 
 
     async function  WinBoost(number_of_games, totalOdds, stakeAmount){
@@ -459,6 +467,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return  Number( 0.5 * (totalOdds * stakeAmount)).toFixed(2);
         }
     }
+
 
 
     // Calculate Betslip Summary
@@ -747,6 +756,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
+
+
         function updateBalanceDisplay(newBalance) {
             const balanceElement = document.getElementById("user-balance");
             if (balanceElement) {
@@ -755,6 +766,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
+
+
         function showErrorAlert(message){
             const alertDiv = document.createElement("div");
             alertDiv.className = "alert alert-danger alert-dismissible fade show";
@@ -809,16 +822,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
-    if(moreOddsPage && window.location.pathname.includes('/more-odds/')){
+    if(gamesDisplayMoreOdds && window.location.pathname.includes('/more-odds/')){
 
-        moreOddsPage.addEventListener("click", function (event) {
+        gamesDisplayMoreOdds.addEventListener("click", function (event) {
 
             if(event.target.classList.contains('filter-odds-by')){
                 const selectedFilter = event.target;
                 if(!selectedFilter.classList.contains('br-and-b-aqua')){
                     selectedFilter.classList.add('br-and-b-aqua');
                 }
-                Array.from(moreOddsPage.querySelectorAll('.filter-odds-by')).forEach(filter =>{
+                Array.from(gamesDisplayMoreOdds.querySelectorAll('.filter-odds-by')).forEach(filter =>{
                     if(filter != selectedFilter){
                         if(filter.classList.contains('br-and-b-aqua')){
                             filter.classList.remove('br-and-b-aqua');
@@ -827,68 +840,70 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
             }
 
-            if (event.target.classList.contains("odds-btn")) {
+            // if (event.target.classList.contains("odds-btn")) {
                 
-                if(someGamesSelected.classList.contains('d-none')){
-                    someGamesSelected.classList.remove('d-none');
-                    noGamesSelected.classList.add('d-none');
-                }
+            //     if(someGamesSelected.classList.contains('d-none')){
+            //         someGamesSelected.classList.remove('d-none');
+            //         noGamesSelected.classList.add('d-none');
+            //     }
             
-                const button = event.target;
-                const oddsValue = button.querySelector('.odds-value').textContent;
-                if (oddsValue) {
-                    // const matchContainer = button.closest(".match-link");
-                    const marketType = button.closest('[data-market-type]').getAttribute("data-market-type");
-                    const selectedGames = gamesInATicket.querySelectorAll(".selected-game");
-                    const homeTeam = moreOddsPage.querySelector("[data-home-team]").getAttribute("data-home-team");
-                    const awayTeam = moreOddsPage.querySelector("[data-away-team]").getAttribute("data-away-team");
-                    const datetime = moreOddsPage.querySelector("[data-datetime]").getAttribute('data-datetime');
-                    const leagueId = moreOddsPage.querySelector("[data-league-id]").getAttribute('data-league-id');
-                    const date = moreOddsPage.querySelector("[data-date]").getAttribute("data-date");
-                    const time = moreOddsPage.querySelector("[data-match-time]").getAttribute("data-match-time");
-                    const matchId = moreOddsPage.querySelector("[data-match-id]").getAttribute("data-match-id");
-                    const country = moreOddsPage.querySelector("[data-country]").getAttribute("data-country");
-                    const league = moreOddsPage.querySelector("[data-league]").getAttribute("data-league");
-                    const sport = moreOddsPage.querySelector("[data-sport]").getAttribute("data-sport");
-                    const prediction = button.getAttribute("data-prediction");
+            //     const button = event.target;
+            //     const oddsValue = button.querySelector('.odds-value').textContent;
+            //     if (oddsValue) {
+            //         // const matchContainer = button.closest(".match-link");
+            //         const marketType = button.closest('[data-market-type]').getAttribute("data-market-type");
+            //         const selectedGames = gamesInATicket.querySelectorAll(".selected-game");
+            //         const homeTeam = gamesDisplayMoreOdds.querySelector("[data-home-team]").getAttribute("data-home-team");
+            //         const awayTeam = gamesDisplayMoreOdds.querySelector("[data-away-team]").getAttribute("data-away-team");
+            //         const datetime = gamesDisplayMoreOdds.querySelector("[data-datetime]").getAttribute('data-datetime');
+            //         const leagueId = gamesDisplayMoreOdds.querySelector("[data-league-id]").getAttribute('data-league-id');
+            //         const date = gamesDisplayMoreOdds.querySelector("[data-date]").getAttribute("data-date");
+            //         const time = gamesDisplayMoreOdds.querySelector("[data-match-time]").getAttribute("data-match-time");
+            //         const matchId = gamesDisplayMoreOdds.querySelector("[data-match-id]").getAttribute("data-match-id");
+            //         const country = gamesDisplayMoreOdds.querySelector("[data-country]").getAttribute("data-country");
+            //         const league = gamesDisplayMoreOdds.querySelector("[data-league]").getAttribute("data-league");
+            //         const sport = gamesDisplayMoreOdds.querySelector("[data-sport]").getAttribute("data-sport");
+            //         const prediction = button.getAttribute("data-prediction");
                 
-                    const newGame = createGameElement(oddsValue, marketType, homeTeam, awayTeam, date, time, prediction, matchId, sport, datetime, leagueId, country, league);
+            //         const newGame = createGameElement(oddsValue, marketType, homeTeam, awayTeam, date, time, prediction, matchId, sport, datetime, leagueId, country, league);
 
-                    const activeBtns = moreOddsPage.querySelectorAll('.odds-btn-active');
-                    if(activeBtns){
-                        activeBtns.forEach(btn=>{
-                            btn.classList.remove('odds-btn-active');
-                            btn.querySelector('.prediction').classList.remove('text-black')
-                        })
-                    }
+            //         const activeBtns = gamesDisplayMoreOdds.querySelectorAll('.odds-btn-active');
+            //         if(activeBtns){
+            //             activeBtns.forEach(btn=>{
+            //                 btn.classList.remove('odds-btn-active');
+            //                 btn.querySelector('.prediction').classList.remove('text-black')
+            //             })
+            //         }
                     
-                    if(!button.classList.contains('odds-btn-active')){
-                        button.classList.add('odds-btn-active');
-                        const predictionLabel = button.querySelector('.prediction');
-                        predictionLabel.classList.add('text-black')
-                    }
+            //         if(!button.classList.contains('odds-btn-active')){
+            //             button.classList.add('odds-btn-active');
+            //             const predictionLabel = button.querySelector('.prediction');
+            //             predictionLabel.classList.add('text-black')
+            //         }
 
-                    let matchFound = false;
-                    selectedGames.forEach((game) => {
-                        if (game.classList.contains(matchId)) {
-                            game.remove();
-                            gamesInATicket.appendChild(newGame);
-                            matchFound = true;
-                        }
-                    });
+            //         let matchFound = false;
+            //         selectedGames.forEach((game) => {
+            //             if (game.classList.contains(matchId)) {
+            //                 game.remove();
+            //                 gamesInATicket.appendChild(newGame);
+            //                 matchFound = true;
+            //             }
+            //         });
 
-                    if (!matchFound) {
-                        gamesInATicket.appendChild(newGame);
-                    }
+            //         if (!matchFound) {
+            //             gamesInATicket.appendChild(newGame);
+            //         }
 
-                    numberOfSelectedGames.forEach(el => {
-                        el.textContent = gamesInATicket.querySelectorAll(".selected-game").length || betslipSelections.length;
-                    });
-                    betslipSummaryCalculator();
-                }
-            }
+            //         numberOfSelectedGames.forEach(el => {
+            //             el.textContent = gamesInATicket.querySelectorAll(".selected-game").length || betslipSelections.length;
+            //         });
+            //         betslipSummaryCalculator();
+            //     }
+            // }
         });
     }
+
+
 
     const headers = document.querySelectorAll('.my-header');
     headers.forEach(header => {
@@ -943,6 +958,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     initLiveOddsWebSocket(`${currentSport}`);
+
 
 
     function updateLiveOddsOnPage(matchPayload) {
@@ -1019,12 +1035,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
+
     async function fetchLiveGamesBySport(sport, page = 1) {
-        const gamesDisplay = livePage.querySelector('#games-display');
         const oddsDescription = livePage.querySelector('#odds-description');
         const sportsRaw = livePage.querySelector('#sports-row');
 
-        gamesDisplay.appendChild(spinner);
+        gamesDisplayLive.appendChild(spinner);
 
         let url = `/fetch-live-games/?sport=${sport}&page=${page}`;
 
@@ -1038,10 +1054,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
             data = Data.games;
             
-            // Update games display
-            if(gamesDisplay){
+            // Update games display live
+            if(gamesDisplayLive){
                 if (data && data.length > 0) {
-                    Array.from(gamesDisplay.children).forEach(child=>{
+                    Array.from(gamesDisplayLive.children).forEach(child=>{
                         if(child != oddsDescription && child != sportsRaw){
                             child.remove();
                         }
@@ -1059,7 +1075,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     data.forEach(game => { 
                         if(typeof window[functionName] === "function"){
-                            window[functionName](game, `${sport}`, gamesDisplay);
+                            window[functionName](game, `${sport}`, gamesDisplayLive);
                         }
                         else{
                             console.log(`${functionName} does not exist`);
@@ -1067,12 +1083,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                     
                     if(typeof window[dropDownName] === "function"){
-                        window[dropDownName](data, [gamesDisplay]);
+                        window[dropDownName](data, [gamesDisplayLive]);
                     }
 
                 }
                 else {
-                    Array.from(gamesDisplay.children).forEach(child =>{
+                    Array.from(gamesDisplayLive.children).forEach(child =>{
                         if(child != oddsDescription && child != sportsRaw){
                             child.remove();
                         }
@@ -1080,7 +1096,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     oddsDescription.innerHTML = '';
                     const message = document.createElement('div');
                     message.innerHTML = `<p class="text-center text-aqua py-5">No live ${sport} games found.</p>`;
-                    gamesDisplay.appendChild(message);
+                    gamesDisplayLive.appendChild(message);
                 }  
             }   
         }
@@ -1088,7 +1104,6 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error("Error fetching games:", error);
         }
     }
-
 
 
     function filterGames(data){
@@ -1111,7 +1126,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         const UpcomingMatches = data.filter(isUpcoming);
                         
                         if(UpcomingMatches.length > 0 ){
-                            Array.from(gamesDisplay.children).forEach(child=>{
+                            Array.from(gamesDisplaySports.children).forEach(child=>{
                                 if(child != oddsDescription){
                                     child.remove();
                                 }
@@ -1119,7 +1134,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                             UpcomingMatches.forEach(match => {
                                 if(typeof window[functionName] === "function"){
-                                    window[functionName](match, currentSport, gamesDisplay);
+                                    window[functionName](match, currentSport, gamesDisplaySports);
                                 }
                                 else{
                                     console.log(`${functionName} does not exist`);
@@ -1135,7 +1150,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         } 
                         else{
                             
-                            Array.from(gamesDisplay.children).forEach(child=>{
+                            Array.from(gamesDisplaySports.children).forEach(child=>{
                                 if(child != oddsDescription){
                                     child.remove();
                                 }
@@ -1143,7 +1158,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                             const message = document.createElement('div')
                             message.innerHTML =  `<div class="text-center py-5 text-aqua"><p>No upcoming games found.</p></div>`;
-                            gamesDisplay.appendChild(message);
+                            gamesDisplaySports.appendChild(message);
                         }
 
                         break;
@@ -1169,7 +1184,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         const nextHour = data.filter(NextHour);
                         
                         if(nextHour.length > 0 ){
-                            Array.from(gamesDisplay.children).forEach(child=>{
+                            Array.from(gamesDisplaySports.children).forEach(child=>{
                                 if(child != oddsDescription){
                                     child.remove();
                                 }
@@ -1177,7 +1192,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                             nextHour.forEach(match => {
                                 if(typeof window[functionName] === "function"){
-                                    window[functionName](match, currentSport, gamesDisplay);
+                                    window[functionName](match, currentSport, gamesDisplaySports);
                                 }
                                 else{
                                     console.log(`${functionName} does not exist`);
@@ -1193,7 +1208,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         } 
                         else{
                             
-                            Array.from(gamesDisplay.children).forEach(child=>{
+                            Array.from(gamesDisplaySports.children).forEach(child=>{
                                 if(child != oddsDescription){
                                     child.remove();
                                 }
@@ -1201,7 +1216,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                             const message = document.createElement('div')
                             message.innerHTML =  `<div class="text-center py-5 text-aqua"><p>No ${currentSport} games in the next hour.</p></div>`;
-                            gamesDisplay.appendChild(message);
+                            gamesDisplaySports.appendChild(message);
                         }
                         break;
 
@@ -1222,7 +1237,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         const next3Hours = data.filter(Next3Hours);
                         
                         if(next3Hours.length > 0 ){
-                            Array.from(gamesDisplay.children).forEach(child=>{
+                            Array.from(gamesDisplaySports.children).forEach(child=>{
                                 if(child != oddsDescription){
                                     child.remove();
                                 }
@@ -1230,7 +1245,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                             next3Hours.forEach(match => {
                                 if(typeof window[functionName] === "function"){
-                                    window[functionName](match, currentSport, gamesDisplay);
+                                    window[functionName](match, currentSport, gamesDisplaySports);
                                 }
                                 else{
                                     console.log(`${functionName} does not exist`);
@@ -1247,7 +1262,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         } 
                         else{
                             
-                            Array.from(gamesDisplay.children).forEach(child=>{
+                            Array.from(gamesDisplaySports.children).forEach(child=>{
                                 if(child != oddsDescription){
                                     child.remove();
                                 }
@@ -1255,7 +1270,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                             const message = document.createElement('div')
                             message.innerHTML =  `<div class="text-center py-5 text-aqua"><p>No ${currentSport} games in the next 3 hours.</p></div>`;
-                            gamesDisplay.appendChild(message);
+                            gamesDisplaySports.appendChild(message);
                         }
                         break;
 
@@ -1276,7 +1291,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         const next5Hours = data.filter(Next5Hours);
                         
                         if(next5Hours.length > 0 ){
-                            Array.from(gamesDisplay.children).forEach(child=>{
+                            Array.from(gamesDisplaySports.children).forEach(child=>{
                                 if(child != oddsDescription){
                                     child.remove();
                                 }
@@ -1284,7 +1299,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                             next5Hours.forEach(match => {
                                 if(typeof window[functionName] === "function"){
-                                    window[functionName](match, currentSport, gamesDisplay);
+                                    window[functionName](match, currentSport, gamesDisplaySports);
                                 }
                                 else{
                                     console.log(`${functionName} does not exist`);
@@ -1301,7 +1316,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         } 
                         else{
                             
-                            Array.from(gamesDisplay.children).forEach(child=>{
+                            Array.from(gamesDisplaySports.children).forEach(child=>{
                                 if(child != oddsDescription){
                                     child.remove();
                                 }
@@ -1309,7 +1324,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                             const message = document.createElement('div')
                             message.innerHTML =  `<div class="text-center py-5 text-aqua"><p>No ${currentSport} games in the next 5 hours.</p></div>`;
-                            gamesDisplay.appendChild(message);
+                            gamesDisplaySports.appendChild(message);
                         }
                         break;
 
@@ -1324,7 +1339,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         const today = data.filter(Today);
                         
                         if(today.length > 0 ){
-                            Array.from(gamesDisplay.children).forEach(child=>{
+                            Array.from(gamesDisplaySports.children).forEach(child=>{
                                 if(child != oddsDescription){
                                     child.remove();
                                 }
@@ -1332,7 +1347,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             
                             today.forEach(match => {
                                 if(typeof window[functionName] === "function"){
-                                    window[functionName](match, currentSport, gamesDisplay);
+                                    window[functionName](match, currentSport, gamesDisplaySports);
                                 }
                                 else{
                                     console.log(`${functionName} does not exist`);
@@ -1349,7 +1364,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         } 
                         else{
                             
-                            Array.from(gamesDisplay.children).forEach(child=>{
+                            Array.from(gamesDisplaySports.children).forEach(child=>{
                                 if(child != oddsDescription){
                                     child.remove();
                                 }
@@ -1357,7 +1372,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                             const message = document.createElement('div')
                             message.innerHTML =  `<div class="text-center py-5 text-aqua"><p>No ${currentSport} games for today.</p></div>`;
-                            gamesDisplay.appendChild(message);
+                            gamesDisplaySports.appendChild(message);
                         }
                         break;
 
@@ -1373,7 +1388,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         const tomorrow = data.filter(Tomorrow);
                         
                         if(tomorrow.length > 0 ){
-                            Array.from(gamesDisplay.children).forEach(child=>{
+                            Array.from(gamesDisplaySports.children).forEach(child=>{
                                 if(child != oddsDescription){
                                     child.remove();
                                 }
@@ -1381,7 +1396,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                             tomorrow.forEach(match => {                                                           
                                 if(typeof window[functionName] === "function"){
-                                    window[functionName](match, currentSport, gamesDisplay);
+                                    window[functionName](match, currentSport, gamesDisplaySports);
                                 }
                                 else{
                                     console.log(`${functionName} does not exist`);
@@ -1389,14 +1404,14 @@ document.addEventListener('DOMContentLoaded', function() {
                             }); 
 
                             if(typeof window[dropDownName] === "function"){
-                                window[dropDownName](data, gamesDisplay);
+                                window[dropDownName](data, gamesDisplaySports);
                             }
                             else{
                                 console.log(`${dropDownName} does not exist`);
                             }
                         } 
                         else{
-                            Array.from(gamesDisplay.children).forEach(child=>{
+                            Array.from(gamesDisplaySports.children).forEach(child=>{
                                 if(child != oddsDescription){
                                     child.remove();
                                 }
@@ -1404,7 +1419,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                             const message = document.createElement('div')
                             message.innerHTML =  `<div class="text-center py-5 text-aqua"><p>No ${currentSport} games found for tomorrow.</p></div>`;
-                            gamesDisplay.appendChild(message);
+                            gamesDisplaySports.appendChild(message);
                         }
                         break;
                 }
@@ -1430,7 +1445,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
 
             }else{
-                Array.from(gamesDisplay.children).forEach(child =>{
+                Array.from(gamesDisplaySports.children).forEach(child =>{
                     if(child != oddsDescription){
                         child.remove();
                     }
@@ -1545,9 +1560,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const sport = urlParams.get("sport");
         const matchId = urlParams.get("match_id");
 
-        if(document.getElementById("all-odds-page")){
+        if(document.getElementById("games-display-all-odds")){
             if (!sport || !matchId) {
-                document.getElementById("all-odds-page").innerHTML = "<p>Error: Missing match details.</p>";
+                document.getElementById("games-display-all-odds").innerHTML = "<p>Error: Missing match details.</p>";
                 return;
             }
 
@@ -1570,11 +1585,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
-
-
-    // Run the function when the page loads
-    fetchMoreOdds();
-
 
 
     function toggleDisplayNone(container_id){
@@ -1744,7 +1754,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Functions that must be globally defined 
     async function fetchGamesBySport(sport, page = 1) {
-        gamesDisplay.appendChild(spinner);
+        // using gamesdisplay from sports page
+        gamesDisplaySports.appendChild(spinner);
 
         let url = `/api/fetch-games/?sport=${sport}&page=${page}`;
 
@@ -1762,7 +1773,6 @@ document.addEventListener('DOMContentLoaded', function() {
             Countries = combinedData.countries || {}; 
             // let highlightGames = combinedData.highlight_games || [];
             let totalMatches = combinedData.total_matches || 0;
-
 
             // --- Highlight Games ---
             // const highlightGamesContainer = document.getElementById('highlist-games-container');
@@ -1800,6 +1810,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // }
 
             // --- Top Leagues (accordion) ---
+            
             const topLeaguesContainer = document.getElementById('top-leagues-accordion-container');
             if(topLeaguesContainer){
                 topLeaguesContainer.innerHTML = `
@@ -1850,10 +1861,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // --- Display Games ---
-            if(gamesDisplay){
+            if(gamesDisplaySports){
                 if (data.length > 0) {
                     if(page === 1){
-                        Array.from(gamesDisplay.children).forEach(child=>{
+                        Array.from(gamesDisplaySports.children).forEach(child=>{
                             if(child != oddsDescription){
                                 child.remove();
                             }
@@ -1870,24 +1881,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     data.forEach(game => { 
                         if(typeof window[functionName] === "function"){
-                            window[functionName](game, `${sport}`, gamesDisplay);
+                            window[functionName](game, `${sport}`, gamesDisplaySports);
                         }
                     });
 
                     if(typeof window[dropDownName] === "function"){
-                        window[dropDownName](data, [gamesDisplay]);
+                        window[dropDownName](data, [gamesDisplaySports]);
                     }
 
                     // --- Add Load More button if there are more matches ---
                     const loadedGamesCount = page * 100;
                     if(totalMatches > loadedGamesCount){
-                        let loadMoreBtn = document.getElementById(`${sport}-load-more`);
-                        if(!loadMoreBtn){
-                            loadMoreBtn = document.createElement('button');
-                            loadMoreBtn.id = `${sport}-load-more`;
-                            loadMoreBtn.className = 'btn btn-warning my-2 mx-auto';
-                            loadMoreBtn.innerText = 'Load More';
-                            gamesDisplay.appendChild(loadMoreBtn);
+                        let loadMoreDiv = document.getElementById(`${sport}-load-more-div`);
+                        let loadMoreBtn = loadMoreDiv.getElementById(`${sport}-load-more`);
+                        if(!loadMoreDiv){
+                            loadMoreDiv = document.createElement(`${sport}-load-more-div`);
+                            loadMoreDiv.classList.add('text-center');
+                            loadMoreDiv.innerHTML = `<button id="${sport}-load-more" class="btn btn-yellow my-2">Load More</button>`;
+                            gamesDisplaySports.appendChild(loadMoreDiv);
                         }
 
                         loadMoreBtn.onclick = function(){
@@ -1897,7 +1908,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
 
                 } else {
-                    Array.from(gamesDisplay.children).forEach(child =>{
+                    Array.from(gamesDisplaySports.children).forEach(child =>{
                         if(child != oddsDescription){
                             child.remove();
                         }
@@ -1905,18 +1916,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     oddsDescription.innerHTML = '';
                     const message = document.createElement('div');
                     message.innerHTML = `<p class="text-center text-aqua py-5">No matches found for ${sport}.</p>`;
-                    gamesDisplay.appendChild(message);
+                    gamesDisplaySports.appendChild(message);
 
-                    // remove after 30 seconds
-                    // setTimeout(() => {
-                    // if (message.parentNode) {
-                    //     message.remove();
-                    // }
-                    // }, 30000);
+                    // remove after 10 seconds
+                    setTimeout(() => {
+                    if (message.parentNode) {
+                        message.remove();
+                    }
+                    }, 10000);
                 }  
             }   
 
-            // showLeaguesResponsive()
+            showLeaguesResponsive();
 
         } catch (error) {
             console.error("Error fetching games:", error);
@@ -1929,6 +1940,13 @@ document.addEventListener('DOMContentLoaded', function() {
     if(window.location.pathname.includes('/sports/')){
         fetchGamesBySport(currentSport);
     }
+
+
+    if(window.location.pathname.includes('/more-odds/')){
+        // Run the function when the page loads
+        fetchMoreOdds();
+    }
+
 
     if(window.location.pathname.includes('/mybets/')){              
 
@@ -2168,6 +2186,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
+
     window.footballMatchElementInnerHTML = function(game, sport, container){
         const { match_id, country , league, league_id, datetime, extras , odds, status} = game;
 
@@ -2206,8 +2225,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Example calls:
         // console.log(displayOdd("1X2", "home"));   // 2.56
         // console.log(displayOdd("1X2", "draw"));   // "-" (suspended)
-        // console.log(isSuspended("1X2", "draw"));  // true
-
+      
         const matchElement = document.createElement('a');
         matchElement.href = `/more-odds/?sport=${sport}&match_id=${match_id}`;
         matchElement.classList.add('text-decoration-none', 'match-link', 'text-whitesmoke', 'mb-2');
@@ -2275,129 +2293,17 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
 
+
     window.basketballMatchElementInnerHTML = function(game, sport){
-        const { match_id, country , league, datetime, extras , odds} = game;
-
-        // convert to local date and time
-        let dateObj = new Date(datetime);
-
-        let date = dateObj.toLocaleDateString("en-GB");
-        let time = dateObj.toLocaleTimeString("en-GB", {hour: "2-digit", minute: "2-digit"});
-
-        // Extract relevant odds
-        let marketOdds = {};
-        odds.forEach(market => {
-            marketOdds[market.market_type] = market.odds;
-        });
-
-        // Helper function to safely get odds values
-        function getOdds(market, selection) {
-            return marketOdds[market] && marketOdds[market][selection] ? marketOdds[market][selection] : "N/A";
-        }
-
-        const matchElement = document.createElement('a');
-        matchElement.href = `/more-odds/?sport=${sport}&match_id=${match_id}`;
-        matchElement.classList.add('text-decoration-none', 'match-link', 'text-whitesmoke', 'mb-2');
-        
-        matchElement.innerHTML = `
-                    <div data-match-id="${match_id}" class="match-container bb-white pt-1 pb-1">
-                        <div class="row g-0 d-md-none">
-                            <div class="col-12">
-                                <div class="row g-0 text-small">
-                                    <div class="col-7 text-truncate" style="margin-bottom: -5px;">
-                                        <span data-country="${country}">🎟</span>&nbsp;
-                                        <span data-country="${country}">${country}</span>&nbsp; 
-                                        <span data-league="${league}">${league}</span>
-                                    </div>
-                                </div>
-                                <div class="row g-0" style="margin-bottom: -5px;">
-                                    <div class="col-6">
-                                        <div class="row g-0 d-flex">
-                                            <div class="col-10">
-                                                <div style="margin-bottom: -5px;" data-home-team="${extras.home_team}">${extras.home_team}</div>
-                                                <div data-away-team="${extras.away_team}">${extras.away_team}</div>
-                                            </div>
-                                            <div class="col-2">
-                                                <div style="margin-bottom: -5px;">2</div>
-                                                <div>0</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div id="odds-desc-container1-small" class="col-6 d-flex odds-desc-container1-small">
-                                        <button class="odds-btn my-2 big-screen-odds-btn" data-option="FT - home win">${league}</button>
-                                        <button class="mx-1 my-2 odds-btn big-screen-odds-btn" data-option="FT - draw">${league}</button >
-                                        <button class="odds-btn my-2 big-screen-odds-btn" data-option="FT - away win">${league}</button>
-                                    </div>
-                                </div>
-                                <div class="row g-0">
-                                    <div class="col-auto">
-                                        <span class="text-danger italic text-small fw-bold">LIVE</span>
-                                        <span class="text-small italic">1H</span>
-                                        <span class="text-small" data-match-id="${match_id}">id : ${match_id}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row g-0 d-none d-md-block">
-                            <div class="col-12">
-                                <div class="row g-0 d-flex">
-                                    <div class="col-6">
-                                        <div class="text-small">
-                                            <span class="text-truncate" data-country-logo="${country}">🎟</span>&nbsp;
-                                            <span class="text-truncate data-country="${country}">${country}</span>&nbsp; 
-                                            <span class="text-truncate data-league="${league}">${league}</span>
-                                        </div>
-                                    </div>
-                                    <div class="col-6 text-small">
-                                        <div class="row g-0 text-end">
-                                            <div class="col-12" >
-                                                <span class="text-yellow">+154 markets</span>
-                                            </div>
-                                        </div>
-                                        
-                                    </div>
-                                </div>
-                                <div class="row g-0">
-                                    <div class="col-4 col-lg-3">
-                                        <div class="text-truncate">${extras.home_team}</div>
-                                        <div class="text-truncate">${extras.away_team}</div>
-                                    </div>
-                                    <div id="odds-desc-container1" data-market-type="Fulltime" class="col-4 col-lg-3 d-flex pe-1 py-2 odds-desc-container1">
-                                        <button class="odds-btn big-screen-odds-btn" data-option="1">${getOdds('1X2', 'home')}</button>
-                                        <button class="mx-1 odds-btn big-screen-odds-btn" data-option="X">${getOdds('1X2', 'draw')}</button >
-                                        <button class="odds-btn big-screen-odds-btn" data-option="2">${getOdds('1X2', 'away')}</button>
-                                    </div>
-                                    <div id="odds-desc-container2" data-market-type="Over/Under 2.5" class="col-4 col-lg-3 d-flex pe-1 py-2 odds-desc-container2">
-                                        <span class="w-31 " data-option="DC - home/draw">
-                                            <span class="line fw-bold">2.5</span>
-                                        </span>
-                                        <button class="mx-1 odds-btn big-screen-odds-btn" data-option="Over">${getOdds('over_under_2.5', 'over')}</button >
-                                        <button class="odds-btn big-screen-odds-btn" data-option="Under">${getOdds('over_under_2.5', 'under')}</button>
-                                    </div>
-                                    <div id="odds-desc-container3" data-market-type="Double Chance" class="col-4 col-lg-3 d-flex pe-1 py-2 odds-desc-container3">
-                                        <button class="odds-btn big-screen-odds-btn " data-option="1X">${getOdds('double_chance', 'home_or_draw')}</button>
-                                        <button class="mx-1 odds-btn big-screen-odds-btn" data-option="12">${getOdds('double_chance', 'home_or_away')}</button >
-                                        <button class="odds-btn big-screen-odds-btn" data-option="X2">${getOdds('double_chance', 'draw_or_away')}</button>
-                                    </div>
-                                </div>
-                                <div style="margin-top: -5px;" class="row g-0 col-3 text-truncate">
-                                    <div data-date="${date}" data-match-id="${match_id}" data-match-time="${time}" class="text-small italic">${date} <span class="text-yellow">${time}</span> id:${match_id}</div>
-                                </div>
-                            </div>                        
-                        </div>
-                    </div> `;
-
-        gamesDisplay.classList.remove('text-center')
-        gamesDisplay.appendChild(matchElement);
 
     };
+
 
 
     window.footballMoreOddsInnerHTML = function(data){
         //Get match data    
         const { match_id, league_id, league, datetime, country, sport, extras , odds} = data;
-        let container = document.getElementById("all-odds-page");
+        let container = gamesDisplayMoreOdds;
         const allMarkets = document.getElementById('all-markets');
         // Set data-mach-id dynamically so that websocet finds the match and update its info, should there be any changes
         container.dataset.matchId = `${match_id}`;
@@ -5735,9 +5641,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
+
     window.basketballMoreOddsInnerHTML = function(data){
         
     }
+
 
 
     // DROPDOWN ODDS FUNCTIONS FOR DIFFERENT SPORTS
@@ -5893,7 +5801,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function addSelection(selection) {
         // Remove old selection if exists
         betslipSelections = betslipSelections.filter(
-            s => !(s.matchId === selection.matchId)
+            s => !(s.match_id === selection.match_id)
         );
 
         // Add new selection
@@ -5905,9 +5813,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-    function removeSelection(matchId, prediction) {
+    function removeSelection(matchId) {
         betslipSelections = betslipSelections.filter(
-            s => !(s.matchId === matchId && s.prediction === prediction)
+            s => !(s.match_id === matchId)
         );
         localStorage.setItem("betslipSelections", JSON.stringify(betslipSelections));
     }
@@ -5931,24 +5839,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
             betslipSelections.forEach(sel => {
                 const newGame = createGameElement(
-                    sel.oddsValue, sel.marketType,
-                    sel.homeTeam, sel.awayTeam,
-                    sel.prediction, sel.matchId,
-                    sel.sport, sel.datetime,
-                    sel.leagueId, sel.country, sel.league
+                    sel.odds_value, sel.market_type,
+                    sel.home_team, sel.away_team,
+                    sel.prediction, sel.match_id,
+                    sel.sport, sel.date_time,
+                    sel.league_id, sel.country, sel.league
                 );
 
                 // A button for removing that match element on beslip
                 const removeBtn = newGame.querySelector(".btn-close");
                 removeBtn.addEventListener("click", function(){
                     newGame.remove();
-                    removeSelection(sel.matchId, sel.prediction);
+                    removeSelection(sel.match_id);
                     numberOfSelectedGames.forEach(el => {
                         el.textContent = gamesInATicket.querySelectorAll(".selected-game").length || betslipSelections.length;
                     });
 
                     betslipSummaryCalculator();
-                    const match = gamesDisplay.querySelector(`[data-match-id="${sel.matchId}"]`);
+                    const match = document.querySelector(`[data-match-id="${sel.match_id}"]`);
                     if(match){
                         const oddsBtn = match.querySelector('.odds-btn-active');
                         oddsBtn.classList.remove('odds-btn-active');
@@ -5961,7 +5869,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 });
 
-                gamesInATicket.appendChild(newGame);
+                gamesInATicket.appendChild(newGame); 
 
             });
 
@@ -5969,9 +5877,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 el.textContent = gamesInATicket.querySelectorAll(".selected-game").length || betslipSelections.length;
             });
 
-            // betslipSummaryCalculator();
+            betslipSummaryCalculator();
         } else {
-            window.alert('No selections in local storage');
             gamesInATicket.innerHTML = '';
             if(!someGamesSelected.classList.contains('d-none')){
                 someGamesSelected.classList.add('d-none');
@@ -5988,7 +5895,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-
+// in gamesinaicket i want to select all with classname selected-game, if its there for each (its in this format  li.innerHTML = `
+//             <div id="li-element" data-sport="${sport}" data-country="${country}" data-league="${league}" data-league-id="${leagueId}" data-datetime="${datetime}" data-prediction="${prediction}" data-odds-value="${oddsValue}" data-market-type="${marketType}" data-match-id="${matchId}" class="col-10 mb-5px fw-bold text-truncate">${marketType} - ${prediction}</div>
+//             <div id="odds-value" class="col-2 fw-bold text-center">${oddsValue}</div>
+//             <div class="col-10 text-truncate">
+//                 <div class="row g-0 mb-5px">
+//                     <div data-home-team="${homeTeam}" class="col-auto pe-1 text-truncate">${homeTeam}</div>
+//                     <div data-away-team="${awayTeam}" class="col-6 text-truncate"><span class="me-1">v</span>${awayTeam}</div>
+//                 </div>
+//                 <div class="text-small text-yellow"><span class="text-white">${date}</span> ${time}</div>
+//             </div>
+//             <div class="col-2 text-center">
+//                 <button class="btn-close" type="button" aria-label="Close"></button>
+//             </div>
+//         `;) i want to get matchis from data-match-id, its market-type and prediction and then use it to find the button in dom and add class odds-btn active, this is how it should be done, you find match by document.queryselector data-match-id=matchid, then within match find data-market-type=markeytype, within this find button by data-prediction=prediction, then it this button add class odds-btn-active, i will be using this everytime after page reload if betslip is not empty
 
 
 

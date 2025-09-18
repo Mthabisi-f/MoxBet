@@ -241,8 +241,15 @@ async def get_latest_odds(request):
                     "match_id": selection["match_id"],
                     "match_odds": odds
                 })
+        
+        if not updated_selections:
+            return JsonResponse({
+                "success": False,
+                "message": "No valid selections found (all odds suspended or matches missing)."
+            }, status=400)
 
-        return JsonResponse({"updated_selections": updated_selections})
+        return JsonResponse({"success": True,
+                            "updated_selections": updated_selections})
 
 
 
