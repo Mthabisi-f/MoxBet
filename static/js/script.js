@@ -5,10 +5,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const noGamesSelected = document.getElementById('betslip-no-games-selected');
     const someGamesSelected = document.getElementById('betslip-some-games-selected');
     const gamesInATicket = document.querySelector('.games-in-a-ticket-list');
-    const gamesDisplay = document.querySelectorAll('.games-dipslay');
+    const gamesDisplay = document.querySelectorAll('.games-display');
     const gamesDisplayMoreOdds = document.getElementById('games-display-all-odds'); 
-    const gamesDisplaySports = document.getElementById('games-dipslay-sports');
-    const gamesDisplayLive = document.getElementById('games-dipslay-live');
+    const gamesDisplaySports = document.getElementById('games-display-sports');
+    const gamesDisplayLive = document.getElementById('games-display-live');
     const gamesDisplayBtns = document.getElementById('games-display-btns');
     const oddsDescription = document.getElementById('odds-description');
     const allEventsContainer = document.getElementById('all-events-container');
@@ -1164,7 +1164,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         break;
 
                     case 'Leagues':
-                        showLeaguesResponsive();
+                        // showLeaguesResponsive();
                         break;
 
                     case 'Next-hour':
@@ -1560,9 +1560,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const sport = urlParams.get("sport");
         const matchId = urlParams.get("match_id");
 
-        if(document.getElementById("games-display-all-odds")){
+        if(gamesDisplayMoreOdds){
             if (!sport || !matchId) {
-                document.getElementById("games-display-all-odds").innerHTML = "<p>Error: Missing match details.</p>";
+                gamesDisplayMoreOdds.innerHTML = "<p>Error: Missing match details.</p>";
                 return;
             }
 
@@ -1740,6 +1740,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // }
         }
     }
+
 
 
     function toggleAccordion(accordionId, arrowId){
