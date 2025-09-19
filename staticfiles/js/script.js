@@ -1998,7 +1998,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const ticket_sts_fil = ticketStatusFilter.value; 
             
             const url = `/fetch-tickets/?${status_fil ? 'status_fil=' + encodeURIComponent(status_fil): ''}&ticket_tp_fil=${encodeURIComponent(ticket_tp_fil)}&ticket_sts_fil=${encodeURIComponent(ticket_sts_fil)}&date_from=${encodeURIComponent(dateFrom)}&date_to=${encodeURIComponent(dateTo)}`;
-
+            console.log(url);
             try {
                 let response = await fetch(url);
                 const ticketsData = await response.json();
@@ -5862,25 +5862,37 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-   renderBetslip();
+    
+
+    function activateOddsBtns() {
+        // Get selections from localStorage (betslipSelections)
+
+        betslipSelections.forEach(match => {
+            // 1️⃣ Find the match container by match_id
+            const matchElement = document.querySelector(`[data-match-id="${match.match_id}"]`);
+            if (!matchElement) return; // Skip if match is not in the DOM
+
+            // 2️⃣ Find the market container by market_type inside the match
+            const marketContainer = matchElement.querySelector(`[data-market-type="${match.market_type}"]`);
+            if (!marketContainer) return; // Skip if market is not in the DOM
+
+            // 3️⃣ Find the button by prediction inside the market container
+            const predictionButton = marketContainer.querySelector(`[data-prediction="${match.prediction}"]`);
+            if (!predictionButton) return; // Skip if button not found
+
+            // 4️⃣ Add the active class
+            predictionButton.classList.add('odds-btn-active');
+        });
+    }
+
+
+    if(gamesInATicket){
+        renderBetslip();
+        activateOddsBtns();
+    }
+
+
 });
-
-
-
-// in gamesinaicket i want to select all with classname selected-game, if its there for each (its in this format  li.innerHTML = `
-//             <div id="li-element" data-sport="${sport}" data-country="${country}" data-league="${league}" data-league-id="${leagueId}" data-datetime="${datetime}" data-prediction="${prediction}" data-odds-value="${oddsValue}" data-market-type="${marketType}" data-match-id="${matchId}" class="col-10 mb-5px fw-bold text-truncate">${marketType} - ${prediction}</div>
-//             <div id="odds-value" class="col-2 fw-bold text-center">${oddsValue}</div>
-//             <div class="col-10 text-truncate">
-//                 <div class="row g-0 mb-5px">
-//                     <div data-home-team="${homeTeam}" class="col-auto pe-1 text-truncate">${homeTeam}</div>
-//                     <div data-away-team="${awayTeam}" class="col-6 text-truncate"><span class="me-1">v</span>${awayTeam}</div>
-//                 </div>
-//                 <div class="text-small text-yellow"><span class="text-white">${date}</span> ${time}</div>
-//             </div>
-//             <div class="col-2 text-center">
-//                 <button class="btn-close" type="button" aria-label="Close"></button>
-//             </div>
-//         `;) i want to get matchis from data-match-id, its market-type and prediction and then use it to find the button in dom and add class odds-btn active, this is how it should be done, you find match by document.queryselector data-match-id=matchid, then within match find data-market-type=markeytype, within this find button by data-prediction=prediction, then it this button add class odds-btn-active, i will be using this everytime after page reload if betslip is not empty
 
 
 
