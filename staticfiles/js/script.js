@@ -5,10 +5,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const noGamesSelected = document.getElementById('betslip-no-games-selected');
     const someGamesSelected = document.getElementById('betslip-some-games-selected');
     const gamesInATicket = document.querySelector('.games-in-a-ticket-list');
-    const gamesDisplay = document.querySelectorAll('.games-dipslay');
+    const gamesDisplay = document.querySelectorAll('.games-display');
     const gamesDisplayMoreOdds = document.getElementById('games-display-all-odds'); 
-    const gamesDisplaySports = document.getElementById('games-dipslay-sports');
-    const gamesDisplayLive = document.getElementById('games-dipslay-live');
+    const gamesDisplaySports = document.getElementById('games-display-sports');
+    const gamesDisplayLive = document.getElementById('games-display-live');
     const gamesDisplayBtns = document.getElementById('games-display-btns');
     const oddsDescription = document.getElementById('odds-description');
     const allEventsContainer = document.getElementById('all-events-container');
@@ -101,6 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
+
     if(gamesInATicket && gamesInATicket.innerHTML == ''){
         if(!someGamesSelected.classList.contains('d-none')){
             someGamesSelected.classList.add('d-none');
@@ -122,7 +123,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if(limits && stakeInput){
         minStake = parseFloat(limits.dataset.minStake);
         if(minStake && currencySymbol){
-            minStakeDisplay.textContent = `${currencySymbol} ${minStake}`;
+            minStakeDisplay.textContent = `${currencySymbol} ${minStake}` || '$0.50' ;
         }    
     }
 
@@ -335,103 +336,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
-    // Handle Clicking on Odds Button
-    if(gamesDisplay){
-        gamesDisplay.forEach(gd => {
-            gd.addEventListener("click", function (event) {
-                if (event.target.classList.contains("odds-btn")) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    
-                    // Toggle visibility based on selected games
-                    if(gamesInATicket.querySelectorAll(".selected-game").length > 0){
-                        someGamesSelected.classList.remove('d-none');
-                        noGamesSelected.classList.add('d-none');
-                    } else {
-                        someGamesSelected.classList.add('d-none');
-                        noGamesSelected.classList.remove('d-none');
-                    }
-
-                    const button = event.target;
-                    const oddsValue = button.querySelector('.odds-value').textContent || button.textContent;
-                    if (oddsValue) {
-                        const matchContainer = button.closest(".match-link");
-                        const marketType = button.closest('[data-market-type]').getAttribute("data-market-type");
-                        const selectedGames = gamesInATicket.querySelectorAll(".selected-game");
-                        const homeTeam = matchContainer.querySelector("[data-home-team]").getAttribute("data-home-team");
-                        const awayTeam = matchContainer.querySelector("[data-away-team]").getAttribute("data-away-team");
-                        const datetime = matchContainer.querySelector("[data-datetime]").getAttribute('data-datetime');
-                        const leagueId = matchContainer.querySelector("[data-league-id]").getAttribute('data-league-id');
-                        const matchId = matchContainer.querySelector("[data-match-id]").getAttribute("data-match-id");
-                        const country = matchContainer.querySelector("[data-country]").getAttribute("data-country");
-                        const league = matchContainer.querySelector("[data-league]").getAttribute("data-league");
-                        const sport = matchContainer.querySelector("[data-sport]").getAttribute("data-sport");
-                        const prediction = button.getAttribute("data-prediction");
-
-                    
-                        const newGame = createGameElement(oddsValue, marketType, homeTeam, awayTeam, prediction, matchId, sport, datetime, leagueId, country, league);
-
-                        const selection = {
-                                    sport: sport,
-                                    country: country,
-                                    league: league,
-                                    league_d: leagueId,
-                                    date_time: datetime,
-                                    prediction: button.dataset.prediction,
-                                    odds_value: oddsValue,
-                                    market_type: marketType,
-                                    match_id: matchId,
-                                    home_team: homeTeam,
-                                    away_team: awayTeam
-                                };
-
-                        addSelection(selection);
-
-                        const activeBtns = matchContainer.querySelectorAll('.odds-btn-active');
-                        if(activeBtns){
-                            activeBtns.forEach(btn=>{
-                                btn.classList.remove('odds-btn-active');
-                            })
-                        }
-                        
-                        if(!button.classList.contains('odds-btn-active')){
-                            button.classList.add('odds-btn-active');
-                        }
-
-                        let matchFound = false;
-                        selectedGames.forEach((game) => {
-                            if (game.classList.contains(matchId)) {
-                                game.remove();
-                                gamesInATicket.appendChild(newGame);
-                                matchFound = true;
-                            }
-                        });
-
-                        if (!matchFound) {
-                            gamesInATicket.appendChild(newGame);
-                        }
-
-
-                        // After appending the game
-                        if (gamesInATicket.querySelectorAll(".selected-game").length > 0) {
-                            someGamesSelected.classList.remove('d-none');
-                            noGamesSelected.classList.add('d-none');
-                        } else {
-                            someGamesSelected.classList.add('d-none');
-                            noGamesSelected.classList.remove('d-none');
-                        }
-
-                        numberOfSelectedGames.forEach(el => {
-                            el.textContent = gamesInATicket.querySelectorAll(".selected-game").length || betslipSelections.length;
-                        });
-                        betslipSummaryCalculator();
-                    }
-                }    
-            
-            });
-        });
-    }
-
 
     // activate all odds button whose selections are in local storage
     // betslipContainer
@@ -466,6 +370,110 @@ document.addEventListener('DOMContentLoaded', function() {
         }else if(number_of_games >= 22){
             return  Number( 0.5 * (totalOdds * stakeAmount)).toFixed(2);
         }
+    }
+
+
+    // Handle Clicking on Odds Button
+    if(gamesDisplay){
+        gamesDisplay.forEach(gd => {
+
+            gd.addEventListener("click", function (event) {
+                if (event.target.classList.contains("prediction") || event.target.classList.contains("odds-value") || event.target.classList.contains("odds-btn")) {
+                    event.preventDefault();
+                    event.stopPropagation();
+
+                    // ✅ Always resolve the parent button
+                    const button = event.target.closest(".odds-btn");
+                    if (!button) return; // safety
+
+                    // Get odds value correctly
+                    const oddsValue = button.querySelector(".odds-value")?.textContent || button.textContent.trim();
+
+                    const prediction = button.getAttribute("data-prediction");
+
+                    if (oddsValue && prediction) {
+                        const matchContainer = button.closest(".match-link");
+                        const marketType = button.closest("[data-market-type]").getAttribute("data-market-type");
+                        const selectedGames = gamesInATicket.querySelectorAll(".selected-game");
+                        const homeTeam = matchContainer.querySelector("[data-home-team]").getAttribute("data-home-team");
+                        const awayTeam = matchContainer.querySelector("[data-away-team]").getAttribute("data-away-team");
+                        const datetime = matchContainer.querySelector("[data-datetime]").getAttribute("data-datetime");
+                        const leagueId = matchContainer.querySelector("[data-league-id]").getAttribute("data-league-id");
+                        const matchId = matchContainer.querySelector("[data-match-id]").getAttribute("data-match-id");
+                        const country = matchContainer.querySelector("[data-country]").getAttribute("data-country");
+                        const league = matchContainer.querySelector("[data-league]").getAttribute("data-league");
+                        const sport = matchContainer.querySelector("[data-sport]").getAttribute("data-sport");
+
+                        const newGame = createGameElement(
+                            oddsValue,
+                            marketType,
+                            homeTeam,
+                            awayTeam,
+                            prediction,
+                            matchId,
+                            sport,
+                            datetime,
+                            leagueId,
+                            country,
+                            league
+                        );
+
+                        const selection = {
+                            sport: sport,
+                            country: country,
+                            league: league,
+                            league_id: leagueId,
+                            date_time: datetime,
+                            prediction: prediction,
+                            odds_value: oddsValue,
+                            market_type: marketType,
+                            match_id: matchId,
+                            home_team: homeTeam,
+                            away_team: awayTeam,
+                        };
+
+                        addSelection(selection);
+
+                        // Toggle active class
+                        matchContainer.querySelectorAll(".odds-btn-active").forEach((btn) =>
+                            btn.classList.remove("odds-btn-active")
+                        );
+                        button.classList.add("odds-btn-active");
+
+                        // Replace or append game in betslip
+                        let matchFound = false;
+                        selectedGames.forEach((game) => {
+                            if (game.classList.contains(matchId)) {
+                                game.remove();
+                                gamesInATicket.appendChild(newGame);
+                                matchFound = true;
+                            }
+                        });
+
+                        if (!matchFound) {
+                            gamesInATicket.appendChild(newGame);
+                        }
+
+                        // Update summary UI
+                        if (gamesInATicket.querySelectorAll(".selected-game").length > 0) {
+                            someGamesSelected.classList.remove("d-none");
+                            noGamesSelected.classList.add("d-none");
+                        } else {
+                            someGamesSelected.classList.add("d-none");
+                            noGamesSelected.classList.remove("d-none");
+                        }
+
+                        numberOfSelectedGames.forEach((el) => {
+                            el.textContent =
+                                gamesInATicket.querySelectorAll(".selected-game").length ||
+                                betslipSelections.length;
+                        });
+                        betslipSummaryCalculator();
+                    }
+                }
+            });
+
+        });
     }
 
 
@@ -966,72 +974,51 @@ document.addEventListener('DOMContentLoaded', function() {
         const matchEl = document.querySelector(`[data-match-id="${matchId}"]`);
         if (!matchEl) return;
 
-        // convert to local date and time
-        let dateObj = new Date(matchPayload.datetime);
-        let date = dateObj.toLocaleDateString("en-GB");
-        let time = dateObj.toLocaleTimeString("en-GB", {hour: "2-digit", minute: "2-digit"});
+        // --- Update scores ---
+        const homeScoreEl = matchEl.querySelector("[data-home-score]");
+        const awayScoreEl = matchEl.querySelector("[data-away-score]");
+        if (homeScoreEl) homeScoreEl.textContent = matchPayload.extras?.goals?.home ?? "";
+        if (awayScoreEl) awayScoreEl.textContent = matchPayload.extras?.goals?.away ?? "";
 
-        // Update all away scores
-        const awayScoreEls = matchEl.querySelectorAll(`[data-away-score]`);
-        awayScoreEls.forEach(el => {
-            const newAway = matchPayload.extras?.goals?.away ?? '';
-            el.textContent = newAway;        // updates visible text
-            el.dataset.awayScore = newAway;  // updates data attribute
-        });
+        // --- Update time/status ---
+        const timeEl = matchEl.querySelector("[data-match-time]");
+        const dateEl = matchEl.querySelector("[data-match-date]");
+    
+        if (timeEl && dateEl) {
+            if (matchPayload.status?.elapsed) {
+                dateEl.textContent = `Live ${matchPayload.status.short}`;
+                timeEl.textContent = matchPayload.status.elapsed;
+            } 
+        }
 
-        // Update all home scores
-        const homeScoreEls = matchEl.querySelectorAll(`[data-home-score]`);
-        homeScoreEls.forEach(el => {
-            const newHome = matchPayload.extras?.goals?.home ?? '';
-            el.textContent = newHome;
-            el.dataset.homeScore = newHome;
-        });
-            
-        const times = matchEl.querySelectorAll(`[data-match-time="${time}"]`);
-        const dates = matchEl.querySelectorAll(`[data-match-date="${date}"]`);
-
-        times.forEach(t => {
-            t.innerText = `${matchPayload.status.elapsed}`;
-        });
-
-        dates.forEach(d => {
-            d.innerText = `Live ${matchPayload.status.short}`;
-        });
-
-        // --- HERE: update odds ---
-        const newOdds = matchPayload.odds; // fresh odds from server
+        // --- Update odds ---
+        const newOdds = matchPayload.odds;
+        if (!newOdds) return;
 
         Object.keys(newOdds).forEach(marketType => {
-            const oddsContainers = matchEl.querySelectorAll(`[data-market-type="${marketType}"]`);
-            if (!oddsContainers) return;
-        
-            oddsContainers.forEach(cont => {
-                cont.querySelectorAll(".odds-btn").forEach(btn => {
+            const containers = matchEl.querySelectorAll(`[data-market-type="${marketType}"]`);
+            containers.forEach(container => {
+                container.querySelectorAll(".odds-btn").forEach(btn => {
                     const prediction = btn.dataset.prediction;
-                    const oddsValue = btn.querySelector('.odds-value');
-                    const newInfo = newOdds[marketType]?.[prediction];
-                    const oldInfo = matchPayload?.odds?.[marketType]?.[prediction];
+                    const oddsInfo = newOdds[marketType]?.[prediction];
+                    if (!oddsInfo) return;
 
-                    if (!newInfo) return;
+                    // Support both formats (nested .odds-value or plain text)
+                    const oddsValueEl = btn.querySelector(".odds-value");
+                    const displayTarget = oddsValueEl || btn;
 
-                    // Flash red/green if odds changed
-                    if (oldInfo && oldInfo.odd !== newInfo.odd) {
-                        btn.classList.add(newInfo.odd > oldInfo.odd ? "flash-green" : "flash-red");
-                        setTimeout(() => btn.classList.remove("flash-green", "flash-red"), 1000);
+                    if (oddsInfo.suspended) {
+                        displayTarget.textContent = "-";
+                        btn.disabled = true;
+                        btn.classList.add("text-muted");
+                    } else {
+                        displayTarget.textContent = oddsInfo.odd;
+                        btn.disabled = false;
+                        btn.classList.remove("text-muted");
                     }
-
-                    // Update text & state
-                    const target = oddsValue || btn;
-                    target.innerText = newInfo.suspended ? "-" : newInfo.odd;
-                    btn.disabled = newInfo.suspended;
-                    btn.classList.toggle("text-muted", newInfo.suspended);
                 });
             });
-
         });
-
-        // replace global cache with fresh odds
-        // fixtureOdds = newOdds;
     }
 
 
@@ -1164,21 +1151,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         break;
 
                     case 'Leagues':
-                        showLeaguesResponsive();
+                        // showLeaguesResponsive();
                         break;
 
                     case 'Next-hour':
-                        function NextHour(element){
-                            const currentDate = now.toISOString().split("T")[0];
-                            const currentTime = now.getHours()*60 + now.getMinutes();
-                            
-                            const commenceDate = element.datetime.split("T")[0];
-                            const commenceTimeStr = element.datetime.split("T")[1].slice(0, 5);
-
-                            const [hh, mm] = commenceTimeStr.split(":").map(Number);
-                            const commenceTime = hh * 60 + mm;
-
-                            return commenceDate === currentDate && commenceTime - currentTime > 0 && commenceTime - currentTime <= 60;
+                        function NextHour(element) {
+                            const gameTime = new Date(element.datetime); // properly parse ISO string
+                            const diffMinutes = (gameTime - now) / (1000 * 60); // convert ms → minutes
+                            return diffMinutes > 0 && diffMinutes <= 60;
                         }
 
                         const nextHour = data.filter(NextHour);
@@ -1221,17 +1201,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         break;
 
                     case 'Next-3-hours':
-                        function Next3Hours(element){
-                            const currentDate = now.toISOString().split("T")[0];
-                            const currentTime = now.getHours()*60 + now.getMinutes();
-                            
-                            const commenceDate = element.datetime.split("T")[0];
-                            const commenceTimeStr = element.datetime.split("T")[1].slice(0, 5);
-
-                            const [hh, mm] = commenceTimeStr.split(":").map(Number);
-                            const commenceTime = hh * 60 + mm;
-
-                            return commenceDate === currentDate && commenceTime - currentTime > 0 && commenceTime - currentTime <= 180;
+                        function Next3Hours(element) {
+                            const gameTime = new Date(element.datetime);
+                            const diffMinutes = (gameTime - now) / (1000 * 60);
+                            return diffMinutes > 0 && diffMinutes <= 180; // 180 minutes = 3 hours
                         }
 
                         const next3Hours = data.filter(Next3Hours);
@@ -1275,17 +1248,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         break;
 
                     case 'Next-5-hours':
-                        function Next5Hours(element){
-                            const currentDate = now.toISOString().split("T")[0];
-                            const currentTime = now.getHours()*60 + now.getMinutes();
-                            
-                            const commenceDate = element.datetime.split("T")[0];
-                            const commenceTimeStr = element.datetime.split("T")[1].slice(0, 5);
+                        function Next5Hours(element) {
+                            const now = new Date();
+                            const gameTime = new Date(element.datetime);
 
-                            const [hh, mm] = commenceTimeStr.split(":").map(Number);
-                            const commenceTime = hh * 60 + mm;
-
-                            return commenceDate === currentDate && commenceTime - currentTime > 0 && commenceTime - currentTime <= 300;
+                            const diffMinutes = (gameTime - now) / (1000 * 60);
+                            return diffMinutes > 0 && diffMinutes <= 300; // 300 minutes = 5 hours
                         }
 
                         const next5Hours = data.filter(Next5Hours);
@@ -1329,11 +1297,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         break;
 
                     case 'Today':
-                        function Today(element){
-                            const currentDate = now.toISOString().split("T")[0];
-                            const commenceDate = element.datetime.split("T")[0];
+                        function Today(element) {
+                            const now = new Date();
+                            const gameTime = new Date(element.datetime);
 
-                            return commenceDate === currentDate;
+                            return gameTime.toDateString() === now.toDateString();
                         }
 
                         const today = data.filter(Today);
@@ -1377,14 +1345,16 @@ document.addEventListener('DOMContentLoaded', function() {
                         break;
 
                     case 'Tomorrow':
-                        function Tomorrow(element){
-                            const tomorrow = new Date(now);
+                        function Tomorrow(element) {
+                            const now = new Date();
+                            const tomorrow = new Date();
                             tomorrow.setDate(now.getDate() + 1);
-                            const tomorrowsDate = tomorrow.toISOString().split("T")[0]
-                            const commenceDate = element.datetime.split("T")[0];
 
-                            return commenceDate === tomorrowsDate;
+                            const gameTime = new Date(element.datetime);
+
+                            return gameTime.toDateString() === tomorrow.toDateString();
                         }
+
                         const tomorrow = data.filter(Tomorrow);
                         
                         if(tomorrow.length > 0 ){
@@ -1560,9 +1530,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const sport = urlParams.get("sport");
         const matchId = urlParams.get("match_id");
 
-        if(document.getElementById("games-display-all-odds")){
+        if(gamesDisplayMoreOdds){
             if (!sport || !matchId) {
-                document.getElementById("games-display-all-odds").innerHTML = "<p>Error: Missing match details.</p>";
+                gamesDisplayMoreOdds.innerHTML = "<p>Error: Missing match details.</p>";
                 return;
             }
 
@@ -1740,6 +1710,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // }
         }
     }
+
 
 
     function toggleAccordion(accordionId, arrowId){
@@ -2262,21 +2233,21 @@ document.addEventListener('DOMContentLoaded', function() {
                                         <div data-away-score="${extras.goals?.away ?? ''}">${extras.goals?.away ?? ''}</div>
                                     </div> 
                                     <div id="odds-desc-container1" data-market-type="Match Winner" class="col-6 col-md-4 col-lg-3 d-flex pe-1 py-2 odds-desc-container1">
-                                        <button class="odds-btn big-screen-odds-btn" data-prediction="1">${displayOdd('Match Winner', '1')}</button>
-                                        <button class="mx-1 odds-btn big-screen-odds-btn" data-prediction="X">${displayOdd('Match Winner', 'X')}</button >
-                                        <button class="odds-btn big-screen-odds-btn" data-prediction="2">${displayOdd('Match Winner', '2')}</button>
+                                        <button class="odds-btn big-screen-odds-btn" data-prediction="1" ${isSuspended('Match Winner','1') ? 'disabled' : ''}>${displayOdd('Match Winner', '1')}</button>
+                                        <button class="mx-1 odds-btn big-screen-odds-btn" data-prediction="X" ${isSuspended('Match Winner','X') ? 'disabled' : ''}>${displayOdd('Match Winner', 'X')}</button >
+                                        <button class="odds-btn big-screen-odds-btn" data-prediction="2" ${isSuspended('Match Winner','2') ? 'disabled' : ''}>${displayOdd('Match Winner', '2')}</button>
                                     </div>
                                     <div id="odds-desc-container2" data-market-type="Goals Over/Under" class="d-none d-md-block col-md-4 col-lg-3 d-flex pe-1 py-2 odds-desc-container2">
                                         <span class="w-31">
                                             <span class="line fw-bold">2.5</span>
                                         </span>
-                                        <button class="mx-1 odds-btn big-screen-odds-btn" data-prediction="over 2.5">${displayOdd('Goals Over/Under', 'over 2.5')}</button >
-                                        <button class="odds-btn big-screen-odds-btn" data-prediction="under 2.5">${displayOdd('Goals Over/Under', 'under 2.5')}</button>
+                                        <button class="mx-1 odds-btn big-screen-odds-btn" data-prediction="over 2.5" ${isSuspended('Goals Over/Under','over 2.5') ? 'disabled' : ''}>${displayOdd('Goals Over/Under', 'over 2.5')}</button >
+                                        <button class="odds-btn big-screen-odds-btn" data-prediction="under 2.5" ${isSuspended('Goals Over/Under','under 2.5') ? 'disabled' : ''}>${displayOdd('Goals Over/Under', 'under 2.5')}</button>
                                     </div>
                                     <div id="odds-desc-container3" data-market-type="Double Chance" class="d-none d-lg-block col-lg-3 d-flex pe-1 py-2 odds-desc-container3">
-                                        <button class="odds-btn big-screen-odds-btn " data-prediction="1X">${displayOdd('Double Chance', '1X')}</button>
-                                        <button class="mx-1 odds-btn big-screen-odds-btn" data-prediction="12">${displayOdd('Double Chance', '12')}</button >
-                                        <button class="odds-btn big-screen-odds-btn" data-prediction="X2">${displayOdd('Double Chance', 'X2')}</button>
+                                        <button class="odds-btn big-screen-odds-btn " data-prediction="1X" ${isSuspended('Double Chance','1X') ? 'disabled' : ''}>${displayOdd('Double Chance', '1X')}</button>
+                                        <button class="mx-1 odds-btn big-screen-odds-btn" data-prediction="12" ${isSuspended('Double Chance','12') ? 'disabled' : ''}>${displayOdd('Double Chance', '12')}</button >
+                                        <button class="odds-btn big-screen-odds-btn" data-prediction="X2" ${isSuspended('Double Chance','X2') ? 'disabled' : ''}>${displayOdd('Double Chance', 'X2')}</button>
                                     </div>
                                 </div>
                                 <div style="margin-top: -5px;" class="row g-0 col-6 text-truncate">
@@ -2291,7 +2262,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         container.appendChild(matchElement);
     };
-
 
 
     window.basketballMatchElementInnerHTML = function(game, sport){
