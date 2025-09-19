@@ -2061,31 +2061,28 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        function toggleDisplayNone(container_id){
-            selections_container = document.querySelectorAll(`.${container_id}`);
-            const id = `${container_id.split("-")[1]}` // 'chevron-${id}'
-            const icon = document.querySelector(`#chevron-${id}`);
-            selections_container.forEach(cont =>{
-                cont.classList.toggle('d-none');
-                // flip chevron icon
-                if(icon){
-                    if(icon.classList.contains('fa-chevron-up')){
-                        icon.classList.remove('fa-chevron-up');
-                        icon.classList.add('fa-chevron-down');
-                    }else if(icon.classList.contains('fa-chevron-down')){
-                        icon.classList.remove('fa-chevron-down');
-                        icon.classList.add('fa-chevron-up');
-                    }
-                }
-            })
-        }
-
     }
 
 
-
+    window.toggleDisplayNone = function(container_id){
+        selections_container = document.querySelectorAll(`.${container_id}`);
+        const id = `${container_id.split("-")[1]}`;
+        const icon = document.querySelector(`#chevron-${id}`);
+        selections_container.forEach(cont =>{
+            cont.classList.toggle('d-none');
+            // flip chevron icon
+            if(icon){
+                if(icon.classList.contains('fa-chevron-up')){
+                    icon.classList.remove('fa-chevron-up');
+                    icon.classList.add('fa-chevron-down');
+                }else if(icon.classList.contains('fa-chevron-down')){
+                    icon.classList.remove('fa-chevron-down');
+                    icon.classList.add('fa-chevron-up');
+                }
+            }
+        })
+    }
     
-
 
 
     window.footballOddsDescription = function(container){
