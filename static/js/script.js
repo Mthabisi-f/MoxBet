@@ -119,13 +119,15 @@ document.addEventListener('DOMContentLoaded', function() {
         bookingModal = new bootstrap.Modal(document.getElementById("bookingModal"));
     }
 
-
-    if(limits && stakeInput){
-        minStake = parseFloat(limits.dataset.minStake);
-        if(minStake && currencySymbol){
-            minStakeDisplay.textContent = `${currencySymbol} ${minStake}` || '$0.50' ;
-        }    
+    if (limits && stakeInput && minStakeDisplay) {
+        const minStake = limits.dataset.minStake ? parseFloat(limits.dataset.minStake) : 0.50;
+        if (currencySymbol) {
+            minStakeDisplay.textContent = `${currencySymbol} ${minStake.toFixed(2)}`;
+        } else {
+            minStakeDisplay.textContent = `$${minStake.toFixed(2)}`;
+        }
     }
+
 
 
     async function fetchUpdatedOdds(selections) {
