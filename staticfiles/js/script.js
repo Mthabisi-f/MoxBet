@@ -1552,26 +1552,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
-    function toggleDisplayNone(container_id){
-        selections_container = document.querySelectorAll(`.${container_id}`);
-        const id = `${container_id.split("-")[1]}` // 'chevron-${id}'
-        const icon = document.querySelector(`#chevron-${id}`);
-        selections_container.forEach(cont =>{
-            cont.classList.toggle('d-none');
-            // flip chevron icon
-            if(icon){
-                if(icon.classList.contains('fa-chevron-up')){
-                    icon.classList.remove('fa-chevron-up');
-                    icon.classList.add('fa-chevron-down');
-                }else if(icon.classList.contains('fa-chevron-down')){
-                    icon.classList.remove('fa-chevron-down');
-                    icon.classList.add('fa-chevron-up');
-                }
-            }
-        })
-    }
-
-
 
     function showLeaguesResponsive() {
         const isSmallScreen = window.innerWidth < 992; // Bootstrap lg breakpoint
@@ -1991,11 +1971,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const ticket_sts_fil = ticketStatusFilter.value; 
             
             const url = `/fetch-tickets/?${status_fil ? 'status_fil=' + encodeURIComponent(status_fil): ''}&ticket_tp_fil=${encodeURIComponent(ticket_tp_fil)}&ticket_sts_fil=${encodeURIComponent(ticket_sts_fil)}&date_from=${encodeURIComponent(dateFrom)}&date_to=${encodeURIComponent(dateTo)}`;
-            console.log(url);
             try {
                 let response = await fetch(url);
                 const ticketsData = await response.json();
                 const tickets = ticketsData.tickets;
+
 
                 if(tickets.length > 0 && document.getElementById('tickets-display')){
                     ticketsDisplay.innerHTML = '';
@@ -2080,7 +2060,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('Error fetching tickets data :', error);
             }
         }
+
+        function toggleDisplayNone(container_id){
+            selections_container = document.querySelectorAll(`.${container_id}`);
+            const id = `${container_id.split("-")[1]}` // 'chevron-${id}'
+            const icon = document.querySelector(`#chevron-${id}`);
+            selections_container.forEach(cont =>{
+                cont.classList.toggle('d-none');
+                // flip chevron icon
+                if(icon){
+                    if(icon.classList.contains('fa-chevron-up')){
+                        icon.classList.remove('fa-chevron-up');
+                        icon.classList.add('fa-chevron-down');
+                    }else if(icon.classList.contains('fa-chevron-down')){
+                        icon.classList.remove('fa-chevron-down');
+                        icon.classList.add('fa-chevron-up');
+                    }
+                }
+            })
+        }
+
     }
+
+
+
+    
+
 
 
     window.footballOddsDescription = function(container){
