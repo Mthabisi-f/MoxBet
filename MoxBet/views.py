@@ -86,7 +86,7 @@ def place_bet(request):
                 selections=json.loads(data.get("selections")),
                 win_boost=Decimal(data.get("win_boost", 0)),
                 potential_win=Decimal(data.get("potential_win", 0)),
-                type=data.get("bet_type", "other").lower(),
+                type=data.get("bet_type", "other").capitalize(),
                 total_odds=Decimal(data.get("total_odds", 1))
             )
             
@@ -820,7 +820,7 @@ def check_ticket(request):
 @login_required
 def fetch_tickets(request):
     status_fil = request.GET.get('status_fil').capitalize()
-    ticket_tp_fil = request.GET.get('ticket_tp_fil').lower()
+    ticket_tp_fil = request.GET.get('ticket_tp_fil').capitalize()
     ticket_sts_fil = request.GET.get('ticket_sts_fil').capitalize()
     date_from = request.GET.get('date_from')
     date_to = request.GET.get('date_to')

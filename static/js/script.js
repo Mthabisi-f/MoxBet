@@ -516,19 +516,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 document.getElementById("selections").value = JSON.stringify(selections);
                 document.getElementById("total-odds").value = totalOdds.toFixed(2) || 1;
-                document.getElementById("bet-type").value = getFirstPathSegment();
+                document.getElementById("bet-type").value = 'Sports';
                 document.getElementById("win-boost").value = win_boost || 0;
                 document.getElementById("potential-win").value = potential_win || 1; 
             });
             
             prevSelectionsLength = selections.length;
-        }
-    
-
-        function getFirstPathSegment(){
-            const path = window.location.pathname;
-            const segments = path.replace(/^\/|\/$/g, '').split('/')
-            return (segments[0] || '').trim().toLowerCase()
         }
 
     }
