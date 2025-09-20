@@ -119,6 +119,7 @@ document.addEventListener('DOMContentLoaded', function() {
         bookingModal = new bootstrap.Modal(document.getElementById("bookingModal"));
     }
 
+
     if (limits && stakeInput && minStakeDisplay) {
         const minStake = limits.dataset.minStake ? parseFloat(limits.dataset.minStake) : 0.50;
         if (currencySymbol) {
@@ -477,7 +478,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         });
     }
-
 
 
     // Calculate Betslip Summary
@@ -2026,8 +2026,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                     </div>
                                                     <div class="col-3 p-2 text-center" style="border-left: 1px solid aqua;">
                                                         <div class="row g-0 text-small text-yellow" onclick="toggleDisplayNone('TicketId-${id}')">
-                                                            <div class="col-9 text-center">${selections.filter(s => s.status !== 'Pending').length}/${selections.length} settled</div>
-                                                            <div class="col-3 text-center"><i id="chevron-${id}" class="fa-solid fa-chevron-up"></i></div>
+                                                            <div class="text-center text-truncate">${selections.filter(s => s.status !== 'Pending').length}/${selections.length} settled</div>
                                                         </div>
                                                         <div class="TicketId-${id} d-none">
                                                             ${selections.map(selection => `
@@ -2066,20 +2065,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
     window.toggleDisplayNone = function(container_id){
         selections_container = document.querySelectorAll(`.${container_id}`);
-        const id = `${container_id.split("-")[1]}`;
-        const icon = document.querySelector(`#chevron-${id}`);
+        // const id = `${container_id.split("-")[1]}`;
+        // const icon = document.querySelector(`#chevron-${id}`);
         selections_container.forEach(cont =>{
             cont.classList.toggle('d-none');
             // flip chevron icon
-            if(icon){
-                if(icon.classList.contains('fa-chevron-up')){
-                    icon.classList.remove('fa-chevron-up');
-                    icon.classList.add('fa-chevron-down');
-                }else if(icon.classList.contains('fa-chevron-down')){
-                    icon.classList.remove('fa-chevron-down');
-                    icon.classList.add('fa-chevron-up');
-                }
-            }
+            // if(icon){
+            //     if(icon.classList.contains('fa-chevron-up')){
+            //         icon.classList.remove('fa-chevron-up');
+            //         icon.classList.add('fa-chevron-down');
+            //     }else if(icon.classList.contains('fa-chevron-down')){
+            //         icon.classList.remove('fa-chevron-down');
+            //         icon.classList.add('fa-chevron-up');
+            //     }
+            // }
         })
     }
     
@@ -2179,16 +2178,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Display odd or fallback if suspended/missing
         function displayOdd(market, selection) {
+            if (!odds || Object.keys(odds).length === 0) return "-"; // no odds at all
             const info = getOddInfo(market, selection);
-            if (!info) return "-"; // market/selection not found
-            return !info.suspended ? info.odd : "-";
+            return info && !info.suspended ? info.odd : "-";
         }
 
-        // Check if a market/selection is suspended
         function isSuspended(market, selection) {
+            if (!odds || Object.keys(odds).length === 0) return true; // treat no odds as suspended
             const info = getOddInfo(market, selection);
             return info ? info.suspended : true;
         }
+
 
         // Example calls:
         // console.log(displayOdd("1X2", "home"));   // 2.56
@@ -2197,7 +2197,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const matchElement = document.createElement('a');
         matchElement.href = `/more-odds/?sport=${sport}&match_id=${match_id}`;
         matchElement.classList.add('text-decoration-none', 'match-link', 'text-whitesmoke', 'mb-2');
-        matchElement.dataset.matchId = "${match_id}";
+        matchElement.dataset.matchId = `${match_id}`;
         matchElement.innerHTML = `
                     <div data-sport="${sport}" data-league-id="${league_id}" data-datetime="${datetime}" class="match-container bb-white pt-1 pb-1">
                         
@@ -2261,6 +2261,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
 
+
     window.basketballMatchElementInnerHTML = function(game, sport){
 
     };
@@ -2315,19 +2316,19 @@ document.addEventListener('DOMContentLoaded', function() {
             return null;
         }
 
-        // Display odd or fallback if suspended/missing
+
         function displayOdd(market, selection) {
+            if (!odds || Object.keys(odds).length === 0) return "-"; // no odds at all
             const info = getOddInfo(market, selection);
-            if (!info) return "-"; // market/selection not found
-            return !info.suspended ? info.odd : "-";
+            return info && !info.suspended ? info.odd : "-";
         }
 
-        // Check if a market/selection is suspended
+
         function isSuspended(market, selection) {
+            if (!odds || Object.keys(odds).length === 0) return true; // treat no odds as suspended
             const info = getOddInfo(market, selection);
             return info ? info.suspended : true;
         }
-
         
         // Example calls:
         // console.log(displayOdd("1X2", "home"));   // 2.56
@@ -2346,7 +2347,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 data-show-logos="true">
                             </div>`;
 
-        container.prepend(matchsum)
+        container.prepend(matchsum);
         
         const filterodds = document.createElement('div');
         filterodds.innerHTML = `
@@ -2366,7 +2367,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         allMarkets.prepend(filterodds);
 
-
         if(hasMarket(odds, 'Match Winner')){
             const match_winner = document.createElement('div');
             match_winner.innerHTML = `
@@ -2380,19 +2380,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div id="match_winner" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
                         <div data-market-type="Match Winner" class="accordion-body bg-navy-blue row g-1">
                             <div class="col-4 d-grid">
-                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="1">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="1" ${isSuspended('Match Winner','1') ? 'disabled' : ''}>
                                     <div class="text-yellow prediction">1</div>
                                     <div class="odds-value">${displayOdd('Match Winner', '1')}</div>
                                 </button>
                             </div>
                             <div class="col-4 d-grid">
-                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="X">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="X" ${isSuspended('Match Winner','X') ? 'disabled' : ''}>
                                     <div class="text-yellow prediction">X</div>
                                     <div class="odds-value">${displayOdd('Match Winner', 'X')}</div>
                                 </button>
                             </div>
                             <div class="col-4 d-grid">
-                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="2">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="2" ${isSuspended('Match Winner','2') ? 'disabled' : ''}>
                                     <div class="text-yellow prediction">2</div>
                                     <div class="odds-value">${displayOdd('Match Winner', '2')}</div>
                                 </button>
@@ -2404,6 +2404,7 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             allMarkets.appendChild(match_winner)
         }
+
 
         if(hasMarket(odds, 'Double Chance')){
             const doubleChance = document.createElement('div');
@@ -2418,19 +2419,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div id="doubleChance" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
                         <div data-market-type="Double Chance" class="accordion-body bg-navy-blue row g-1 p-1">
                             <div class="col-4 d-grid">
-                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="1X">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="1X" ${isSuspended('Double Chance','1X') ? 'disabled' : ''}>
                                     <div class="text-yellow prediction">1X</div>
                                     <div class="odds-value">${displayOdd('Double Chance', '1X')}</div>
                                 </button>
                             </div>
                             <div class="col-4 d-grid">
-                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="12">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="12" ${isSuspended('Double Chance','12') ? 'disabled' : ''}>
                                     <div class="text-yellow prediction">12</div>
                                     <div class="odds-value">${displayOdd('Double Chance', '12')}</div>
                                 </button>
                             </div>
                             <div class="col-4 d-grid">
-                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="X2">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="X2" ${isSuspended('Double Chance','X2') ? 'disabled' : ''}>
                                     <div class="text-yellow prediction">X2</div>
                                     <div class="odds-value">${displayOdd('Double Chance', 'X2')}</div>
                                 </button>
@@ -2442,6 +2443,7 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             allMarkets.appendChild(doubleChance);
         }
+
 
         if(hasMarket(odds, 'Both Teams To Score')){
         const btts = document.createElement('div');
@@ -2456,13 +2458,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div id="btts" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
                         <div data-market-type="Both Teams To Score" class="accordion-body bg-navy-blue row g-1 p-1">
                             <div class="col-6 d-grid">
-                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="yes">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="yes" ${isSuspended('Both Teams To Score','yes') ? 'disabled' : ''}>
                                     <div class="text-yellow prediction">Yes</div>
                                     <div class="odds-value">${displayOdd('Both Teams To Score', 'yes')}</div> 
                                 </button>
                             </div>
                             <div class="col-6 d-grid">
-                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="no">
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="no" ${isSuspended('Both Teams To Score','no') ? 'disabled' : ''}>
                                     <div class="text-yellow prediction">No</div>
                                     <div class="odds-value">${displayOdd('Both Teams To Score', 'no')}</div> 
                                 </button>
@@ -2474,6 +2476,7 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             allMarkets.appendChild(btts);
         }
+
 
         if(hasMarket(odds, 'Goals Over/Under')){
             const goals = document.createElement('div');
@@ -2489,13 +2492,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div data-market-type="Goals Over/Under" class="accordion-body bg-navy-blue p-1">
                             <div class="row g-2 mb-2">
                                 <div class="col-6 d-grid">
-                                    <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="over 0.5">
+                                    <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="over 0.5" ${isSuspended('Goals Over/Under','over 0.5') ? 'disabled' : ''}>
                                         <div class="text-yellow prediction">Over 0.5</div>
                                         <div class="odds-value">${displayOdd('Goals Over/Under', 'over 0.5')}</div>
                                     </button>
                                 </div>
                                 <div class="col-6 d-grid">
-                                    <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="under 0.5">
+                                    <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="under 0.5" ${isSuspended('Goals Over/Under','under 0.5') ? 'disabled' : ''}>
                                         <div class="text-yellow prediction">Under 0.5</div>
                                         <div class="odds-value">${displayOdd('Goals Over/Under', 'under 0.5')}</div> 
                                     </button>
@@ -2504,13 +2507,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
                             <div class="row g-2 mb-2">
                                 <div class="col-6 d-grid">
-                                    <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="over 1.5">
+                                    <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="over 1.5" ${isSuspended('Goals Over/Under','over 1.5') ? 'disabled' : ''}>
                                         <div class="text-yellow prediction">Over 1.5</div>
                                         <div class="odds-value">${displayOdd('Goals Over/Under', 'over 1.5')}</div>
                                     </button>
                                 </div>
                                 <div class="col-6 d-grid">
-                                    <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="under 1.5">
+                                    <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="under 1.5" ${isSuspended('Goals Over/Under','under 1.5') ? 'disabled' : ''}>
                                         <div class="text-yellow prediction">Under 1.5</div>
                                         <div class="odds-value">${displayOdd('Goals Over/Under', 'under 1.5')}</div> 
                                     </button>
@@ -2519,13 +2522,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
                             <div class="row g-2 mb-2">
                                 <div class="col-6 d-grid">
-                                    <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="over 2.5">
+                                    <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="over 2.5" ${isSuspended('Goals Over/Under','over 2.5') ? 'disabled' : ''}>
                                         <div class="text-yellow prediction">Over 2.5</div>
                                         <div class="odds-value">${displayOdd('Goals Over/Under', 'over 2.5')}</div>
                                     </button>
                                 </div>
                                 <div class="col-6 d-grid">
-                                    <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="under 2.5">
+                                    <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="under 2.5" ${isSuspended('Goals Over/Under','over 2.5') ? 'disabled' : ''}>
                                         <div class="text-yellow prediction">Under 2.5</div>
                                         <div class="odds-value">${displayOdd('Goals Over/Under', 'under 2.5')}</div> 
                                     </button>
@@ -2534,13 +2537,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
                             <div class="row g-2 mb-2">
                                 <div class="col-6 d-grid">
-                                    <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="over 3.5">
+                                    <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="over 3.5"  ${isSuspended('Goals Over/Under','over 3.5') ? 'disabled' : ''}>
                                         <div class="text-yellow prediction">Over 3.5</div>
                                         <div class="odds-value">${displayOdd('Goals Over/Under', 'over 3.5')}</div>
                                     </button>
                                 </div>
                                 <div class="col-6 d-grid">
-                                    <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="under 3.5">
+                                    <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="under 3.5"  ${isSuspended('Goals Over/Under','over 3.5') ? 'disabled' : ''}>
                                         <div class="text-yellow prediction">Under 3.5</div>
                                         <div class="odds-value">${displayOdd('Goals Over/Under', 'under 3.5')}</div> 
                                     </button>
@@ -2549,13 +2552,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
                             <div class="row g-2 mb-2">
                                 <div class="col-6 d-grid">
-                                    <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="over 4.5">
+                                    <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="over 4.5"  ${isSuspended('Goals Over/Under','over 4.5') ? 'disabled' : ''}>
                                         <div class="text-yellow prediction">Over 4.5</div>
                                         <div class="odds-value">${displayOdd('Goals Over/Under', 'over 4.5')}</div>
                                     </button>
                                 </div>
                                 <div class="col-6 d-grid">
-                                    <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="under 4.5">
+                                    <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="under 4.5"  ${isSuspended('Goals Over/Under','over 4.5') ? 'disabled' : ''}>
                                         <div class="text-yellow prediction">Under 4.5</div>
                                         <div class="odds-value">${displayOdd('Goals Over/Under', 'under 4.5')}</div> 
                                     </button>
@@ -2564,13 +2567,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
                             <div class="row g-2 mb-2">
                                 <div class="col-6 d-grid">
-                                    <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="over 5.5">
+                                    <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="over 5.5"  ${isSuspended('Goals Over/Under','over 5.5') ? 'disabled' : ''}>
                                         <div class="text-yellow prediction">Over 5.5</div>
                                         <div class="odds-value">${displayOdd('Goals Over/Under', 'over 5.5')}</div>
                                     </button>
                                 </div>
                                 <div class="col-6 d-grid">
-                                    <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="under 5.5">
+                                    <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="under 5.5"  ${isSuspended('Goals Over/Under','over 5.5') ? 'disabled' : ''}>
                                         <div class="text-yellow prediction">Under 5.5</div>
                                         <div class="odds-value">${displayOdd('Goals Over/Under', 'under 5.5')}</div> 
                                     </button>
@@ -2583,6 +2586,7 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             allMarkets.appendChild(goals);
         }
+
 
         if(hasMarket(odds, "First Half Winner")){
             const firstHalf1X2 = document.createElement('div');
@@ -5786,6 +5790,7 @@ document.addEventListener('DOMContentLoaded', function() {
         );
         localStorage.setItem("betslipSelections", JSON.stringify(betslipSelections));
     }
+
 
 
     function removeAllSelectionsInLocalStorage() {

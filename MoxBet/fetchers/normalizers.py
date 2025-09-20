@@ -17,12 +17,14 @@ SPORTS = {
     # "BASEBALL": "APISPORTS_HOST_BASEBALL",
 }
 
+
 # intervals for for calling fetch functions
 INTERVALS = {
     "fixtures_live":  15,
-    "fixtures_upcoming": 3600,
+    "fixtures_upcoming": 60,
     "auto_settle_tickets": 20,
 }
+
 
 # short statuses for ninished fixtures
 FINISHED_STATUSES = {"FT", "AET", "PEN", "CANC", "PST"}
