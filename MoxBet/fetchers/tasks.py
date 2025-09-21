@@ -150,7 +150,7 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
             "datetime": nf["fixture"]["date"],
             "status": nf["fixture"]["status"],
             "extras": {k: v for k, v in nf.items() if k not in ["league", "fixture", "id"]},
-            "odds": {} if status in FINISHED_STATUSES else fixture_odds
+            "odds": fixture_odds # {} if status in FINISHED_STATUSES else }
         }
 
        
