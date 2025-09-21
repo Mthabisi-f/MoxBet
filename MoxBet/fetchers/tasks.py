@@ -30,7 +30,7 @@ async def fetch_matches_and_odds_bulk(client, sport, host):
             print(f"[CACHE] Loaded data for {sport} on {today}")
         else:
             print(f"[TASK] Fetching data for {sport} on {today}")
-            resp_f = await get(client, host, "fixtures", params={"date": today})
+            resp_f = await get(client, host, "fixtures", params={"date": today, "status": "NS"})
             fixtures_data = resp_f.get("response", [])
             if not fixtures_data:
                 print(f"[INFO] No fixtures on {today}")
