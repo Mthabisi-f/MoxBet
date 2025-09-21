@@ -641,7 +641,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                     let found = selections.find(sel => sel.match_id == matchId);
                                     if (found) found.match_odds = newOdds;
 
-                                    betslipSummaryCalculator(); // recalc totals
                                     hasChanges = true;
                                 }
                             }
@@ -649,6 +648,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                         if (hasChanges) {  
                             oddsChangeAlert.classList.remove("d-none");
+                            betslipSummaryCalculator(); // recalc totals
                             return; // Wait for user to accept changes
                         }
 
@@ -734,7 +734,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 // Update hidden selections JSON
                                 let found = selections.find(sel => sel.match_id == matchId);
                                 if (found) found.match_odds = newOdds;
-                                betslipSummaryCalculator();
+                               
                                 hasChanges = true;
                             }
                         }
@@ -742,6 +742,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     if (hasChanges) {  
                         oddsChangeAlert.classList.remove("d-none");
+                        betslipSummaryCalculator(); // recalc totals
                         return; // Wait for user to accept changes
                     }
 
