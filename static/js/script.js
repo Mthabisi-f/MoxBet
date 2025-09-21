@@ -625,7 +625,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                         // Check for odds changes (use match_id instead of index)
                         document.querySelectorAll(".selected-game").forEach(selectionEl => {
-                            let matchId = selectionEl.dataset.matchId;
+                            let matchId = querySelector("[data-match-id]").getAttribute("data-match-id");
                             let updated = response.updated_selections.find(s => s.match_id == matchId);
 
                             if (updated) {
@@ -721,7 +721,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     // Check for odds changes (use match_id instead of index)
                     document.querySelectorAll(".selected-game").forEach(selectionEl => {
-                        let matchId = selectionEl.dataset.matchId;
+                        let matchId = querySelector("[data-match-id]").getAttribute("data-match-id");
                         let updated = response.updated_selections.find(s => s.match_id == matchId);
 
                         if (updated) {
@@ -1596,71 +1596,6 @@ document.addEventListener('DOMContentLoaded', function() {
             container.appendChild(cont);
         }
 
-        // if (isSmallScreen) {
-        //     const modal = document.createElement('div');
-        //     modal.className = 'modal fade';
-        //     modal.tabIndex = -1;
-        //     modal.id = containerId + "-modal"; // unique ID
-
-        //     const modalDialog = document.createElement('div');
-        //     modalDialog.className = 'modal-dialog modal-dialog-scrollable'; // scrollable for leagues
-
-        //     const modalContent = document.createElement('div');
-        //     modalContent.className = 'modal-content';
-
-        //     // header
-        //     const modalHeader = document.createElement('div');
-        //     modalHeader.className = 'modal-header';
-        //     modalHeader.innerHTML = `
-        //         <h5 class="modal-title">Select Leagues</h5>
-        //         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        //     `;
-        //     modalContent.appendChild(modalHeader);
-
-        //     // body
-        //     const modalBody = document.createElement('div');
-        //     modalBody.className = 'modal-body';
-        //     modalBody.appendChild(container); // put your leagues list in body
-        //     modalContent.appendChild(modalBody);
-
-        //     // footer
-        //     const modalFooter = document.createElement('div');
-        //     modalFooter.className = 'modal-footer';
-        //     const applyBtn = document.createElement('button');
-        //     applyBtn.className = 'btn btn-yellow text-black';
-        //     applyBtn.textContent = 'Apply';
-        //     applyBtn.addEventListener('click', () => {
-        //         const leagueIds = [];
-        //         modalBody.querySelectorAll('.form-check-input:checked').forEach(checkbox => {
-        //             leagueIds.push(Number(checkbox.id.split('-')[1]));
-        //         });
-        //         fetchGamesByLeagues(leagueIds);
-        //         bsModal.hide();
-        //     });
-        //     modalFooter.appendChild(applyBtn);
-        //     modalContent.appendChild(modalFooter);
-
-        //     // assemble
-        //     modalDialog.appendChild(modalContent);
-        //     modal.appendChild(modalDialog);
-        //     document.body.appendChild(modal);
-
-        //     const bsModal = new bootstrap.Modal(modal, { backdrop: true, keyboard: true });
-        //     bsModal.show();
-
-        //     // move focus back to opener when modal closes
-        //     modal.addEventListener("hidden.bs.modal", () => {
-        //         // try to restore focus to the trigger element if you have one
-        //         const triggerBtn = document.getElementById("open-leagues-btn"); 
-        //         if (triggerBtn) {
-        //             triggerBtn.focus();
-        //         } else {
-        //             // fallback: move focus to body so nothing hidden retains focus
-        //             document.body.focus();
-        //         }
-        //     });
-
-        // }
 
         if (isSmallScreen) {
             const modal = document.createElement('div');
@@ -1693,7 +1628,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const modalFooter = document.createElement('div');
             modalFooter.className = 'modal-footer';
             const applyBtn = document.createElement('button');
-            applyBtn.className = 'btn btn-yellow text-black';
+            applyBtn.className = 'btn btn-yellow text-black py-1';
             applyBtn.textContent = 'Apply';
             applyBtn.addEventListener('click', () => {
                 const leagueIds = [];
@@ -1732,7 +1667,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 sidebar.innerHTML = ''; // clear previous
                 // Apply button
                 const applyBtn = document.createElement('button');
-                applyBtn.className = 'btn btn-yellow mt-2 mx-auto text-black';
+                applyBtn.className = 'btn btn-yellow my-1 mx-auto text-black py-1';
                 applyBtn.textContent = 'Apply';
                 applyBtn.addEventListener('click', () => {
                     const leagueIds = [];
@@ -1744,9 +1679,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 container.appendChild(applyBtn);
                 sidebar.appendChild(container);
             }
-            // else {
-            //     document.body.appendChild(container); // fallback
-            // }
+            
         }
     }
 
@@ -1810,6 +1743,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // --- Top Leagues (accordion) ---
             
+            if(!window.innerWidth < 992){
+                showLeaguesResponsive();
+            }
+
             const topLeaguesContainer = document.getElementById('top-leagues-accordion-container');
             if(topLeaguesContainer){
                 topLeaguesContainer.innerHTML = `
@@ -1925,8 +1862,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }, 10000);
                 }  
             }   
-
-            showLeaguesResponsive();
+            
 
         } catch (error) {
             console.error("Error fetching games:", error);
