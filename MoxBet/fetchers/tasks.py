@@ -30,7 +30,7 @@ async def fetch_matches_and_odds_bulk(client, sport, host):
             print(f"[CACHE] Loaded data for {sport} on {today}")
         else:
             print(f"[TASK] Fetching data for {sport} on {today}")
-            resp_f = await get(client, host, "fixtures", params={"date": today, "status": "NS"})
+            resp_f = await get(client, host, "fixtures", params={"date": today})
             fixtures_data = resp_f.get("response", [])
             if not fixtures_data:
                 print(f"[INFO] No fixtures on {today}")
@@ -102,7 +102,7 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
 
         # Expiry rules
         status = nf["fixture"]["status"]["short"]
-        expiry = 60 * 3
+        expiry = 60 * 60 * 3
 
         odds_entry = odds_map.get(fixture_id)
         if not odds_entry:

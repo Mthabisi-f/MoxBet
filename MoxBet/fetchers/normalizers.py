@@ -21,7 +21,7 @@ SPORTS = {
 # intervals for for calling fetch functions
 INTERVALS = {
     "fixtures_live":  15,
-    "fixtures_upcoming": 60,
+    "fixtures_upcoming": 360,
     "auto_settle_tickets": 20,
 }
 

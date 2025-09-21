@@ -611,7 +611,7 @@ document.addEventListener('DOMContentLoaded', function() {
             event.preventDefault();
 
             const clickedButton = event.submitter;
-            
+           
             if (clickedButton.value === "place") {
                 this.action = placeBetUrl;
                 placeBetBtn.disabled = true;
@@ -619,86 +619,91 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 try {
                     let selections = JSON.parse(document.getElementById("selections").value);
-                    if (selections.length <= 25) {
-                        let response = await fetchUpdatedOdds(selections);
-                        let hasChanges = false;
 
-                        // Check for odds changes (use match_id instead of index)
-                        document.querySelectorAll(".selected-game").forEach(selectionEl => {
-                            let matchId = selectionEl.querySelector("[data-match-id]").getAttribute("data-match-id");
-                            let updated = response.updated_selections.find(s => s.match_id == matchId);
+                    if (selections.length > 25) {
+                        showErrorAlert("Betslip must have 25 or less selections");
+                        return;
+                    }
 
-                            if (updated) {
-                                let newOdds = updated.match_odds;
-                                let oddsValueEl = selectionEl.querySelector("#odds-value");
-                                let oldOdds = parseFloat(oddsValueEl.textContent);
+                    // 🔄 Fetch updated odds from backend
+                    let response = await fetchUpdatedOdds(selections);
+                    let updatedSelections = response.updated_selections || [];
+                    let hasChanges = false;
 
-                                if (oldOdds !== newOdds) {
-                                    // Update visible odds
-                                    oddsValueEl.textContent = newOdds;
+                    // Track valid match IDs
+                    let updatedMatchIds = new Set(updatedSelections.map(s => s.match_id));
 
-                                    // Update hidden selections JSON
-                                    let found = selections.find(sel => sel.match_id == matchId);
-                                    if (found) found.match_odds = newOdds;
+                    // Loop over DOM selections
+                    document.querySelectorAll(".selected-game").forEach(selectionEl => {
+                        let matchId = selectionEl.querySelector("[data-match-id]").getAttribute("data-match-id");
+                        let updated = updatedSelections.find(s => s.match_id == matchId);
 
-                                    hasChanges = true;
-                                }
+                        if (updated) {
+                            let oddsValueEl = selectionEl.querySelector("#odds-value");
+                            let oldOdds = parseFloat(oddsValueEl.textContent);
+                            let newOdds = parseFloat(updated.match_odds);
+
+                            if (oldOdds !== newOdds) {
+                                oddsValueEl.textContent = newOdds;
+                                hasChanges = true;
                             }
-                        });
-
-                        if (hasChanges) {  
-                            oddsChangeAlert.classList.remove("d-none");
-                            betslipSummaryCalculator(); // recalc totals
-                            return; // Wait for user to accept changes
-                        }
-
-                        // Proceed with bet placement
-                        const formData = new FormData(betslipForm);
-                        const betResponse = await fetch(betslipForm.action, {
-                            method: "POST",
-                            body: formData,
-                            headers: {
-                                "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value,
-                                "X-Requested-With": "XMLHttpRequest"
-                            }
-                        });
-
-                        const data = await betResponse.json();
-                        
-                        if (data.success) {
-                            if (data.user_balance) {
-                                updateBalanceDisplay(data.user_balance);
-                            }
-
-                            document.getElementById("user_balance").textContent = `${data.user_balance}`;
-                            document.getElementById("ticket-id").textContent = data.ticket_id;
-                            document.getElementById("ticket-stake").textContent = `${data.currency_symbol}${data.stake}`;
-                            document.getElementById("ticket-potential-win").textContent = `${data.currency_symbol}${data.potential_win}`;
-                            successModal.show();
-
-                            gamesInATicket.innerHTML = '';
-                            removeAllSelectionsInLocalStorage();
-
-                            document.querySelectorAll('.odds-btn-active').forEach(btn=>{
-                                btn.classList.remove('odds-btn-active');
-                            });
-
-                            if (noGamesSelected.classList.contains('d-none')) {
-                                noGamesSelected.classList.remove('d-none')
-                                if (!someGamesSelected.classList.contains('d-none')) {
-                                    someGamesSelected.classList.add('d-none');
-                                    numberOfSelectedGames.forEach(el => {
-                                        el.textContent = '0';
-                                    });
-                                    stakeInput.value = '';
-                                }
-                            }
-                            
                         } else {
-                            showErrorAlert(data.message || "Failed to place bet");
+                            // ❌ Remove selection if backend no longer has it
+                            selectionEl.remove();
+                            hasChanges = true;
+                        }
+                    });
+
+                    // Keep only valid selections
+                    let cleanedSelections = updatedSelections.filter(sel => updatedMatchIds.has(sel.match_id));
+
+                    // 🔄 Sync hidden input + localStorage
+                    document.getElementById("selections").value = JSON.stringify(cleanedSelections);
+                    localStorage.setItem("betslipSelections", JSON.stringify(cleanedSelections));
+
+                    if (hasChanges) {
+                        betslipSummaryCalculator(); // recalc totals
+                        oddsChangeAlert.classList.remove("d-none");
+                        return; // Wait for user to confirm odds change
+                    }
+
+                    // ✅ Proceed with bet placement
+                    const formData = new FormData(betslipForm);
+                    const betResponse = await fetch(betslipForm.action, {
+                        method: "POST",
+                        body: formData,
+                        headers: {
+                            "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value,
+                            "X-Requested-With": "XMLHttpRequest"
+                        }
+                    });
+
+                    const data = await betResponse.json();
+
+                    if (data.success) {
+                        if (data.user_balance) updateBalanceDisplay(data.user_balance);
+
+                        document.getElementById("user_balance").textContent = `${data.user_balance}`;
+                        document.getElementById("ticket-id").textContent = data.ticket_id;
+                        document.getElementById("ticket-stake").textContent = `${data.currency_symbol}${data.stake}`;
+                        document.getElementById("ticket-potential-win").textContent = `${data.currency_symbol}${data.potential_win}`;
+                        successModal.show();
+
+                        gamesInATicket.innerHTML = '';
+                        removeAllSelectionsInLocalStorage();
+
+                        document.querySelectorAll('.odds-btn-active').forEach(btn => {
+                            btn.classList.remove('odds-btn-active');
+                        });
+
+                        if (noGamesSelected.classList.contains('d-none')) {
+                            noGamesSelected.classList.remove('d-none');
+                            someGamesSelected.classList.add('d-none');
+                            numberOfSelectedGames.forEach(el => el.textContent = '0');
+                            stakeInput.value = '';
                         }
                     } else {
-                        showErrorAlert("Betslip must have 25 or less selections");
+                        showErrorAlert(data.message || "Failed to place bet");
                     }
 
                 } catch (error) {
@@ -715,38 +720,46 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 try {
                     let selections = JSON.parse(document.getElementById("selections").value);
+
+                    // 🔄 Fetch updated odds
                     let response = await fetchUpdatedOdds(selections);
+                    let updatedSelections = response.updated_selections || [];
                     let hasChanges = false;
 
-                    // Check for odds changes (use match_id instead of index)
+                    let updatedMatchIds = new Set(updatedSelections.map(s => s.match_id));
+
                     document.querySelectorAll(".selected-game").forEach(selectionEl => {
                         let matchId = selectionEl.querySelector("[data-match-id]").getAttribute("data-match-id");
-                        let updated = response.updated_selections.find(s => s.match_id == matchId);
+                        let updated = updatedSelections.find(s => s.match_id == matchId);
 
                         if (updated) {
-                            let newOdds = updated.match_odds;
                             let oddsValueEl = selectionEl.querySelector("#odds-value");
                             let oldOdds = parseFloat(oddsValueEl.textContent);
+                            let newOdds = parseFloat(updated.match_odds);
 
                             if (oldOdds !== newOdds) {
                                 oddsValueEl.textContent = newOdds;
-                                window.alert('newodds != oldodds')
-                                // Update hidden selections JSON
-                                let found = selections.find(sel => sel.match_id == matchId);
-                                if (found) found.match_odds = newOdds;
-                               
                                 hasChanges = true;
                             }
+                        } else {
+                            selectionEl.remove();
+                            hasChanges = true;
                         }
                     });
 
-                    if (hasChanges) {  
+                    let cleanedSelections = updatedSelections.filter(sel => updatedMatchIds.has(sel.match_id));
+
+                    // 🔄 Sync hidden input + localStorage
+                    document.getElementById("selections").value = JSON.stringify(cleanedSelections);
+                    localStorage.setItem("betslipSelections", JSON.stringify(cleanedSelections));
+
+                    if (hasChanges) {
+                        betslipSummaryCalculator();
                         oddsChangeAlert.classList.remove("d-none");
-                        betslipSummaryCalculator(); // recalc totals
-                        return; // Wait for user to accept changes
+                        return; // Stop until user accepts
                     }
 
-                    // Proceed with booking
+                    // ✅ Proceed with booking
                     const formData = new FormData(betslipForm);
                     const betResponse = await fetch(betslipForm.action, {
                         method: "POST",
@@ -758,7 +771,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
 
                     const data = await betResponse.json();
-                    
+
                     if (data.success) {
                         document.getElementById("booking-code").textContent = data.booking_code;
                         bookingModal.show();
@@ -766,21 +779,16 @@ document.addEventListener('DOMContentLoaded', function() {
                         gamesInATicket.innerHTML = '';
                         removeAllSelectionsInLocalStorage();
 
-                        document.querySelectorAll('.odds-btn-active').forEach(btn=>{
+                        document.querySelectorAll('.odds-btn-active').forEach(btn => {
                             btn.classList.remove('odds-btn-active');
                         });
 
                         if (noGamesSelected.classList.contains('d-none')) {
-                            noGamesSelected.classList.remove('d-none')
-                            if (!someGamesSelected.classList.contains('d-none')) {
-                                someGamesSelected.classList.add('d-none');
-                                numberOfSelectedGames.forEach(el => {
-                                    el.textContent = '0';
-                                });
-                                stakeInput.value = '';
-                            }
+                            noGamesSelected.classList.remove('d-none');
+                            someGamesSelected.classList.add('d-none');
+                            numberOfSelectedGames.forEach(el => el.textContent = '0');
+                            stakeInput.value = '';
                         }
-                        
                     } else {
                         showErrorAlert(data.message || "Failed to book bet");
                     }
@@ -824,40 +832,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Add this handler for accepting odds changes
-        acceptOddsBtn.addEventListener("click", async function() {
+        acceptOddsBtn.addEventListener("click", function() {
             oddsChangeAlert.classList.add("d-none");
-            
-            try {
-                const formData = new FormData(betslipForm);
-                const response = await fetch(betslipForm.action, {
-                    method: "POST",
-                    body: formData,
-                    headers: {
-                        "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value,
-                        "X-Requested-With": "XMLHttpRequest"
-                    }
-                });
 
-                const data = await response.json();
-                
-                if (data.success) {
-                    document.getElementById("ticket-id").textContent = data.ticket_id;
-                    successModal.show();
-                    
-                    // Clear betslip
-                    gamesInATicket.innerHTML = '';
-                    numberOfSelectedGames.forEach(el => {
-                        el.textContent = '0';
-                    });
-                    stakeInput.value = '';
-                } else {
-                    showErrorAlert(data.message || "Failed to place bet");
-                }
-            } catch (error) {
-                console.error("Error:", error);
-                showErrorAlert("An error occurred while placing your bet");
-            }
+            // User must manually click Place Bet / Book Bet again
+            showInfoAlert("Odds updated. Please click place/book bet again to continue.");
         });
+
     }
 
 
