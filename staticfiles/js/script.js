@@ -497,9 +497,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Calculate Betslip Summary
     function betslipSummaryCalculator() {
-        let totalOdds = 1.0, win_boost=0.00, stakeAmount = parseFloat(stakeInput.value || 0).toFixed(2), selections = [];
-
-        let prevSelectionsLength = selections.lenth;
+        let totalOdds = 1.0,
+            win_boost = 0.00,
+            stakeAmount = parseFloat(stakeInput.value || 0) || 0,
+            selections = [];
 
         document.querySelectorAll(".selected-game").forEach(selection => {
             const matchId = selection.querySelector('[data-match-id]').getAttribute('data-match-id');
@@ -511,35 +512,49 @@ document.addEventListener('DOMContentLoaded', function() {
             const sport = selection.querySelector('[data-sport]').getAttribute('data-sport');
             const country = selection.querySelector('[data-country]').getAttribute('data-country');
             const league = selection.querySelector('[data-league]').getAttribute('data-league');
-            const marketType = selection.querySelector('[data-market-type]').getAttribute('data-market-type');
-            const oddsValue = parseFloat(selection.querySelector('[data-odds-value]').getAttribute('data-odds-value')).toFixed(2);
-            selections.push({ match_id: matchId, home_team: homeTeam, away_team: awayTeam, market_type: marketType, prediction: prediction, match_odds: oddsValue, sport: sport, status: 'Pending', date_time: datetime, league_id: leagueId, country: country, league: league });
-            totalOdds *= parseFloat(oddsValue).toFixed(2); 
+            const oddsValue = parseFloat(selection.querySelector('[data-odds-value]').getAttribute('data-odds-value')) || 1;
+
+            selections.push({
+                match_id: matchId,
+                home_team: homeTeam,
+                away_team: awayTeam,
+                market_type: selection.querySelector('[data-market-type]').getAttribute('data-market-type'),
+                prediction: prediction,
+                match_odds: oddsValue.toFixed(2),
+                sport: sport,
+                status: 'Pending',
+                date_time: datetime,
+                league_id: leagueId,
+                country: country,
+                league: league
+            });
+
+            totalOdds *= oddsValue; // ✅ multiply number by number
         });
 
-        if(selections.length !== prevSelectionsLength){
-            WinBoost(selections.length, totalOdds, stakeAmount).then(boost => {
-                win_boost = boost;
-                let potential_win = (Number(win_boost) + (Number(totalOdds) * Number(stakeAmount))).toFixed(2);
-                if(potential_win > Number(maxWin)){
-                    potential_win = Number(maxWin);
-                }
+        // ✅ Always recalc when selections change
+        WinBoost(selections.length, totalOdds, stakeAmount).then(boost => {
+            win_boost = boost;
 
-                document.getElementById("total_odds").textContent = totalOdds.toFixed(2);
-                document.getElementById("win_boost").textContent = win_boost;
-                document.getElementById("potential_win").textContent = potential_win;
+            let potential_win = (Number(win_boost) + (Number(totalOdds) * Number(stakeAmount))).toFixed(2);
+            if (potential_win > Number(maxWin)) {
+                potential_win = Number(maxWin);
+            }
 
-                document.getElementById("selections").value = JSON.stringify(selections);
-                document.getElementById("total-odds").value = totalOdds.toFixed(2) || 1;
-                document.getElementById("bet-type").value = 'Sports';
-                document.getElementById("win-boost").value = win_boost || 0;
-                document.getElementById("potential-win").value = potential_win || 1; 
-            });
-            
-            prevSelectionsLength = selections.length;
-        }
+            // Update DOM
+            document.getElementById("total_odds").textContent = totalOdds.toFixed(2);
+            document.getElementById("win_boost").textContent = win_boost;
+            document.getElementById("potential_win").textContent = potential_win;
 
+            // Update hidden fields
+            document.getElementById("selections").value = JSON.stringify(selections);
+            document.getElementById("total-odds").value = totalOdds.toFixed(2) || 1;
+            document.getElementById("bet-type").value = 'Sports';
+            document.getElementById("win-boost").value = win_boost || 0;
+            document.getElementById("potential-win").value = potential_win || 1;
+        });
     }
+
 
 
     if(stakeInput){
@@ -592,6 +607,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })        
         })
+
 
         offersContentDivs.forEach(div => {
             if(div.id != activeDivId){
