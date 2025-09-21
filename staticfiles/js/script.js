@@ -381,6 +381,21 @@ document.addEventListener('DOMContentLoaded', function() {
         gamesDisplay.forEach(gd => {
 
             gd.addEventListener("click", function (event) {
+
+                if(event.target.classList.contains('filter-odds-by')){
+                    const selectedFilter = event.target;
+                    if(!selectedFilter.classList.contains('br-and-b-aqua')){
+                        selectedFilter.classList.add('br-and-b-aqua');
+                    }
+                    Array.from(gamesDisplayMoreOdds.querySelectorAll('.filter-odds-by')).forEach(filter =>{
+                        if(filter != selectedFilter){
+                            if(filter.classList.contains('br-and-b-aqua')){
+                                filter.classList.remove('br-and-b-aqua');
+                            }
+                        }
+                    })
+                }
+
                 if (event.target.classList.contains("prediction") || event.target.classList.contains("odds-value") || event.target.classList.contains("odds-btn")) {
                     event.preventDefault();
                     event.stopPropagation();
@@ -596,23 +611,40 @@ document.addEventListener('DOMContentLoaded', function() {
             event.preventDefault();
 
             const clickedButton = event.submitter;
-            if(clickedButton.value === "place"){
+            
+            if (clickedButton.value === "place") {
                 this.action = placeBetUrl;
                 placeBetBtn.disabled = true;
                 placeBetBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Placing Bet...';
-                
+
                 try {
                     let selections = JSON.parse(document.getElementById("selections").value);
-                    if(selections.length <= 25){
+                    if (selections.length <= 25) {
                         let response = await fetchUpdatedOdds(selections);
                         let hasChanges = false;
 
-                        // Check for odds changes
-                        document.querySelectorAll(".selected-game").forEach((selection, index) => {
-                            let newOdds = response.updated_selections[index].match_odds;
-                            if (parseFloat(selection.querySelector("#odds-value").textContent) !== newOdds) {
-                                selection.querySelector("#odds-value").textContent = newOdds;
-                                hasChanges = true;
+                        // Check for odds changes (use match_id instead of index)
+                        document.querySelectorAll(".selected-game").forEach(selectionEl => {
+                            let matchId = selectionEl.dataset.matchId;
+                            let updated = response.updated_selections.find(s => s.match_id == matchId);
+
+                            if (updated) {
+                                let newOdds = updated.match_odds;
+                                let oddsValueEl = selectionEl.querySelector("#odds-value");
+                                let oldOdds = parseFloat(oddsValueEl.textContent);
+
+                                if (oldOdds !== newOdds) {
+                                    // Update visible odds
+                                    oddsValueEl.textContent = newOdds;
+
+                                    // Update hidden selections JSON
+                                    let found = selections.find(sel => sel.match_id == matchId);
+                                    if (found) found.match_odds = newOdds;
+                                    document.getElementById("selections").value = JSON.stringify(selections);
+
+                                    betslipSummaryCalculator(); // recalc totals
+                                    hasChanges = true;
+                                }
                             }
                         });
 
@@ -635,31 +667,26 @@ document.addEventListener('DOMContentLoaded', function() {
                         const data = await betResponse.json();
                         
                         if (data.success) {
-                            // Update balance display if you add it to response
                             if (data.user_balance) {
                                 updateBalanceDisplay(data.user_balance);
                             }
-                            
-                            // Show success modal
+
                             document.getElementById("user_balance").textContent = `${data.user_balance}`;
                             document.getElementById("ticket-id").textContent = data.ticket_id;
                             document.getElementById("ticket-stake").textContent = `${data.currency_symbol}${data.stake}`;
                             document.getElementById("ticket-potential-win").textContent = `${data.currency_symbol}${data.potential_win}`;
                             successModal.show();
-                            
-                            // Clear betslip
+
                             gamesInATicket.innerHTML = '';
                             removeAllSelectionsInLocalStorage();
 
-                            // deactivate all active oddsbutons
-                            const activeBtns = document.querySelectorAll('.odds-btn-active');
-                            activeBtns.forEach(btn=>{
+                            document.querySelectorAll('.odds-btn-active').forEach(btn=>{
                                 btn.classList.remove('odds-btn-active');
-                            })
+                            });
 
-                            if(noGamesSelected.classList.contains('d-none')){
+                            if (noGamesSelected.classList.contains('d-none')) {
                                 noGamesSelected.classList.remove('d-none')
-                                if(!someGamesSelected.classList.contains('d-none')){
+                                if (!someGamesSelected.classList.contains('d-none')) {
                                     someGamesSelected.classList.add('d-none');
                                     numberOfSelectedGames.forEach(el => {
                                         el.textContent = '0';
@@ -671,8 +698,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         } else {
                             showErrorAlert(data.message || "Failed to place bet");
                         }
-                    }else{
-                        showErrorAlert("Betslsip must have 25 or less selections");
+                    } else {
+                        showErrorAlert("Betslip must have 25 or less selections");
                     }
 
                 } catch (error) {
@@ -682,22 +709,36 @@ document.addEventListener('DOMContentLoaded', function() {
                     placeBetBtn.disabled = false;
                     placeBetBtn.textContent = "Place Bet";
                 }
-            }
-            else if(clickedButton.value === "book"){
+
+            } else if (clickedButton.value === "book") {
                 this.action = bookBetUrl;
                 bookBetBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Booking Bet...';
-                
+
                 try {
                     let selections = JSON.parse(document.getElementById("selections").value);
                     let response = await fetchUpdatedOdds(selections);
                     let hasChanges = false;
 
-                    // Check for odds changes
-                    document.querySelectorAll(".selected-game").forEach((selection, index) => {
-                        let newOdds = response.updated_selections[index].match_odds;
-                        if (parseFloat(selection.querySelector("#odds-value").textContent) !== newOdds) {
-                            selection.querySelector("#odds-value").textContent = newOdds;
-                            hasChanges = true;
+                    // Check for odds changes (use match_id instead of index)
+                    document.querySelectorAll(".selected-game").forEach(selectionEl => {
+                        let matchId = selectionEl.dataset.matchId;
+                        let updated = response.updated_selections.find(s => s.match_id == matchId);
+
+                        if (updated) {
+                            let newOdds = updated.match_odds;
+                            let oddsValueEl = selectionEl.querySelector("#odds-value");
+                            let oldOdds = parseFloat(oddsValueEl.textContent);
+
+                            if (oldOdds !== newOdds) {
+                                oddsValueEl.textContent = newOdds;
+
+                                // Update hidden selections JSON
+                                let found = selections.find(sel => sel.match_id == matchId);
+                                if (found) found.match_odds = newOdds;
+                                document.getElementById("selections").value = JSON.stringify(selections);
+
+                                hasChanges = true;
+                            }
                         }
                     });
 
@@ -706,7 +747,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         return; // Wait for user to accept changes
                     }
 
-                    // Proceed with bet placement
+                    // Proceed with booking
                     const formData = new FormData(betslipForm);
                     const betResponse = await fetch(betslipForm.action, {
                         method: "POST",
@@ -720,29 +761,23 @@ document.addEventListener('DOMContentLoaded', function() {
                     const data = await betResponse.json();
                     
                     if (data.success) {
-                        
-                        // Show booking modal
                         document.getElementById("booking-code").textContent = data.booking_code;
                         bookingModal.show();
-                        // window.alert('Bet booked');
-                        
-                        // Clear betslip
+
                         gamesInATicket.innerHTML = '';
                         removeAllSelectionsInLocalStorage();
 
-                        // deactivate all active oddsbutons
-                        const activeBtns = document.querySelectorAll('.odds-btn-active');
-                        activeBtns.forEach(btn=>{
+                        document.querySelectorAll('.odds-btn-active').forEach(btn=>{
                             btn.classList.remove('odds-btn-active');
-                        })
+                        });
 
-                        if(noGamesSelected.classList.contains('d-none')){
+                        if (noGamesSelected.classList.contains('d-none')) {
                             noGamesSelected.classList.remove('d-none')
-                            if(!someGamesSelected.classList.contains('d-none')){
+                            if (!someGamesSelected.classList.contains('d-none')) {
                                 someGamesSelected.classList.add('d-none');
                                 numberOfSelectedGames.forEach(el => {
                                     el.textContent = '0';
-                                });;
+                                });
                                 stakeInput.value = '';
                             }
                         }
@@ -756,9 +791,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     showErrorAlert("An error occurred while booking your bet");
                 } finally {
                     bookBetBtn.textContent = "Book Bet";
-                }            
-
+                }
             }
+
         });
 
 
@@ -823,88 +858,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error("Error:", error);
                 showErrorAlert("An error occurred while placing your bet");
             }
-        });
-    }
-
-
-    if(gamesDisplayMoreOdds && window.location.pathname.includes('/more-odds/')){
-
-        gamesDisplayMoreOdds.addEventListener("click", function (event) {
-
-            if(event.target.classList.contains('filter-odds-by')){
-                const selectedFilter = event.target;
-                if(!selectedFilter.classList.contains('br-and-b-aqua')){
-                    selectedFilter.classList.add('br-and-b-aqua');
-                }
-                Array.from(gamesDisplayMoreOdds.querySelectorAll('.filter-odds-by')).forEach(filter =>{
-                    if(filter != selectedFilter){
-                        if(filter.classList.contains('br-and-b-aqua')){
-                            filter.classList.remove('br-and-b-aqua');
-                        }
-                    }
-                })
-            }
-
-            // if (event.target.classList.contains("odds-btn")) {
-                
-            //     if(someGamesSelected.classList.contains('d-none')){
-            //         someGamesSelected.classList.remove('d-none');
-            //         noGamesSelected.classList.add('d-none');
-            //     }
-            
-            //     const button = event.target;
-            //     const oddsValue = button.querySelector('.odds-value').textContent;
-            //     if (oddsValue) {
-            //         // const matchContainer = button.closest(".match-link");
-            //         const marketType = button.closest('[data-market-type]').getAttribute("data-market-type");
-            //         const selectedGames = gamesInATicket.querySelectorAll(".selected-game");
-            //         const homeTeam = gamesDisplayMoreOdds.querySelector("[data-home-team]").getAttribute("data-home-team");
-            //         const awayTeam = gamesDisplayMoreOdds.querySelector("[data-away-team]").getAttribute("data-away-team");
-            //         const datetime = gamesDisplayMoreOdds.querySelector("[data-datetime]").getAttribute('data-datetime');
-            //         const leagueId = gamesDisplayMoreOdds.querySelector("[data-league-id]").getAttribute('data-league-id');
-            //         const date = gamesDisplayMoreOdds.querySelector("[data-date]").getAttribute("data-date");
-            //         const time = gamesDisplayMoreOdds.querySelector("[data-match-time]").getAttribute("data-match-time");
-            //         const matchId = gamesDisplayMoreOdds.querySelector("[data-match-id]").getAttribute("data-match-id");
-            //         const country = gamesDisplayMoreOdds.querySelector("[data-country]").getAttribute("data-country");
-            //         const league = gamesDisplayMoreOdds.querySelector("[data-league]").getAttribute("data-league");
-            //         const sport = gamesDisplayMoreOdds.querySelector("[data-sport]").getAttribute("data-sport");
-            //         const prediction = button.getAttribute("data-prediction");
-                
-            //         const newGame = createGameElement(oddsValue, marketType, homeTeam, awayTeam, date, time, prediction, matchId, sport, datetime, leagueId, country, league);
-
-            //         const activeBtns = gamesDisplayMoreOdds.querySelectorAll('.odds-btn-active');
-            //         if(activeBtns){
-            //             activeBtns.forEach(btn=>{
-            //                 btn.classList.remove('odds-btn-active');
-            //                 btn.querySelector('.prediction').classList.remove('text-black')
-            //             })
-            //         }
-                    
-            //         if(!button.classList.contains('odds-btn-active')){
-            //             button.classList.add('odds-btn-active');
-            //             const predictionLabel = button.querySelector('.prediction');
-            //             predictionLabel.classList.add('text-black')
-            //         }
-
-            //         let matchFound = false;
-            //         selectedGames.forEach((game) => {
-            //             if (game.classList.contains(matchId)) {
-            //                 game.remove();
-            //                 gamesInATicket.appendChild(newGame);
-            //                 matchFound = true;
-            //             }
-            //         });
-
-            //         if (!matchFound) {
-            //             gamesInATicket.appendChild(newGame);
-            //         }
-
-            //         numberOfSelectedGames.forEach(el => {
-            //             el.textContent = gamesInATicket.querySelectorAll(".selected-game").length || betslipSelections.length;
-            //         });
-            //         betslipSummaryCalculator();
-            //     }
-            // }
         });
     }
 
@@ -1973,7 +1926,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }  
             }   
 
-            // showLeaguesResponsive();
+            showLeaguesResponsive();
 
         } catch (error) {
             console.error("Error fetching games:", error);
