@@ -1724,6 +1724,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const bsModal = new bootstrap.Modal(modal, { backdrop: true, keyboard: true });
             bsModal.show();
+            
+            // move focus back to opener when modal closes
+            modal.addEventListener("hidden.bs.modal", () => {
+                // try to restore focus to the trigger element if you have one
+                const triggerBtn = document.getElementById("open-leagues-btn"); 
+                if (triggerBtn) {
+                    triggerBtn.focus();
+                } else {
+                    // fallback: move focus to body so nothing hidden retains focus
+                    document.body.focus();
+                }
+            });
+
         } else {
             // For large screens, append to a sidebar div
             const sidebar = document.getElementById('countries-listed-per-sport');
