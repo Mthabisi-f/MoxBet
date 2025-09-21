@@ -57,7 +57,6 @@ async def fetch_matches_and_odds_bulk(client, sport, host):
     print(f"[FINISHED] Processed from {start_date} to {end_date}")
 
 
-
 async def fetch_live_matches_and_odds(client, sport, host):
     """
     Fetch live fixtures and their odds separately for all in-play matches,
@@ -85,7 +84,6 @@ async def fetch_live_matches_and_odds(client, sport, host):
     await process_day(fixtures_data, all_odds, sport, live=True)
 
     print(f"[INFO] Updated {len(fixtures_data)} LIVE fixtures & {len(all_odds)} odds for {sport}")
-
 
 
 async def process_day(fixtures_data, all_odds, sport, live=False):
@@ -150,7 +148,7 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
             "datetime": nf["fixture"]["date"],
             "status": nf["fixture"]["status"],
             "extras": {k: v for k, v in nf.items() if k not in ["league", "fixture", "id"]},
-            "odds": fixture_odds # {} if status in FINISHED_STATUSES else }
+            "odds": fixture_odds
         }
 
        
@@ -196,7 +194,6 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
             await redis_client.sadd(f"finished:{sport.lower()}", cache_key)
 
         print(f"[CACHED] {sport} fixture {fixture_id} ({status})")
-
 
 
 # @shared_task
