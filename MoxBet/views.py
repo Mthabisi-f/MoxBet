@@ -252,7 +252,7 @@ async def get_latest_odds(request):
         if not updated_selections:
             return JsonResponse({
                 "success": False,
-                "message": "No valid selections found.",
+                "message": "No valid selections found."
             }, status=400)
 
         return JsonResponse({
@@ -396,7 +396,6 @@ async def fetch_games(request):
                 "game_count": league_counts.get(league_name, 0)
             })
 
-    print(f"Live matches fetched: {len(filtered_matches)}")
     ########### HIGHLIGHTS ###########
     highlight_games = filtered_matches[:10]
 
