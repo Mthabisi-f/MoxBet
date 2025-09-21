@@ -2306,9 +2306,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                     </div> `;
 
-        // if(container.classList.contains('text-center')){
-        //     container.classList.remove('text-center')
-        // }
+        if(container.classList.contains('text-center')){
+            container.classList.remove('text-center')
+        }
         container.appendChild(matchElement);
     };
 
