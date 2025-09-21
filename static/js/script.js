@@ -625,7 +625,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                         // Check for odds changes (use match_id instead of index)
                         document.querySelectorAll(".selected-game").forEach(selectionEl => {
-                            let matchId = querySelector("[data-match-id]").getAttribute("data-match-id");
+                            let matchId = selectionEl.querySelector("[data-match-id]").getAttribute("data-match-id");
                             let updated = response.updated_selections.find(s => s.match_id == matchId);
 
                             if (updated) {
@@ -721,7 +721,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     // Check for odds changes (use match_id instead of index)
                     document.querySelectorAll(".selected-game").forEach(selectionEl => {
-                        let matchId = querySelector("[data-match-id]").getAttribute("data-match-id");
+                        let matchId = selectionEl.querySelector("[data-match-id]").getAttribute("data-match-id");
                         let updated = response.updated_selections.find(s => s.match_id == matchId);
 
                         if (updated) {
