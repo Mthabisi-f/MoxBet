@@ -649,6 +649,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             
                             // Clear betslip
                             gamesInATicket.innerHTML = '';
+                            removeAllSelectionsInLocalStorage();
 
                             // deactivate all active oddsbutons
                             const activeBtns = document.querySelectorAll('.odds-btn-active');
@@ -727,6 +728,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         // Clear betslip
                         gamesInATicket.innerHTML = '';
+                        removeAllSelectionsInLocalStorage();
 
                         // deactivate all active oddsbutons
                         const activeBtns = document.querySelectorAll('.odds-btn-active');
@@ -967,7 +969,15 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateLiveOddsOnPage(matchPayload) {
         const matchId = matchPayload.match_id;
         const matchEl = document.querySelector(`[data-match-id="${matchId}"]`);
+        const FINISHED_STATUSES = ["FT", "AET", "PEN", "CANC", "PST"]
+
         if (!matchEl) return;
+
+        // If match is finished remove it in DOM
+        if (FINISHED_STATUSES.includes(matchPayload.status["short"])){
+            matchEl.remove();
+            return;
+        }
 
         // --- Update scores ---
         const homeScoreEl = matchEl.querySelector("[data-home-score]");
@@ -1146,7 +1156,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         break;
 
                     case 'Leagues':
-                        // showLeaguesResponsive();
+                        showLeaguesResponsive();
                         break;
 
                     case 'Next-hour':
@@ -1469,7 +1479,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         accordionWrapper.className = 'accordion';
                         accordionWrapper.id = 'leagues-accordion';
                         accordionWrapper.appendChild(accordionItem);
-                        gamesDisplay.appendChild(accordionWrapper);
+                        gamesDisplaySports.appendChild(accordionWrapper);
                     } else {
                         document.querySelector('#leagues-accordion').appendChild(accordionItem);
                     }
@@ -1512,7 +1522,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         catch (error) {
             console.error('Error fetching games:', error);
-            gamesDisplay.innerHTML = `
+            gamesDisplaySports.innerHTML = `
                 <div class="alert alert-danger">
                     Failed to load games. Please try again later.
                 </div>`;
@@ -1565,7 +1575,7 @@ document.addEventListener('DOMContentLoaded', function() {
         container.id = containerId;
         container.style.maxHeight = '80vh';
         container.style.overflowY = 'auto';
-        container.classList.add('py-1', 'border-aqua');
+        container.classList.add('py-1', 'border-aqua', 'text-center');
 
         if (Countries) {
             const CountriesGamesList = document.createElement('ul');
@@ -1633,34 +1643,87 @@ document.addEventListener('DOMContentLoaded', function() {
             container.appendChild(cont);
         }
 
-        // Append to body for small screens or a sidebar div for large screens
+        // create modal for small screens or a sidebar div for large screens
+        // if (isSmallScreen) {
+        //     container.classList.add('modal', 'fade');
+        //     container.tabIndex = -1;
+
+        //     const modalDialog = document.createElement('div');
+        //     modalDialog.className = 'modal-dialog';
+        //     modalDialog.appendChild(container);
+
+        //     document.body.appendChild(modalDialog);
+
+        //     const bsModal = new bootstrap.Modal(container, { backdrop: true, keyboard: true });
+        //     bsModal.show();
+
+        //     // Apply button
+        //     const applyBtn = document.createElement('button');
+        //     applyBtn.className = 'btn btn-yellow mt-2 mx-auto text-black';
+        //     applyBtn.textContent = 'Apply';
+        //     applyBtn.addEventListener('click', () => {
+        //         const leagueIds = [];
+        //         container.querySelectorAll('.form-check-input:checked').forEach(checkbox => {
+        //             leagueIds.push(Number(checkbox.id.split('-')[1]));
+        //         });
+        //         fetchGamesByLeagues(leagueIds);
+        //         bsModal.hide();
+        //     });
+        //     container.appendChild(applyBtn);
+
+        // }
+
         if (isSmallScreen) {
-            container.classList.add('modal', 'fade');
-            container.tabIndex = -1;
+            const modal = document.createElement('div');
+            modal.className = 'modal fade';
+            modal.tabIndex = -1;
+            modal.id = containerId + "-modal"; // unique ID
 
             const modalDialog = document.createElement('div');
-            modalDialog.className = 'modal-dialog';
-            modalDialog.appendChild(container);
+            modalDialog.className = 'modal-dialog modal-dialog-scrollable'; // scrollable for leagues
 
-            document.body.appendChild(modalDialog);
+            const modalContent = document.createElement('div');
+            modalContent.className = 'modal-content';
 
-            const bsModal = new bootstrap.Modal(container, { backdrop: true, keyboard: true });
-            bsModal.show();
+            // header
+            const modalHeader = document.createElement('div');
+            modalHeader.className = 'modal-header';
+            modalHeader.innerHTML = `
+                <h5 class="modal-title">Select Leagues</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            `;
+            modalContent.appendChild(modalHeader);
 
-            // Apply button
+            // body
+            const modalBody = document.createElement('div');
+            modalBody.className = 'modal-body';
+            modalBody.appendChild(container); // put your leagues list in body
+            modalContent.appendChild(modalBody);
+
+            // footer
+            const modalFooter = document.createElement('div');
+            modalFooter.className = 'modal-footer';
             const applyBtn = document.createElement('button');
-            applyBtn.className = 'btn btn-yellow mt-2 mx-auto text-black';
+            applyBtn.className = 'btn btn-yellow text-black';
             applyBtn.textContent = 'Apply';
             applyBtn.addEventListener('click', () => {
                 const leagueIds = [];
-                container.querySelectorAll('.form-check-input:checked').forEach(checkbox => {
+                modalBody.querySelectorAll('.form-check-input:checked').forEach(checkbox => {
                     leagueIds.push(Number(checkbox.id.split('-')[1]));
                 });
                 fetchGamesByLeagues(leagueIds);
                 bsModal.hide();
             });
-            container.appendChild(applyBtn);
+            modalFooter.appendChild(applyBtn);
+            modalContent.appendChild(modalFooter);
 
+            // assemble
+            modalDialog.appendChild(modalContent);
+            modal.appendChild(modalDialog);
+            document.body.appendChild(modal);
+
+            const bsModal = new bootstrap.Modal(modal, { backdrop: true, keyboard: true });
+            bsModal.show();
         } else {
             // For large screens, append to a sidebar div
             const sidebar = document.getElementById('countries-listed-per-sport');
@@ -1686,17 +1749,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-
-
-    function toggleAccordion(accordionId, arrowId){
-        const content = document.getElementById(accordionId);
-        const arrow = document.getElementById(arrowId);
-
-        // toggle the open on the content and arrow
-        content.classList.toggle('open');
-        arrow.classList.toggle('open');
-    }
-    
 
     // Functions that must be globally defined 
     async function fetchGamesBySport(sport, page = 1) {
@@ -1838,13 +1890,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     // --- Add Load More button if there are more matches ---
                     const loadedGamesCount = page * 100;
                     if(totalMatches > loadedGamesCount){
-                        let loadMoreDiv = document.getElementById(`${sport}-load-more-div`);
-                        let loadMoreBtn = loadMoreDiv.getElementById(`${sport}-load-more`);
-                        if(!loadMoreDiv){
-                            loadMoreDiv = document.createElement(`${sport}-load-more-div`);
-                            loadMoreDiv.classList.add('text-center');
-                            loadMoreDiv.innerHTML = `<button id="${sport}-load-more" class="btn btn-yellow my-2">Load More</button>`;
-                            gamesDisplaySports.appendChild(loadMoreDiv);
+                        let loadMoreBtn = document.getElementById(`${sport}-load-more`);
+                        if(!loadMoreBtn){
+                            loadMoreBtn = document.createElement('button');
+                            loadMoreBtn.id = `${sport}-load-more`;
+                            loadMoreBtn.className = 'btn btn-yellow my-2';
+                            loadMoreBtn.innerText = 'Load More';
+                            gamesDisplay.appendChild(loadMoreBtn);
                         }
 
                         loadMoreBtn.onclick = function(){
@@ -1873,7 +1925,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }  
             }   
 
-            showLeaguesResponsive();
+            // showLeaguesResponsive();
 
         } catch (error) {
             console.error("Error fetching games:", error);
@@ -2254,9 +2306,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                     </div> `;
 
-        if(container.classList.contains('text-center')){
-            container.classList.remove('text-center')
-        }
+        // if(container.classList.contains('text-center')){
+        //     container.classList.remove('text-center')
+        // }
         container.appendChild(matchElement);
     };
 
@@ -5768,6 +5820,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
     }
 
+    
     
     function addSelection(selection) {
         // Remove old selection if exists

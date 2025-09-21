@@ -209,49 +209,6 @@ async def get_booking(request):
 
 
 # Get latest odds from redis
-# @csrf_exempt
-# async def get_latest_odds(request):
-#     if request.method == "POST":
-#         data = json.loads(request.body)
-#         selections = data.get("selections", [])
-
-#         updated_selections = []
-
-#         for selection in selections:
-#             try:
-#                 # Fetch single match directly from Redis
-#                 value = await redis_client.get(f"match:{selection['match_id']}")
-#                 match_data = json.loads(value) if value else None
-#             except Exception as e:
-#                 print(f"Redis error: {e}")
-#                 match_data = None
-
-#             if match_data:
-#                 market_type = selection["market_type"]
-#                 prediction = selection["prediction"]
-
-#                 odds = (
-#                     match_data.get("odds", {})
-#                     .get(market_type, {})
-#                     .get(prediction, {})
-#                     .get("odd", selection["match_odds"])
-#                 )
-
-#                 updated_selections.append({
-#                     "match_id": selection["match_id"],
-#                     "match_odds": odds
-#                 })
-        
-#         if not updated_selections:
-#             return JsonResponse({
-#                 "success": False,
-#                 "message": "No valid selections found (all odds suspended or matches missing)."
-#             }, status=400)
-
-#         return JsonResponse({"success": True,
-#                             "updated_selections": updated_selections})
-
-
 @csrf_exempt
 async def get_latest_odds(request):
     if request.method == "POST":
@@ -295,7 +252,7 @@ async def get_latest_odds(request):
         if not updated_selections:
             return JsonResponse({
                 "success": False,
-                "message": "No valid selections found."
+                "message": "No valid selections found.",
             }, status=400)
 
         return JsonResponse({
