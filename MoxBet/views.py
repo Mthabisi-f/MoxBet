@@ -396,6 +396,7 @@ async def fetch_games(request):
                 "game_count": league_counts.get(league_name, 0)
             })
 
+    print(f"Live matches fetched: {len(filtered_matches)}")
     ########### HIGHLIGHTS ###########
     highlight_games = filtered_matches[:10]
 
