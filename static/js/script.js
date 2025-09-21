@@ -623,6 +623,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }) 
         
         
+        
         betslipForm.addEventListener("submit", async function (event) {
             event.preventDefault();
 
@@ -676,9 +677,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     // 🔄 Sync hidden input + localStorage
                     document.getElementById("selections").value = JSON.stringify(cleanedSelections);
                     localStorage.setItem("betslipSelections", JSON.stringify(cleanedSelections));
+                    // 🔄 Always recalc totals after syncing selections
+                    betslipSummaryCalculator();
 
                     if (hasChanges) {
-                        betslipSummaryCalculator(); // recalc totals
                         oddsChangeAlert.classList.remove("d-none");
                         return; // Wait for user to confirm odds change
                     }
