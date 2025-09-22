@@ -1694,7 +1694,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let oddsDescName = `${sport}OddsDescription`;  
         
         try {
-            let response = await fetch(url);
+            let response = await fetch(url); // url
             let combinedData = await response.json();
 
             // Extract games, topLeagues, highlights
@@ -1861,6 +1861,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }  
             }   
             
+            showLeaguesResponsive();
 
         } catch (error) {
             console.error("Error fetching games:", error);
