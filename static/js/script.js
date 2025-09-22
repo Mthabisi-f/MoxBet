@@ -650,6 +650,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Track valid match IDs
                     let updatedMatchIds = new Set(updatedSelections.map(s => s.match_id));
 
+                    let totalOdds = 1.0;  
+                    let win_boost = 0.00;
+                    stakeAmount = parseFloat(stakeInput.value || 0) || 0;
+                    
                     // Loop over DOM selections
                     document.querySelectorAll(".selected-game").forEach(selectionEl => {
                         let matchId = selectionEl.querySelector("[data-match-id]").getAttribute("data-match-id");
@@ -662,6 +666,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                             if (oldOdds !== newOdds) {
                                 oddsValueEl.textContent = newOdds;
+                                totalOdds *= total0dds;
                                 hasChanges = true;
                             }
                         } else {
@@ -678,7 +683,26 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById("selections").value = JSON.stringify(cleanedSelections);
                     localStorage.setItem("betslipSelections", JSON.stringify(cleanedSelections));
                     // 🔄 Always recalc totals after syncing selections
-                    betslipSummaryCalculator();
+                    WinBoost(cleanedSelections.length, totalOdds, stakeAmount).then(boost => {
+                        win_boost = boost;
+
+                        let potential_win = (Number(win_boost) + (Number(totalOdds) * Number(stakeAmount))).toFixed(2);
+                        if (potential_win > Number(maxWin)) {
+                            potential_win = Number(maxWin);
+                        }
+
+                        // Update DOM
+                        document.getElementById("total_odds").textContent = totalOdds.toFixed(2);
+                        document.getElementById("win_boost").textContent = win_boost;
+                        document.getElementById("potential_win").textContent = potential_win;
+
+                        // Update hidden fields
+                        document.getElementById("selections").value = JSON.stringify(cleanedSelections);
+                        document.getElementById("total-odds").value = totalOdds.toFixed(2) || 1;
+                        document.getElementById("bet-type").value = 'Sports';
+                        document.getElementById("win-boost").value = win_boost || 0;
+                        document.getElementById("potential-win").value = potential_win || 1;
+                    });
 
                     if (hasChanges) {
                         oddsChangeAlert.classList.remove("d-none");
@@ -1741,9 +1765,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // --- Top Leagues (accordion) ---
             
-            // if(!window.innerWidth < 992){
-            //     showLeaguesResponsive();
-            // }
+            if(!window.innerWidth < 992){
+                showLeaguesResponsive();
+            }
 
             const topLeaguesContainer = document.getElementById('top-leagues-accordion-container');
             if(topLeaguesContainer){
@@ -1861,7 +1885,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }  
             }   
             
-            showLeaguesResponsive();
 
         } catch (error) {
             console.error("Error fetching games:", error);
