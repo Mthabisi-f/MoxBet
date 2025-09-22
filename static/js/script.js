@@ -1741,9 +1741,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // --- Top Leagues (accordion) ---
             
-            if(!window.innerWidth < 992){
-                showLeaguesResponsive();
-            }
+            // if(!window.innerWidth < 992){
+            //     showLeaguesResponsive();
+            // }
 
             const topLeaguesContainer = document.getElementById('top-leagues-accordion-container');
             if(topLeaguesContainer){
