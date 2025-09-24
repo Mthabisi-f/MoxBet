@@ -17,8 +17,8 @@
 
 .grid-odds {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); /* equal share of space */
-    gap: 0.25rem;
+    grid-template-columns: repeat(3, 1fr); /* exactly 3 buttons share space equally */
+    gap: 0.25rem; /* spacing between buttons */
 }
 
 
@@ -27,11 +27,15 @@
     background-color: transparent;
     border: 1px solid yellow;
     border-radius: 5px;
-    text-decoration: none;
     color: whitesmoke;
+    text-decoration: none;
     text-align: center;
-    padding: 0.25em 0.5em;
+    white-space: nowrap;
+    width: 100%; /* fill the grid cell */
+    box-sizing: border-box; /* ensures border/padding stay inside width */
+    padding: 0.5em 0; /* optional vertical padding only, no horizontal padding */
 }
+
 
 /* Optional active state */
 .odds-btn-active {
