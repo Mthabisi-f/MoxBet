@@ -15,34 +15,6 @@
     font-size: small;
 }
 
-.grid-odds {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); /* each button fills equal fraction */
-    gap: 0.25rem;
-}
-
-
-
-/* Keep existing styles for odds-btn and odds-btn-active */
-.odds-btn {
-    background-color: transparent;
-    border: 1px solid yellow;
-    border-radius: 5px;
-    color: whitesmoke;
-    text-decoration: none;
-    text-align: center;
-    white-space: nowrap;
-    width: 100%; /* fill the grid cell */
-    box-sizing: border-box; /* ensures border/padding stay inside width */
-    padding: 0.5em 0; /* optional vertical padding only, no horizontal padding */
-}
-
-
-/* Optional active state */
-.odds-btn-active {
-    background-color: yellow;
-    color: black;
-}
 
 
 .more-odds-btns{
@@ -327,6 +299,34 @@
 #wg-api-football-games {
     --color-green: #1E90FF /* Ensure this targets the widget specifically */
 }
+
+
+.grid-odds {
+    display: flex;
+    gap: 0.25rem;
+    min-width: 0;
+}
+
+.odds-btn {
+    flex: 1;
+    min-width: 0;
+    background-color: transparent;
+    border: 1px solid yellow;
+    border-radius: 5px;
+    color: whitesmoke;
+    text-align: center;
+    white-space: nowrap;
+    padding: 0.5em 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-sizing: border-box;
+}
+
+.odds-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
 
 .sticky-top {
   position: sticky;

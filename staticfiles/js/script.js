@@ -2218,7 +2218,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </div> 
 
                                 <!-- Odds Container 1 -->
-                                <div id="odds-desc-container1" data-market-type="Match Winner" class="col-6 col-md-4 col-lg-3 d-flex pe-1 py-2 odds-desc-container1 grid-odds">
+                                <div id="odds-desc-container1" data-market-type="Match Winner" class="col-6 col-md-4 col-lg-3 pe-1 py-2 odds-desc-container1 grid-odds">
                                     <button class="odds-btn" data-prediction="1" ${isSuspended('Match Winner','1') ? 'disabled' : ''}>${displayOdd('Match Winner', '1')}</button>
                                     <button class="odds-btn" data-prediction="X" ${isSuspended('Match Winner','X') ? 'disabled' : ''}>${displayOdd('Match Winner', 'X')}</button>
                                     <button class="odds-btn" data-prediction="2" ${isSuspended('Match Winner','2') ? 'disabled' : ''}>${displayOdd('Match Winner', '2')}</button>
