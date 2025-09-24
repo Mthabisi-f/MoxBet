@@ -15,12 +15,12 @@
     font-size: small;
 }
 
-/* Make all odds containers use CSS grid */
 .grid-odds {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); /* equal share of space */
     gap: 0.25rem;
 }
+
 
 /* Keep existing styles for odds-btn and odds-btn-active */
 .odds-btn {
