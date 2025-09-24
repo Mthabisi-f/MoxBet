@@ -17,9 +17,10 @@
 
 .grid-odds {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* exactly 3 buttons share space equally */
-    gap: 0.25rem; /* spacing between buttons */
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); /* each button fills equal fraction */
+    gap: 0.25rem;
 }
+
 
 
 /* Keep existing styles for odds-btn and odds-btn-active */
