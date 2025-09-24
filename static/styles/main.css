@@ -322,9 +322,15 @@
     box-sizing: border-box;
 }
 
-.odds-btn:disabled {
-    opacity: 0.3;
+/* .odds-btn:disabled {
+    opacity: 0.1;
+    border: none;
     cursor: not-allowed;
+} */
+
+.odds-btn-active{
+    background-color: yellow;
+    color: black;
 }
 
 

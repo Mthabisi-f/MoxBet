@@ -556,7 +556,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
-
     if(stakeInput){
         stakeInput.addEventListener("input", function () {
             const newStakeAmount = parseFloat(this.value || 0).toFixed(2);
@@ -659,11 +658,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (updated) {
                             let oddsValueEl = selectionEl.querySelector("#odds-value");
                             let oldOdds = parseFloat(oddsValueEl.textContent);
-                            
                             let newOdds = parseFloat(updated.match_odds);
 
                             if (oldOdds !== newOdds) {
+                                // update DOM and localStorage
                                 oddsValueEl.textContent = newOdds;
+                                selectionEl.querySelector('[data-odds-value]').setAttribute('data-odds-value', newOdds);
                                 updateLocalStorage.match_odds = newOdds;
                                 hasChanges = true;
                             }
@@ -680,8 +680,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     // 🔄 Sync hidden input + localStorage
                     document.getElementById("selections").value = JSON.stringify(cleanedSelections);
                     localStorage.setItem("betslipSelections", JSON.stringify(cleanedSelections));
+
                     // 🔄 Always recalc totals after syncing selections
                     betslipSummaryCalculator();
+
                     if (hasChanges) {
                         oddsChangeAlert.classList.remove("d-none");
                         return; // Wait for user to confirm odds change
@@ -736,21 +738,30 @@ document.addEventListener('DOMContentLoaded', function() {
 
             } else if (clickedButton.value === "book") {
                 this.action = bookBetUrl;
+                bookBetBtn.disabled = true;
                 bookBetBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Booking Bet...';
 
                 try {
                     let selections = JSON.parse(document.getElementById("selections").value);
 
-                    // 🔄 Fetch updated odds
+                    if (selections.length > 25) {
+                        showErrorAlert("Betslip must have 25 or less selections");
+                        return;
+                    }
+
+                    // 🔄 Fetch updated odds from backend
                     let response = await fetchUpdatedOdds(selections);
                     let updatedSelections = response.updated_selections || [];
                     let hasChanges = false;
 
+                    // Track valid match IDs
                     let updatedMatchIds = new Set(updatedSelections.map(s => s.match_id));
 
+                    // Loop over DOM selections
                     document.querySelectorAll(".selected-game").forEach(selectionEl => {
                         let matchId = selectionEl.querySelector("[data-match-id]").getAttribute("data-match-id");
                         let updated = updatedSelections.find(s => s.match_id == matchId);
+                        let updateLocalStorage = betslipSelections.find(s => s.match_id == matchId);
 
                         if (updated) {
                             let oddsValueEl = selectionEl.querySelector("#odds-value");
@@ -758,7 +769,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             let newOdds = parseFloat(updated.match_odds);
 
                             if (oldOdds !== newOdds) {
+                                // update DOM and localStorage
                                 oddsValueEl.textContent = newOdds;
+                                selectionEl.querySelector('[data-odds-value]').setAttribute('data-odds-value', newOdds);
+                                updateLocalStorage.match_odds = newOdds;
                                 hasChanges = true;
                             }
                         } else {
@@ -767,16 +781,19 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     });
 
+                    // Keep only valid selections
                     let cleanedSelections = updatedSelections.filter(sel => updatedMatchIds.has(sel.match_id));
 
                     // 🔄 Sync hidden input + localStorage
                     document.getElementById("selections").value = JSON.stringify(cleanedSelections);
                     localStorage.setItem("betslipSelections", JSON.stringify(cleanedSelections));
 
+                    // 🔄 Always recalc totals
+                    betslipSummaryCalculator();
+
                     if (hasChanges) {
-                        betslipSummaryCalculator();
                         oddsChangeAlert.classList.remove("d-none");
-                        return; // Stop until user accepts
+                        return; // Stop until user accepts changes
                     }
 
                     // ✅ Proceed with booking
@@ -817,6 +834,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.error("Error:", error);
                     showErrorAlert("An error occurred while booking your bet");
                 } finally {
+                    bookBetBtn.disabled = false;
                     bookBetBtn.textContent = "Book Bet";
                 }
             }
@@ -2226,7 +2244,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                                 <!-- Odds Container 2 -->
                                 <div id="odds-desc-container2" data-market-type="Goals Over/Under" class="d-none d-md-flex col-md-4 col-lg-3 pe-1 py-2 odds-desc-container2 grid-odds">
-                                    <button class="odds-btn line" disabled>2.5</button>
+                                    <button class="odds-btn line border-0" disabled>2.5</button>
                                     <button class="odds-btn" data-prediction="over 2.5" ${isSuspended('Goals Over/Under','over 2.5') ? 'disabled' : ''}>${displayOdd('Goals Over/Under', 'over 2.5')}</button>
                                     <button class="odds-btn" data-prediction="under 2.5" ${isSuspended('Goals Over/Under','under 2.5') ? 'disabled' : ''}>${displayOdd('Goals Over/Under', 'under 2.5')}</button>
                                 </div>
