@@ -2225,14 +2225,14 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </div>
 
                                 <!-- Odds Container 2 -->
-                                <div id="odds-desc-container2" data-market-type="Goals Over/Under" class="d-none d-md-block col-md-4 col-lg-3 d-flex pe-1 py-2 odds-desc-container2 grid-odds">
+                                <div id="odds-desc-container2" data-market-type="Goals Over/Under" class="d-none d-md-block col-md-4 col-lg-3 pe-1 py-2 odds-desc-container2 grid-odds">
                                     <button class="odds-btn line" disabled>2.5</button>
                                     <button class="odds-btn" data-prediction="over 2.5" ${isSuspended('Goals Over/Under','over 2.5') ? 'disabled' : ''}>${displayOdd('Goals Over/Under', 'over 2.5')}</button>
                                     <button class="odds-btn" data-prediction="under 2.5" ${isSuspended('Goals Over/Under','under 2.5') ? 'disabled' : ''}>${displayOdd('Goals Over/Under', 'under 2.5')}</button>
                                 </div>
 
                                 <!-- Odds Container 3 -->
-                                <div id="odds-desc-container3" data-market-type="Double Chance" class="d-none d-lg-block col-lg-3 d-flex pe-1 py-2 odds-desc-container3 grid-odds">
+                                <div id="odds-desc-container3" data-market-type="Double Chance" class="d-none d-lg-block col-lg-3 pe-1 py-2 odds-desc-container3 grid-odds">
                                     <button class="odds-btn" data-prediction="1X" ${isSuspended('Double Chance','1X') ? 'disabled' : ''}>${displayOdd('Double Chance', '1X')}</button>
                                     <button class="odds-btn" data-prediction="12" ${isSuspended('Double Chance','12') ? 'disabled' : ''}>${displayOdd('Double Chance', '12')}</button>
                                     <button class="odds-btn" data-prediction="X2" ${isSuspended('Double Chance','X2') ? 'disabled' : ''}>${displayOdd('Double Chance', 'X2')}</button>
@@ -2377,7 +2377,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div id="match_winner" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
                         <div data-market-type="Match Winner" class="accordion-body bg-navy-blue row g-1">
                             <div class="col-4 d-grid">
-                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="1" ${isSuspended('Match Winner','1') ? 'disabled' : ''}>
+                                <button class="odds-btn ps-3 pe-3 justify-content-between more-odds-btns" data-prediction="1" ${isSuspended('Match Winner','1') ? 'disabled' : ''}>
                                     <div class="text-yellow prediction">1</div>
                                     <div class="odds-value">${displayOdd('Match Winner', '1')}</div>
                                 </button>
