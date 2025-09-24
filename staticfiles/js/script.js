@@ -2226,9 +2226,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                                 <!-- Odds Container 2 -->
                                 <div id="odds-desc-container2" data-market-type="Goals Over/Under" class="d-none d-md-block col-md-4 col-lg-3 d-flex pe-1 py-2 odds-desc-container2 grid-odds">
-                                    <span class="w-31">
-                                        <span class="line fw-bold">2.5</span>
-                                    </span>
+                                    <button class="odds-btn line" disabled>2.5</button>
                                     <button class="odds-btn" data-prediction="over 2.5" ${isSuspended('Goals Over/Under','over 2.5') ? 'disabled' : ''}>${displayOdd('Goals Over/Under', 'over 2.5')}</button>
                                     <button class="odds-btn" data-prediction="under 2.5" ${isSuspended('Goals Over/Under','under 2.5') ? 'disabled' : ''}>${displayOdd('Goals Over/Under', 'under 2.5')}</button>
                                 </div>
