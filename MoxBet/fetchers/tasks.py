@@ -122,6 +122,8 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
             try:
                 await redis_client.set(cache_key, json.dumps(payload), ex=expiry)
                 await redis_client.sadd(f"finished:{sport.lower()}", cache_key)
+                print(f"[CACHED] {sport} finished game {fixture_id} ({status})")
+
 
             except Exception as e:
                 print(f"Redis error caching {fixture_id}: {e}")
