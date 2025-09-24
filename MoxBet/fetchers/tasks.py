@@ -102,98 +102,124 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
         status = nf["fixture"]["status"]["short"]
         expiry = 60 * 60 * 3
 
-        odds_entry = odds_map.get(fixture_id)
-        if not odds_entry:
-            continue
+        cache_key = f"match:{fixture_id}"
 
-        # Build odds dict
-        fixture_odds = {}
+         
+        if status in FINISHED_STATUSES:
+            expiry = 60 * 60 * 3
+            payload = {
+                "match_id": fixture_id,
+                "sport": sport,
+                "country": country,
+                "league": nf["league"],
+                "league_id": league_id,
+                "datetime": nf["fixture"]["date"],
+                "status": status,
+                "extras": {k: v for k, v in nf.items() if k not in ["league", "fixture", "id"]},
+                "odds": {}
+            }
 
-        def build_market_object(bet):
-            market_type = normalize_market(bet["name"])
-            market_obj = {}
-            special_markets = {"Double Chance 1st Half", "Double Chance 2nd Half", "Double Chance"}
-            for v in bet.get("values", []):
-                prediction = str(v["value"]).lower()
-                handicap = v.get("handicap")
-                prediction_key = f"{prediction} {handicap}" if handicap else prediction
-                key = (
-                    special_normalize_prediction(prediction_key)
-                    if market_type in special_markets
-                    else normalize_prediction(prediction_key)
-                )
-                market_obj[key] = {
-                    "odd": float(v["odd"]) if v.get("odd") else None,
-                    "suspended": v.get("suspended", False)
-                }
-            return market_type, market_obj
+            try:
+                await redis_client.set(cache_key, json.dumps(payload), ex=expiry)
+                await redis_client.sadd(f"finished:{sport.lower()}", cache_key)
 
-        if not live:
-            for bookmaker in odds_entry.get("bookmakers", []):
-                for bet in bookmaker.get("bets", []):
-                    market_type, market_obj = build_market_object(bet)
-                    fixture_odds.setdefault(market_type, {}).update(market_obj)
+            except Exception as e:
+                print(f"Redis error caching {fixture_id}: {e}")
+
+
         else:
-            for bet in odds_entry.get("odds", []):
-                market_type, market_obj = build_market_object(bet)
-                fixture_odds[market_type] = market_obj
+            odds_entry = odds_map.get(fixture_id)
+            if not odds_entry:
+                continue
 
-        payload = {
-            "match_id": fixture_id,
-            "sport": sport,
-            "country": country,
-            "league": nf["league"],
-            "league_id": league_id,
-            "venue": nf["fixture"]["venue"],
-            "datetime": nf["fixture"]["date"],
-            "status": nf["fixture"]["status"],
-            "extras": {k: v for k, v in nf.items() if k not in ["league", "fixture", "id"]},
-            "odds": {} if status in FINISHED_STATUSES else fixture_odds
-        }
+            # Build odds dict
+            fixture_odds = {}
+
+            def build_market_object(bet):
+                market_type = normalize_market(bet["name"])
+                market_obj = {}
+                special_markets = {"Double Chance 1st Half", "Double Chance 2nd Half", "Double Chance"}
+                for v in bet.get("values", []):
+                    prediction = str(v["value"]).lower()
+                    handicap = v.get("handicap")
+                    prediction_key = f"{prediction} {handicap}" if handicap else prediction
+                    key = (
+                        special_normalize_prediction(prediction_key)
+                        if market_type in special_markets
+                        else normalize_prediction(prediction_key)
+                    )
+                    market_obj[key] = {
+                        "odd": float(v["odd"]) if v.get("odd") else None,
+                        "suspended": v.get("suspended", False)
+                    }
+                return market_type, market_obj
+
+            if not live:
+                for bookmaker in odds_entry.get("bookmakers", []):
+                    for bet in bookmaker.get("bets", []):
+                        market_type, market_obj = build_market_object(bet)
+                        fixture_odds.setdefault(market_type, {}).update(market_obj)
+            else:
+                for bet in odds_entry.get("odds", []):
+                    market_type, market_obj = build_market_object(bet)
+                    fixture_odds[market_type] = market_obj
+
+            payload = {
+                "match_id": fixture_id,
+                "sport": sport,
+                "country": country,
+                "league": nf["league"],
+                "league_id": league_id,
+                "venue": nf["fixture"]["venue"],
+                "datetime": nf["fixture"]["date"],
+                "status": nf["fixture"]["status"],
+                "extras": {k: v for k, v in nf.items() if k not in ["league", "fixture", "id"]},
+                "odds": {} if status in FINISHED_STATUSES else fixture_odds
+            }
 
        
-        # --- Redis caching ---
-        cache_key = f"match:{fixture_id}"
-        await redis_client.set(cache_key, json.dumps(payload), ex=expiry)
-        channel_layer = get_channel_layer()
+            # --- Redis caching ---
+            try:
+                await redis_client.set(cache_key, json.dumps(payload), ex=expiry)
+                channel_layer = get_channel_layer()
 
-        # Broadcast to a "live odds" group (per sport or global)
-        await channel_layer.group_send(
-            f"live_odds_{sport.lower()}",
-            {
-                "type": "odds.update",
-                "data": payload
-            }
-        )
+                # Broadcast to a "live odds" group (per sport or global)
+                await channel_layer.group_send(
+                    f"live_odds_{sport.lower()}",
+                    {
+                        "type": "odds.update",
+                        "data": payload
+                    }
+                )
 
-        # league that will be used in frontend
-        league_info = {
-            "id": league_id,
-            "name": league_name,
-            "country": country,
-            "flag": nf["league"].get("flag"),
-        }
-        await redis_client.set(f"league:{sport.lower()}:{league_id}:info", json.dumps(league_info))
+                # league that will be used in frontend
+                league_info = {
+                    "id": league_id,
+                    "name": league_name,
+                    "country": country,
+                    "flag": nf["league"].get("flag"),
+                }
+                await redis_client.set(f"league:{sport.lower()}:{league_id}:info", json.dumps(league_info))
 
-        # Register league under its country
-        await redis_client.sadd(f"country:{sport.lower()}:{country}:leagues", league_id)
+                # Register league under its country
+                await redis_client.sadd(f"country:{sport.lower()}:{country}:leagues", league_id)
 
-        # Register unique country for this sport
-        await redis_client.sadd(f"countries:{sport.lower()}", country)
+                # Register unique country for this sport
+                await redis_client.sadd(f"countries:{sport.lower()}", country)
 
-        # Keep your same match groupings
-        await redis_client.sadd(f"sport:{sport.lower()}", cache_key)
-        await redis_client.sadd(f"league:{sport.lower()}:{league_id}", cache_key)
-        await redis_client.sadd(f"country:{sport.lower()}:{country}", cache_key)
-        match_date = nf["fixture"]["date"][:10]
-        await redis_client.sadd(f"time:{sport}:{match_date}", cache_key)
-        if status in ["1H", "2H", "HT", "ET", "P", "BT", "LIVE"]:
-            await redis_client.sadd(f"live:{sport.lower()}", cache_key)
-        
-        if status in FINISHED_STATUSES:
-            await redis_client.sadd(f"finished:{sport.lower()}", cache_key)
+                # Keep your same match groupings
+                await redis_client.sadd(f"sport:{sport.lower()}", cache_key)
+                await redis_client.sadd(f"league:{sport.lower()}:{league_id}", cache_key)
+                await redis_client.sadd(f"country:{sport.lower()}:{country}", cache_key)
+                match_date = nf["fixture"]["date"][:10]
+                await redis_client.sadd(f"time:{sport}:{match_date}", cache_key)
+                if status in ["1H", "2H", "HT", "ET", "P", "BT", "LIVE"]:
+                    await redis_client.sadd(f"live:{sport.lower()}", cache_key)
+                
+                print(f"[CACHED] {sport} fixture {fixture_id} ({status})")
 
-        print(f"[CACHED] {sport} fixture {fixture_id} ({status})")
+            except Exception as e:
+                print(f"Redis error caching {fixture_id}: {e}")
 
 
 # @shared_task
