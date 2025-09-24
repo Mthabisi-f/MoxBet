@@ -15,62 +15,38 @@
     font-size: small;
 }
 
-.big-screen-odds-btn{
+/* Make all odds containers use CSS grid */
+.grid-odds {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+    gap: 0.25rem;
+}
+
+/* Keep existing styles for odds-btn and odds-btn-active */
+.odds-btn {
     background-color: transparent;
-    border: 1px solid yellow; /* #1E90FF */
+    border: 1px solid yellow;
     border-radius: 5px;
-    width: 31%;
     text-decoration: none;
     color: whitesmoke;
-    align-items: center;
+    text-align: center;
+    padding: 0.25em 0.5em;
 }
+
+/* Optional active state */
+.odds-btn-active {
+    background-color: yellow;
+    color: black;
+}
+
+
 .more-odds-btns{
     background-color: transparent;
     border: 1px solid yellow; /* #1E90FF */
     color: whitesmoke;
     border-radius:5px ;
 }
-.odds-btn-active{
-    background-color: yellow;
-    color: black;
-    border: none;
-}
 
-/* Flash styles only apply when odds change */
-.odds-btn.flash-green,
-.odds-btn.flash-red {
-    position: relative;  /* create positioning context */
-    overflow: hidden;    /* keep the flash inside */
-}
-
-.odds-btn.flash-green::after,
-.odds-btn.flash-red::after {
-    content: "";
-    position: absolute;
-    top: 4px;
-    right: 4px;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    opacity: 0;
-    animation: flashAnim 1s ease-out;
-}
-
-.odds-btn.flash-green::after {
-    background-color: #28a745; /* Bootstrap green */
-}
-
-.odds-btn.flash-red::after {
-    background-color: #dc3545; /* Bootstrap red */
-}
-
-/* Fade in/out with a pulse */
-@keyframes flashAnim {
-    0%   { opacity: 0; transform: scale(0.5); }
-    20%  { opacity: 1; transform: scale(1.2); }
-    80%  { opacity: 1; transform: scale(1); }
-    100% { opacity: 0; transform: scale(0.5); }
-}
 
 
 .accordion-header{

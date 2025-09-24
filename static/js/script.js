@@ -2188,60 +2188,70 @@ document.addEventListener('DOMContentLoaded', function() {
         matchElement.classList.add('text-decoration-none', 'match-link', 'text-whitesmoke', 'mb-2');
         matchElement.dataset.matchId = `${match_id}`;
         matchElement.innerHTML = `
-                    <div data-sport="${sport}" data-league-id="${league_id}" data-datetime="${datetime}" class="match-container bb-white pt-1 pb-1">
-                        
-                        <div class="row g-0">
-                            <div class="col-12">
-                                <div class="row g-0 d-flex">
-                                    <div class="col-6">
-                                        <div class="text-small">
-                                            <span class="text-truncate"><img src="${league.flag}" class="logo" alt="logo"/></span>&nbsp;
-                                            <span class="text-truncate" data-country="${country}">${country}</span>&nbsp; 
-                                            <span class="text-truncate" data-league="${league.name}" data-league-id="${league.id}">${league.name}</span>
+            <div data-sport="${sport}" data-league-id="${league_id}" data-datetime="${datetime}" class="match-container bb-white pt-1 pb-1">
+                <div class="row g-0">
+                    <div class="col-12">
+                        <div class="row g-0 d-flex">
+                            <div class="col-6">
+                                <div class="text-small">
+                                    <span class="text-truncate"><img src="${league.flag}" class="logo" alt="logo"/></span>&nbsp;
+                                    <span class="text-truncate" data-country="${country}">${country}</span>&nbsp; 
+                                    <span class="text-truncate" data-league="${league.name}" data-league-id="${league.id}">${league.name}</span>
+                                </div>
+                                </div>
+                                <div class="col-6 text-small">
+                                    <div class="row g-0 text-end">
+                                        <div class="col-12">
+                                            <span class="text-yellow">+${marketsCount} markets</span>
                                         </div>
-                                    </div>
-                                    <div class="col-6 text-small">
-                                        <div class="row g-0 text-end">
-                                            <div class="col-12" >
-                                                <span class="text-yellow">+${marketsCount} markets</span>
-                                            </div>
-                                        </div> 
-                                        
-                                    </div>
-                                </div>
-                                <div class="row g-0">
-                                    <div class="col-4 col-md-3 col-lg-2">
-                                        <div data-home-team="${extras.teams?.home?.name}" class="text-truncate">${extras.teams?.home?.name}</div>
-                                        <div data-away-team="${extras.teams?.away?.name}" class="text-truncate">${extras.teams?.away?.name}</div>
-                                    </div>
-                                    <div class="col-2 col-md-1 text-center text-aqua"> 
-                                        <div data-home-score="${extras.goals?.home ?? ''}">${extras.goals?.home ?? ''}</div>
-                                        <div data-away-score="${extras.goals?.away ?? ''}">${extras.goals?.away ?? ''}</div>
                                     </div> 
-                                    <div id="odds-desc-container1" data-market-type="Match Winner" class="col-6 col-md-4 col-lg-3 d-flex pe-1 py-2 odds-desc-container1">
-                                        <button class="odds-btn big-screen-odds-btn" data-prediction="1" ${isSuspended('Match Winner','1') ? 'disabled' : ''}>${displayOdd('Match Winner', '1')}</button>
-                                        <button class="mx-1 odds-btn big-screen-odds-btn" data-prediction="X" ${isSuspended('Match Winner','X') ? 'disabled' : ''}>${displayOdd('Match Winner', 'X')}</button >
-                                        <button class="odds-btn big-screen-odds-btn" data-prediction="2" ${isSuspended('Match Winner','2') ? 'disabled' : ''}>${displayOdd('Match Winner', '2')}</button>
-                                    </div>
-                                    <div id="odds-desc-container2" data-market-type="Goals Over/Under" class="d-none d-md-block col-md-4 col-lg-3 d-flex pe-1 py-2 odds-desc-container2">
-                                        <span class="w-31">
-                                            <span class="line fw-bold">2.5</span>
-                                        </span>
-                                        <button class="mx-1 odds-btn big-screen-odds-btn" data-prediction="over 2.5" ${isSuspended('Goals Over/Under','over 2.5') ? 'disabled' : ''}>${displayOdd('Goals Over/Under', 'over 2.5')}</button >
-                                        <button class="odds-btn big-screen-odds-btn" data-prediction="under 2.5" ${isSuspended('Goals Over/Under','under 2.5') ? 'disabled' : ''}>${displayOdd('Goals Over/Under', 'under 2.5')}</button>
-                                    </div>
-                                    <div id="odds-desc-container3" data-market-type="Double Chance" class="d-none d-lg-block col-lg-3 d-flex pe-1 py-2 odds-desc-container3">
-                                        <button class="odds-btn big-screen-odds-btn " data-prediction="1X" ${isSuspended('Double Chance','1X') ? 'disabled' : ''}>${displayOdd('Double Chance', '1X')}</button>
-                                        <button class="mx-1 odds-btn big-screen-odds-btn" data-prediction="12" ${isSuspended('Double Chance','12') ? 'disabled' : ''}>${displayOdd('Double Chance', '12')}</button >
-                                        <button class="odds-btn big-screen-odds-btn" data-prediction="X2" ${isSuspended('Double Chance','X2') ? 'disabled' : ''}>${displayOdd('Double Chance', 'X2')}</button>
-                                    </div>
                                 </div>
-                                <div style="margin-top: -5px;" class="row g-0 col-6 text-truncate">
-                                    <div data-match-id="${match_id}"  class="text-small italic"><span data-match-date="${date}">${status.elapsed ?  `Live ${status.short}` : `${date}`}</span> <span data-match-time="${time}" class="text-yellow">${status.elapsed ?? `${time}`}</span> ${status.elapsed ? '' : `id : ${match_id}`}</div>
+                            </div>
+                            <div class="row g-0">
+                                <div class="col-4 col-md-3 col-lg-2">
+                                    <div data-home-team="${extras.teams?.home?.name}" class="text-truncate">${extras.teams?.home?.name}</div>
+                                    <div data-away-team="${extras.teams?.away?.name}" class="text-truncate">${extras.teams?.away?.name}</div>
                                 </div>
-                            </div>                        
-                        </div>
-                    </div> `;
+                                <div class="col-2 col-md-1 text-center text-aqua"> 
+                                    <div data-home-score="${extras.goals?.home ?? ''}">${extras.goals?.home ?? ''}</div>
+                                    <div data-away-score="${extras.goals?.away ?? ''}">${extras.goals?.away ?? ''}</div>
+                                </div> 
+
+                                <!-- Odds Container 1 -->
+                                <div id="odds-desc-container1" data-market-type="Match Winner" class="col-6 col-md-4 col-lg-3 d-flex pe-1 py-2 odds-desc-container1 grid-odds">
+                                    <button class="odds-btn" data-prediction="1" ${isSuspended('Match Winner','1') ? 'disabled' : ''}>${displayOdd('Match Winner', '1')}</button>
+                                    <button class="odds-btn" data-prediction="X" ${isSuspended('Match Winner','X') ? 'disabled' : ''}>${displayOdd('Match Winner', 'X')}</button>
+                                    <button class="odds-btn" data-prediction="2" ${isSuspended('Match Winner','2') ? 'disabled' : ''}>${displayOdd('Match Winner', '2')}</button>
+                                </div>
+
+                                <!-- Odds Container 2 -->
+                                <div id="odds-desc-container2" data-market-type="Goals Over/Under" class="d-none d-md-block col-md-4 col-lg-3 d-flex pe-1 py-2 odds-desc-container2 grid-odds">
+                                    <span class="w-31">
+                                        <span class="line fw-bold">2.5</span>
+                                    </span>
+                                    <button class="odds-btn" data-prediction="over 2.5" ${isSuspended('Goals Over/Under','over 2.5') ? 'disabled' : ''}>${displayOdd('Goals Over/Under', 'over 2.5')}</button>
+                                    <button class="odds-btn" data-prediction="under 2.5" ${isSuspended('Goals Over/Under','under 2.5') ? 'disabled' : ''}>${displayOdd('Goals Over/Under', 'under 2.5')}</button>
+                                </div>
+
+                                <!-- Odds Container 3 -->
+                                <div id="odds-desc-container3" data-market-type="Double Chance" class="d-none d-lg-block col-lg-3 d-flex pe-1 py-2 odds-desc-container3 grid-odds">
+                                    <button class="odds-btn" data-prediction="1X" ${isSuspended('Double Chance','1X') ? 'disabled' : ''}>${displayOdd('Double Chance', '1X')}</button>
+                                    <button class="odds-btn" data-prediction="12" ${isSuspended('Double Chance','12') ? 'disabled' : ''}>${displayOdd('Double Chance', '12')}</button>
+                                    <button class="odds-btn" data-prediction="X2" ${isSuspended('Double Chance','X2') ? 'disabled' : ''}>${displayOdd('Double Chance', 'X2')}</button>
+                                </div>
+                            </div>
+
+                            <div style="margin-top: -5px;" class="row g-0 col-6 text-truncate">
+                                <div data-match-id="${match_id}" class="text-small italic">
+                                    <span data-match-date="${date}">${status.elapsed ?  `Live ${status.short}` : `${date}`}</span> 
+                                    <span data-match-time="${time}" class="text-yellow">${status.elapsed ?? `${time}`}</span> 
+                                    ${status.elapsed ? '' : `id : ${match_id}`}
+                                </div>
+                            </div>
+                        </div>                        
+                    </div>
+                </div>`;
+
 
         if(container.classList.contains('text-center')){
             container.classList.remove('text-center')
