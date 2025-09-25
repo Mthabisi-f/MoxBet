@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
     const stakeInput = document.getElementById('input-stake');
-    const oddsBtns = document.querySelectorAll('.odds-btn');
     const betslipContainer = document.querySelector('.betslip-container');
     const noGamesSelected = document.getElementById('betslip-no-games-selected');
     const someGamesSelected = document.getElementById('betslip-some-games-selected');
@@ -9,14 +8,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const gamesDisplayMoreOdds = document.getElementById('games-display-all-odds'); 
     const gamesDisplaySports = document.getElementById('games-display-sports');
     const gamesDisplayLive = document.getElementById('games-display-live');
-    const gamesDisplayBtns = document.getElementById('games-display-btns');
     const oddsDescription = document.getElementById('odds-description');
     const allEventsContainer = document.getElementById('all-events-container');
     const mainNavbar = document.getElementById('main-navbar');
     const sportNavbar = document.getElementById('sport-navbar');
     const filterGamesBy = document.getElementById('filter-games-by');
     const livePage = document.getElementById('live-page');
-    const userBalance = document.getElementById('user_balance');
     const limits = document.getElementById('limits');
     const copyrightYear =  document.querySelectorAll('.copyright-year');
     const minStakeDisplay = document.getElementById("min-stake-display");
@@ -718,14 +715,18 @@ document.addEventListener('DOMContentLoaded', function() {
                             btn.classList.remove('odds-btn-active');
                         });
 
-                        if (noGamesSelected.classList.contains('d-none')) {
-                            noGamesSelected.classList.remove('d-none');
-                            someGamesSelected.classList.add('d-none');
-                            numberOfSelectedGames.forEach(el => el.textContent = '0');
-                            stakeInput.value = '';
-                        }
                     } else {
                         showErrorAlert(data.message || "Failed to place bet");
+                    }
+
+                    if (!(cleanedSelections.length >= 1)) {
+                        noGamesSelected.classList.remove('d-none');
+                        someGamesSelected.classList.add('d-none');
+                        numberOfSelectedGames.forEach(el => el.textContent = '0');
+                        stakeInput.value = '';
+                    }else{
+                        noGamesSelected.classList.add('d-none');
+                        someGamesSelected.classList.remove('d-none');
                     }
 
                 } catch (error) {
@@ -1761,7 +1762,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // --- Top Leagues (accordion) ---
             
-            if(!window.innerWidth < 992){
+            if(!(window.innerWidth < 992)){
                 showLeaguesResponsive();
             }
 
@@ -1987,7 +1988,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if(tickets.length > 0 && document.getElementById('tickets-display')){
                     ticketsDisplay.innerHTML = '';
                     tickets.forEach(ticket =>{
-                        const {id, status, created_at, total_odds, stake, potential_win} = ticket;
+                        const {id, status, win_boost, created_at, total_odds, stake, potential_win} = ticket;
 
                         const selections = ticket.selections;
                     
@@ -2027,7 +2028,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                             </div>
                                                             <div class="col-4 text-center">
                                                                 <div style="margin-bottom: -5px; font-style: italic;">Win boost</div>
-                                                                <div class="text-small">${currencySymbol}&nbsp;20.77</div>
+                                                                <div class="text-small">${currencySymbol}&nbsp;${win_boost}</div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -2097,7 +2098,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                             <div class="text-center filter-games-by-parent">
                                                 <select id="filter-games-by" class="filter-games-by form-select bg-sky-blue rounded-0 text-small">
                                                     <option class="prediction" value="Upcoming">Upcoming</option>
-                                                    <option class="prediction" value="Leagues">Leagues</option>
+                                                    ${window.innerWidth < 992 ? '<option class="prediction" value="Leagues">Leagues</option>' : ''}
                                                     <option class="prediction" value="Next-hour">Next hour</option>
                                                     <option class="prediction" value="Next-3-hours">Next 3 hours</option>
                                                     <option class="prediction" value="Next-5-hours">Next 5 hours</option>
@@ -2290,6 +2291,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const allMarkets = document.getElementById('all-markets');
         // Set data-mach-id dynamically so that websocet finds the match and update its info, should there be any changes
         container.dataset.matchId = `${match_id}`;
+        container.classList.add('match-link');
         allMarkets.dataset.sport = `${sport}`;
         allMarkets.dataset.country = `${country}`;
         allMarkets.dataset.datetime = `${datetime}`;

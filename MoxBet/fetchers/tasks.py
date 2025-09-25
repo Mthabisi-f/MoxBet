@@ -106,7 +106,7 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
 
          
         if status in FINISHED_STATUSES:
-            expiry = 60 * 60 * 3
+            expiry = 60 * 60 * 24 * 7
             payload = {
                 "match_id": fixture_id,
                 "sport": sport,
@@ -119,14 +119,14 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
                 "odds": {}
             }
 
+                    
             try:
-                await redis_client.set(cache_key, json.dumps(payload), ex=expiry)
-                await redis_client.sadd(f"finished:{sport.lower()}", cache_key)
+                # Store finished match with a dedicated key pattern
+                finished_key = f"finished:{fixture_id}"
+                await redis_client.set(finished_key, json.dumps(payload), ex=expiry)
                 print(f"[CACHED] {sport} finished game {fixture_id} ({status})")
-
-
             except Exception as e:
-                print(f"Redis error caching {fixture_id}: {e}")
+                print(f"Redis error caching finished match {fixture_id}: {e}")
 
 
         else:
@@ -235,12 +235,14 @@ async def auto_settle_tickets():
 
 # @shared_task
 async def get_finished_fixtures():
-    finished_keys = await redis_client.keys("finished:*")  # Get all finished match keys
-
+    finished_keys = await redis_client.keys("finished:*")
+    
     async def fetch_match(k):
         value = await redis_client.get(k)
         if value:
-            return json.loads(value)
+            match_data = json.loads(value)
+            # Ensure extras contains the full results structure
+            return match_data
         return None
 
     matches = await asyncio.gather(*(fetch_match(k) for k in finished_keys))

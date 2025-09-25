@@ -583,8 +583,6 @@ def receive_sms(request):
             if not data:
                 data = json.loads(request.body.decode("utf-8"))
 
-            print("Raw Data:", data)  # Debugging: Print full data received
-
             # Extract actual message
             if "msg" in data:
                 message = data.get("msg", "").strip()
@@ -596,24 +594,26 @@ def receive_sms(request):
             if not message:
                 return JsonResponse({"status": "error", "message": "No message received"}, status=400)
 
-            # Extract Currency
-            currency_match = re.search(r'([A-Z]{3})\s*\d+', message)
+            # Extract currency (USD, ZIG, ZAR, etc.)
+            currency_match = re.search(r'\b(USD|ZIG|ZAR)\b', message)
             currency = currency_match.group(1) if currency_match else "Unknown"
 
-            # Extract Amount
-            amount_match = re.search(r'[A-Z]{3}\s*(\d+)', message)
-            amount = int(amount_match.group(1)) if amount_match else 0
+            # Extract amount
+            amount_match = re.search(rf'{currency}\s*(\d+(?:\.\d+)?)', message)
+            amount = float(amount_match.group(1)) if amount_match else 0.0
 
-            # Extract Reference Code
-            reference_match = re.search(r'Reference:\s*([A-Z0-9]+)', message)
-            confirmation_code = reference_match.group(1) if reference_match else "Unknown"
+            # Extract confirmation code from Txn ID (e.g., CI250917.1139.K74051 → CI2509171139K74051)
+            txn_match = re.search(r'Txn ID:\s*([A-Z0-9.]+)', message, re.IGNORECASE)
+            confirmation_code = txn_match.group(1).replace(".", "") if txn_match else "Unknown"
 
-            # Save to database
+            # Save transaction to database
             transaction = Transactions.objects.create(
                 message=message,
                 amount=amount,
                 currency=currency,
-                confirmation_code=confirmation_code
+                confirmation_code=confirmation_code,
+                transaction_type="deposit",  # Assuming these are all deposits
+                status="pending"
             )
             transaction.save()
 
@@ -623,7 +623,7 @@ def receive_sms(request):
             print("Error:", str(e))
             return JsonResponse({"status": "error", "message": str(e)}, status=400)
 
-    return JsonResponse({"status": "error", "messsge": "SMS not recieved"})
+    return JsonResponse({"status": "error", "message": "SMS not received"}, status=400)
 
 
 def sports(request):    
@@ -694,7 +694,7 @@ def deposit(request):
     if request.method == "POST":
         try:
             user = request.user  # Get logged-in user
-            confirmation_code = request.POST.get("confirmation_code", "").strip().upper()
+            confirmation_code = request.POST.get("confirmation_code", "").strip().upper().replace(".", "")
 
             if not confirmation_code:
                 return JsonResponse({"status": "error", "message": "Reference code required"}, status=400)
@@ -703,35 +703,30 @@ def deposit(request):
             transaction = Transactions.objects.filter(confirmation_code=confirmation_code).first()
 
             if not transaction:
-                messages.error(request, f'Confirmation code not found, try again.')
+                messages.error(request, 'Confirmation code not found, try again.')
             else:
                 # Check if the transaction is already approved
                 if transaction.status == "approved":
                     messages.error(request, "Confirmation code already used")
 
                 else:
-                    # Check if transaction is still pending
+                    # Check if transaction is still pending and type is deposit
                     if transaction.transaction_type != "deposit":
                         messages.error(request, "Transaction not available for deposit.")
+                    elif transaction.currency != user.currency:
+                        messages.error(request, f"You cannot deposit {transaction.currency} into the {user.currency} account.")
                     else:
-                        if transaction.currency != user.currency:  # Check if currency matches the user's currency
-                            messages.error(request, f"You cannot deposit {transaction.currency} into the {user.currency} account.")
-                        
-                        else:
-                            # Add transaction amount to user balance
-                            user.balance += transaction.amount
-                            user.save()
+                        # Proceed with deposit
+                        user.balance += transaction.amount
+                        user.save()
 
-                            # Update transaction status to approved
-                            transaction.status = "approved"
-                            transaction.user = user  # Assign transaction to user
-                            transaction.save()
+                        transaction.status = "approved"
+                        transaction.user = user
+                        transaction.save()
 
-                            # TO FIX THIS TO BE A MODAL
-                            messages.success(request, f'Your deposit of ${transaction.amount} was successful!, Your balance is now {user.balance:.2f}')
-
-        except:
-            messages.error("Error encountered")
+                        messages.success(request, f'Your deposit of ${transaction.amount} was successful! Your balance is now {user.balance:.2f}')
+        except Exception as e:
+            messages.error(request, f"Error encountered: {str(e)}")
 
     return render(request, 'deposit.html')
 

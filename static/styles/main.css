@@ -312,7 +312,7 @@
     min-width: 0;
     background-color: transparent;
     border: 1px solid yellow;
-    border-radius: 5px;
+    border-radius: 10px;
     color: whitesmoke;
     text-align: center;
     white-space: nowrap;
@@ -322,11 +322,6 @@
     box-sizing: border-box;
 }
 
-/* .odds-btn:disabled {
-    opacity: 0.1;
-    border: none;
-    cursor: not-allowed;
-} */
 
 .odds-btn-active{
     background-color: yellow;
