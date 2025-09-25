@@ -2290,9 +2290,9 @@ document.addEventListener('DOMContentLoaded', function() {
         let container = gamesDisplayMoreOdds;
         const allMarkets = document.getElementById('all-markets');
         // Set data-mach-id dynamically so that websocet finds the match and update its info, should there be any changes
-        container.dataset.matchId = `${match_id}`;
         container.classList.add('match-link');
         allMarkets.dataset.sport = `${sport}`;
+        allMarkets.dataset.matchId = `${match_id}`;
         allMarkets.dataset.country = `${country}`;
         allMarkets.dataset.datetime = `${datetime}`;
         allMarkets.dataset.leagueId = `${league_id}`;
@@ -2397,7 +2397,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div id="match_winner" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
                         <div data-market-type="Match Winner" class="accordion-body bg-navy-blue row g-1">
                             <div class="col-4 d-grid">
-                                <button class="odds-btn ps-3 pe-3 justify-content-between more-odds-btns" data-prediction="1" ${isSuspended('Match Winner','1') ? 'disabled' : ''}>
+                                <button class="odds-btn ps-3 pe-3 d-flex justify-content-between more-odds-btns" data-prediction="1" ${isSuspended('Match Winner','1') ? 'disabled' : ''}>
                                     <div class="text-yellow prediction">1</div>
                                     <div class="odds-value">${displayOdd('Match Winner', '1')}</div>
                                 </button>
@@ -5260,7 +5260,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // `;
 
 
-        if(hasMarket(odds, "Odd/Even FT")){Half
+        if(hasMarket(odds, "Odd/Even FT")){
             const oddOrEvenft = document.createElement('div');
             oddOrEvenft.innerHTML = `
                 <div class="accordion accordion-flush border-0 br-top-2 bg-dark mb-2" id="accordionExample">
