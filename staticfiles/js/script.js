@@ -1014,7 +1014,28 @@ document.addEventListener('DOMContentLoaded', function() {
         
         try {
             let response = await fetch(url);
+            
+            // First, check if the response is OK (status 200-299)
+            if (!response.ok) {
+                // Handle server errors (500, 404, etc.)
+                const errorText = await response.text();
+                throw new Error(`Server error ${response.status}: ${errorText.substring(0, 200)}`);
+            }
+            
+            // Check if response is JSON before parsing
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const htmlResponse = await response.text();
+                console.warn('Server returned HTML instead of JSON. Response sample:', htmlResponse.substring(0, 500));
+                throw new Error('Server returned HTML error page instead of JSON');
+            }
+            
             let Data = await response.json();
+            
+            // Check if the expected data structure exists
+            if (!Data || typeof Data !== 'object') {
+                throw new Error('Invalid response format from server');
+            }
 
             data = Data.games;
             
@@ -1066,6 +1087,35 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         catch (error) {
             console.error("Error fetching games:", error);
+            
+            // Show user-friendly error message
+            if(gamesDisplayLive) {
+                Array.from(gamesDisplayLive.children).forEach(child =>{
+                    if(child != oddsDescription && child != sportsRaw){
+                        child.remove();
+                    }
+                });
+                
+                const errorMessage = document.createElement('div');
+                errorMessage.innerHTML = `
+                    <div class="text-center py-5">
+                        <p class="text-danger">Unable to load live games.</p>
+                        <small class="text-muted">Server temporarily unavailable. Please try again later.</small>
+                        <br>
+                        <button onclick="fetchLiveGamesBySport('${sport}', ${page})" class="btn btn-primary mt-3">
+                            Retry
+                        </button>
+                    </div>
+                `;
+                gamesDisplayLive.appendChild(errorMessage);
+            }
+        }
+        finally {
+            // Remove spinner whether request succeeds or fails
+            const spinnerElement = gamesDisplayLive.querySelector('.spinner');
+            if (spinnerElement) {
+                spinnerElement.remove();
+            }
         }
     }
 
