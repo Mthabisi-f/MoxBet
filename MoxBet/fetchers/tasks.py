@@ -227,11 +227,30 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
 # @shared_task
 async def auto_settle_tickets():
     from MoxBet.models import Tickets
-    tickets = Tickets.objects.filter(status__in=["Pending", "Refund"])
-    for ticket in tickets:
-        handler = SportsSettlementHandler(ticket)
-        handler.settle()
-
+    from asgiref.sync import sync_to_async
+    import logging
+    
+    logger = logging.getLogger(__name__)
+    
+    try:
+        logger.info("[SETTLEMENT] Starting ticket settlement")
+        
+        # Convert sync ORM call to async
+        tickets = await sync_to_async(list)(Tickets.objects.filter(status__in=["Pending"]))
+        
+        logger.info(f"[SETTLEMENT] Found {len(tickets)} pending tickets")
+        
+        for ticket in tickets:
+            logger.info(f"[SETTLEMENT] Processing ticket {ticket.id}")
+            
+            # Convert sync method calls to async
+            handler = SportsSettlementHandler(ticket)
+            await sync_to_async(handler.settle)()
+            
+            logger.info(f"[SETTLEMENT] Ticket {ticket.id} settled with status: {ticket.status}")
+            
+    except Exception as e:
+        logger.error(f"[SETTLEMENT] Error: {e}", exc_info=True)
 
 # @shared_task
 async def get_finished_fixtures():

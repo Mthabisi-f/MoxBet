@@ -999,125 +999,74 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
-
-    async function fetchLiveGamesBySport(sport, page = 1) {
-        const oddsDescription = livePage.querySelector('#odds-description');
-        const sportsRaw = livePage.querySelector('#sports-row');
-
-        gamesDisplayLive.appendChild(spinner);
-
-        let url = `/fetch-live-games/?sport=${sport}&page=${page}`;
-
-        let functionName = `${sport}MatchElementInnerHTML`;
-        let dropDownName = `${sport}OddsDropdowns`;  
-        let oddsDescName = `${sport}OddsDescription`;  
-        
-        try {
-            let response = await fetch(url);
+      async function fetchLiveGamesBySport(sport, page = 1) {
+            const oddsDescription = livePage.querySelector('#odds-description');
+            const sportsRaw = livePage.querySelector('#sports-row');
+    
+            gamesDisplayLive.appendChild(spinner);
+    
+            let url = `/fetch-live-games/?sport=${sport}&page=${page}`;
+    
+            let functionName = `${sport}MatchElementInnerHTML`;
+            let dropDownName = `${sport}OddsDropdowns`;  
+            let oddsDescName = `${sport}OddsDescription`;  
             
-            // First, check if the response is OK (status 200-299)
-            if (!response.ok) {
-                // Handle server errors (500, 404, etc.)
-                const errorText = await response.text();
-                throw new Error(`Server error ${response.status}: ${errorText.substring(0, 200)}`);
-            }
-            
-            // Check if response is JSON before parsing
-            const contentType = response.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                const htmlResponse = await response.text();
-                console.warn('Server returned HTML instead of JSON. Response sample:', htmlResponse.substring(0, 500));
-                throw new Error('Server returned HTML error page instead of JSON');
-            }
-            
-            let Data = await response.json();
-            
-            // Check if the expected data structure exists
-            if (!Data || typeof Data !== 'object') {
-                throw new Error('Invalid response format from server');
-            }
-
-            data = Data.games;
-            
-            // Update games display live
-            if(gamesDisplayLive){
-                if (data && data.length > 0) {
-                    Array.from(gamesDisplayLive.children).forEach(child=>{
-                        if(child != oddsDescription && child != sportsRaw){
-                            child.remove();
-                        }
-                    })
-
-                    // display OddsDiscription for the current sport
-                    if(typeof window[oddsDescName] === "function"){
-                        window[oddsDescName](oddsDescription);
-                    }
-                    else{
-                        oddsDescription.innerHTML = '';
-                    }
-
-                    filterGames();
-
-                    data.forEach(game => { 
-                        if(typeof window[functionName] === "function"){
-                            window[functionName](game, `${sport}`, gamesDisplayLive);
+            try {
+                let response = await fetch(url);
+                let Data = await response.json();
+    
+                data = Data.games;
+                
+                // Update games display live
+                if(gamesDisplayLive){
+                    if (data && data.length > 0) {
+                        Array.from(gamesDisplayLive.children).forEach(child=>{
+                            if(child != oddsDescription && child != sportsRaw){
+                                child.remove();
+                            }
+                        })
+    
+                        // display OddsDiscription for the current sport
+                        if(typeof window[oddsDescName] === "function"){
+                            window[oddsDescName](oddsDescription);
                         }
                         else{
-                            console.log(`${functionName} does not exist`);
+                            oddsDescription.innerHTML = '';
                         }
-                    });
-                    
-                    if(typeof window[dropDownName] === "function"){
-                        window[dropDownName](data, [gamesDisplayLive]);
-                    }
-
-                }
-                else {
-                    Array.from(gamesDisplayLive.children).forEach(child =>{
-                        if(child != oddsDescription && child != sportsRaw){
-                            child.remove();
+    
+                        filterGames();
+    
+                        data.forEach(game => { 
+                            if(typeof window[functionName] === "function"){
+                                window[functionName](game, `${sport}`, gamesDisplayLive);
+                            }
+                            else{
+                                console.log(`${functionName} does not exist`);
+                            }
+                        });
+                        
+                        if(typeof window[dropDownName] === "function"){
+                            window[dropDownName](data, [gamesDisplayLive]);
                         }
-                    });
-                    oddsDescription.innerHTML = '';
-                    const message = document.createElement('div');
-                    message.innerHTML = `<p class="text-center text-aqua py-5">No live ${sport} games found.</p>`;
-                    gamesDisplayLive.appendChild(message);
-                }  
-            }   
-        }
-        catch (error) {
-            console.error("Error fetching games:", error);
-            
-            // Show user-friendly error message
-            if(gamesDisplayLive) {
-                Array.from(gamesDisplayLive.children).forEach(child =>{
-                    if(child != oddsDescription && child != sportsRaw){
-                        child.remove();
+    
                     }
-                });
-                
-                const errorMessage = document.createElement('div');
-                errorMessage.innerHTML = `
-                    <div class="text-center py-5">
-                        <p class="text-danger">Unable to load live games.</p>
-                        <small class="text-muted">Server temporarily unavailable. Please try again later.</small>
-                        <br>
-                        <button onclick="fetchLiveGamesBySport('${sport}', ${page})" class="btn btn-primary mt-3">
-                            Retry
-                        </button>
-                    </div>
-                `;
-                gamesDisplayLive.appendChild(errorMessage);
+                    else {
+                        Array.from(gamesDisplayLive.children).forEach(child =>{
+                            if(child != oddsDescription && child != sportsRaw){
+                                child.remove();
+                            }
+                        });
+                        oddsDescription.innerHTML = '';
+                        const message = document.createElement('div');
+                        message.innerHTML = `<p class="text-center text-aqua py-5">No live ${sport} games found.</p>`;
+                        gamesDisplayLive.appendChild(message);
+                    }  
+                }   
+            }
+            catch (error) {
+                console.error("Error fetching games:", error);
             }
         }
-        finally {
-            // Remove spinner whether request succeeds or fails
-            const spinnerElement = gamesDisplayLive.querySelector('.spinner');
-            if (spinnerElement) {
-                spinnerElement.remove();
-            }
-        }
-    }
 
 
     function filterGames(data){
