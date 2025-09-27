@@ -20,13 +20,13 @@ SPORTS = {
 
 # intervals for for calling fetch functions
 INTERVALS = {
-    "fixtures_live":  10,
+    "fixtures_live":  15,
     "fixtures_upcoming": 60,
 }
 
 
 # short statuses for ninished fixtures
-FINISHED_STATUSES = {"FT", "CANC", "PST"}
+FINISHED_STATUSES = {"FT", "AET", "PEN", "CANC", "PST"}
 
 
 # Standardize market types

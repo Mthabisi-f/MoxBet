@@ -119,7 +119,6 @@ class SportsSettlementHandler(SettlementHandler):
 
         return self.ticket
 
-
     def _settle_selection(self, selection, result):
         if selection.get("status") not in [None, "Pending", "ERROR"]:
             return {"status": selection["status"]}
@@ -138,7 +137,7 @@ class SportsSettlementHandler(SettlementHandler):
                 and str(match.get("league_id")) == str(selection.get("league_id"))
             ):
                 status_short = match.get("status", "").upper()
-                if status_short in ["CANC", "POST"]:
+                if status_short in ["CANC", "PST"]:
                     selection["status"] = "Cancelled" if status_short == "CANC" else "Postponed"
                     selection["match_odds"] = 1
                     selection["results"] = match.get("extras", {})
