@@ -162,6 +162,7 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
                         market_type, market_obj = build_market_object(bet)
                         fixture_odds.setdefault(market_type, {}).update(market_obj)
             else:
+                expiry = 60 * 2
                 for bet in odds_entry.get("odds", []):
                     market_type, market_obj = build_market_object(bet)
                     fixture_odds[market_type] = market_obj
@@ -224,50 +225,6 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
                 print(f"Redis error caching {fixture_id}: {e}")
 
 
-# @shared_task
-async def auto_settle_tickets():
-    from MoxBet.models import Tickets
-    from asgiref.sync import sync_to_async
-    import logging
-    
-    logger = logging.getLogger(__name__)
-    
-    try:
-        logger.info("[SETTLEMENT] Starting ticket settlement")
-        
-        # Convert sync ORM call to async
-        tickets = await sync_to_async(list)(Tickets.objects.filter(status__in=["Pending"]))
-        
-        logger.info(f"[SETTLEMENT] Found {len(tickets)} pending tickets")
-        
-        for ticket in tickets:
-            logger.info(f"[SETTLEMENT] Processing ticket {ticket.id}")
-            
-            # Convert sync method calls to async
-            handler = SportsSettlementHandler(ticket)
-            await sync_to_async(handler.settle)()
-            
-            logger.info(f"[SETTLEMENT] Ticket {ticket.id} settled with status: {ticket.status}")
-            
-    except Exception as e:
-        logger.error(f"[SETTLEMENT] Error: {e}", exc_info=True)
-
-# @shared_task
-async def get_finished_fixtures():
-    finished_keys = await redis_client.keys("finished:*")
-    
-    async def fetch_match(k):
-        value = await redis_client.get(k)
-        if value:
-            match_data = json.loads(value)
-            # Ensure extras contains the full results structure
-            return match_data
-        return None
-
-    matches = await asyncio.gather(*(fetch_match(k) for k in finished_keys))
-    return [m for m in matches if m]
-
-
 # generic periodic wrapper
 async def periodic(task_coro, every_seconds):
     while True:
@@ -292,7 +249,7 @@ async def run_all():
             jobs.append(asyncio.create_task(periodic(lambda c=client   , s=sport, h=host: fetch_matches_and_odds_bulk(c, s, h), INTERVALS["fixtures_upcoming"])))
             
             # auto settletickets
-            jobs.append(asyncio.create_task(periodic(auto_settle_tickets, INTERVALS["auto_settle_tickets"])))
+            # jobs.append(asyncio.create_task(periodic(auto_settle_tickets, INTERVALS["auto_settle_tickets"])))
  
            
         await asyncio.gather(*jobs)

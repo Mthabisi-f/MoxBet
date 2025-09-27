@@ -1,67 +1,68 @@
 import logging
 from .base import SettlementHandler
 from MoxBet.models import MoneyBack
-import json, asyncio
+from asgiref.sync import async_to_sync
 from decimal import Decimal
 from django.utils import timezone
-
+from MoxBet.services.settlemet.tasks import get_finished_fixtures
 
 logger = logging.getLogger(__name__)
 
-
-
 class SportsSettlementHandler(SettlementHandler):
     def settle(self):
+        try:
+            finished_results = async_to_sync(get_finished_fixtures)()
+        except Exception as e:
+            logger.error(f"[SETTLEMENT] Error fetching finished fixtures: {e}")
+            finished_results = []
+
         selections = self.ticket.selections
         results = []
 
-        for i, selection in enumerate(selections):
-            result = self._get_match_result(selection)
+        for selection in selections:
+            result = self._get_match_result(selection, finished_results)
             if not result:
                 # Match not finished, leave selection pending
                 continue
-        
-            # Match has finished and its there in redis, settle this selection
-            outcome = self._settle_selection(selection)
 
-            selection['status'] = outcome['status']
-            selection['results'] = result
+            # Match has finished → settle this selection
+            outcome = self._settle_selection(selection, result)
+            selection["status"] = outcome["status"]
+            selection["results"] = result
             results.append(outcome)
 
         # Save updated selections back to ticket
         self.ticket.selections = selections
 
-        # Check final ticket status
-        statuses = [sel['status'] for sel in selections]
+        # --- Final ticket settlement ---
+        statuses = [sel["status"] for sel in selections]
         total_selections = len(selections)
-        lost_count = statuses.count('Lost')
-        odds = [Decimal(str(sel.get('match_odds', 0))) for sel in selections]
+        lost_count = statuses.count("Lost")
+        odds = [Decimal(str(sel.get("match_odds", 0))) for sel in selections]
 
         odds_meet = lambda min_odd: all(o >= min_odd for o in odds if o)
 
-
-        if all(status == 'Won' for status in statuses):
-            self.ticket.status = 'Won'
-            user = self.ticket.user
-            user.balance += self.ticket.potential_win
-            user.save()
+        if all(status == "Won" for status in statuses):
+            self.ticket.status = "Won"
+            self.ticket.user.balance += self.ticket.potential_win
+            self.ticket.user.save()
 
         elif lost_count > 1:
-            self.ticket.status = 'Lost'
+            self.ticket.status = "Lost"
 
-        elif lost_count == 1: 
+        elif lost_count == 1:
             refund = None
-            if 6 <= total_selections <= 10 and odds_meet(Decimal('1.5')):
+            if 6 <= total_selections <= 10 and odds_meet(Decimal("1.5")):
                 refund = self.ticket.stake
-            elif 11 <= total_selections <= 15 and odds_meet(Decimal('1.3')):
-                refund = self.ticket.stake * Decimal('2')
-            elif 16 <= total_selections <= 20 and odds_meet(Decimal('1.3')):
-                refund = self.ticket.stake * Decimal('5')
-            elif total_selections >= 21 and odds_meet(Decimal('1.3')):
-                refund = self.ticket.stake * Decimal('10')
+            elif 11 <= total_selections <= 15 and odds_meet(Decimal("1.3")):
+                refund = self.ticket.stake * Decimal("2")
+            elif 16 <= total_selections <= 20 and odds_meet(Decimal("1.3")):
+                refund = self.ticket.stake * Decimal("5")
+            elif total_selections >= 21 and odds_meet(Decimal("1.3")):
+                refund = self.ticket.stake * Decimal("10")
 
             if refund:
-                self.ticket.status = 'Refund'
+                self.ticket.status = "Refund"
                 self.ticket.potential_win = refund
                 self.ticket.user.balance += refund
                 self.ticket.user.save()
@@ -71,46 +72,39 @@ class SportsSettlementHandler(SettlementHandler):
                     ticket_id=self.ticket.id,
                     ticket_type=self.ticket.type,
                     minimum_odds=min(odds),
-                    amount_returned=refund
+                    amount_returned=refund,
                 )
             else:
-                self.ticket.status = 'Lost'
+                self.ticket.status = "Lost"
 
-        elif any(status == 'Pending' for status in statuses):
-            self.ticket.status = 'Pending'
+        elif any(status == "Pending" for status in statuses):
+            self.ticket.status = "Pending"
         else:
-            self.ticket.status = 'Void'
+            self.ticket.status = "Void"
 
         self.ticket.settled_at = timezone.now()
         self.ticket.save()
 
-        
-    def _settle_selection(self, selection):
-        # If already settled (Won/Lost/Void/Refund), don't touch it
-        if selection.get('status') not in [None, 'Pending', 'ERROR']:
-            return {'status': selection['status']}
+        # **Return the ticket object so the command can use it**
+        return self.ticket
 
-        result = self._get_match_result(selection)
-        if not result:
-            return {'status': 'Pending'}
+    def _settle_selection(self, selection, result):
+        if selection.get("status") not in [None, "Pending", "ERROR"]:
+            return {"status": selection["status"]}
 
-        func = MARKET_SETTLEMENT_MAPPING.get(selection['market_type'])
+        func = MARKET_SETTLEMENT_MAPPING.get(selection["market_type"])
         if not func:
-            logger.error(f"Sports settlement function not found for {selection['market_type']}")
-            return {'status': 'ERROR'}
+            logger.error(f"[SETTLEMENT] No settlement function for {selection['market_type']}")
+            return {"status": "ERROR"}
 
         return func(selection, result)
 
-
-    def _get_match_result(self, selection):
-        from MoxBet.fetchers.tasks import get_finished_fixtures
-
-        finished_results = asyncio.run(get_finished_fixtures())
-
+    def _get_match_result(self, selection, finished_results):
         for match in finished_results:
-            # Flexible matching - sometimes IDs might be strings vs integers
-            if (str(match["match_id"]) == str(selection["match_id"]) and 
-                str(match["league_id"]) == str(selection['league_id'])):
+            if (
+                str(match.get("match_id")) == str(selection.get("match_id"))
+                and str(match.get("league_id")) == str(selection.get("league_id"))
+            ):
                 return match.get("extras", {})
         return None
 
