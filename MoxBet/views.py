@@ -718,6 +718,33 @@ def registerPage(request):
     return render(request, 'register_login.html', context)
 
 
+
+def loginPage(request):
+    page = 'login'
+    if request.user.is_authenticated:
+        return redirect('sports')
+    
+    if request.method == 'POST':
+        username = request.POST.get('username', '').strip().capitalize()
+        password = request.POST.get('password')
+        #checking if the user exists
+        try:
+            user = User.objects.get(username = username)
+        except:
+            messages.error(request, 'User does not exist')
+
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect('sports')
+        else:
+            messages.error(request, 'Username or password does not exist')
+
+    context = {'page':page}
+    return render(request, 'register_login.html', context)
+
+
+
 def logoutUser(request):
     logout(request)
     return render(request, 'sports.html')
