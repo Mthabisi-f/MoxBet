@@ -1013,6 +1013,10 @@ document.addEventListener('DOMContentLoaded', function() {
             
             try {
                 let response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 let Data = await response.json();
     
                 data = Data.games;

@@ -941,7 +941,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateLiveOddsOnPage(matchPayload) {
         const matchId = matchPayload.match_id;
         const matchEl = document.querySelector(`[data-match-id="${matchId}"]`);
-        const FINISHED_STATUSES = ["FT", "CANC", "PST"]
+        const FINISHED_STATUSES = ["FT","AET", "PEN", "CANC", "PST"]
 
         if (!matchEl) return;
 
@@ -1013,6 +1013,10 @@ document.addEventListener('DOMContentLoaded', function() {
             
             try {
                 let response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 let Data = await response.json();
     
                 data = Data.games;
