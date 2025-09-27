@@ -2,16 +2,6 @@ import os
 import asyncio
 import json
 from MoxBet.redis_client import redis_client
-# from MoxBet.services.settlemet.sports import SportsSettlementHandler
-
-
-# # @shared_task
-# async def auto_settle_tickets():
-#     from MoxBet.models import Tickets
-#     tickets = Tickets.objects.filter(status__in=["Pending", "Refund"])
-#     for ticket in tickets:
-#         handler = SportsSettlementHandler(ticket)
-#         handler.settle()
 
 
 # @shared_task

@@ -64,13 +64,12 @@ class Bookings(models.Model):
 
 
 class Agents(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='user')
-    total_users = models.ManyToManyField(User, blank=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='agent_profile')
+    total_users = models.ManyToManyField(User, blank=True, related_name='agent_users')
     total_earnings = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
     def __str__(self):
-        return f"Agent: {self.user.username} - Earnings: {self.total_users}"
-
+        return f"Agent: {self.user.username} - Earnings: {self.total_earnings}"
 
 class Tickets(models.Model):
     TICKET_STATUS = [

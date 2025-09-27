@@ -655,28 +655,66 @@ def registerPage(request):
     return render(request, 'register_login.html', context)
 
 
-def loginPage(request):
-    page = 'login'
-    if request.user.is_authenticated:
-        return redirect('sports')
-    
-    if request.method == 'POST':
-        username = request.POST.get('username', '').strip().capitalize()
-        password = request.POST.get('password')
-        #checking if the user exists
-        try:
-            user = User.objects.get(username = username)
-        except:
-            messages.error(request, 'User does not exist')
+from django.contrib import messages
+from django.contrib.auth import login
+from .models import Agents
+from .forms import UserRegistrationForm
 
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
+
+@login_required
+def agent_dashboard(request):
+    try:
+        agent_profile = Agents.objects.get(user=request.user)
+    except Agents.DoesNotExist:
+        agent_profile = None
+
+    return render(request, "agent_dashboard.html", {
+        "agent_profile": agent_profile
+    })
+# {% if agent_profile %}
+#     <h2>Agent Dashboard</h2>
+#     <p>Total users referred: {{ agent_profile.total_users.count }}</p>
+#     <p>This month’s earnings: R{{ agent_profile.total_earnings }}</p>
+# {% else %}
+#     <p>You are not registered as an agent.</p>
+# {% endif %}
+
+
+
+
+def assign_agent(user, agent_code):
+    agent_user = User.objects.filter(agent_code=agent_code).first()
+    if agent_user:
+        agent_profile, created = Agents.objects.get_or_create(user=agent_user)
+        agent_profile.total_users.add(user)
+        agent_profile.save()
+        return agent_profile
+    return None
+
+
+def registerPage(request):
+    form = UserRegistrationForm()
+
+    if request.method == 'POST':
+        form = UserRegistrationForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.username = user.username.strip().capitalize()
+            user.first_name = user.first_name.strip().capitalize()
+            user.save()
+
+            # Assign agent if agent_code was provided, otherwise default "1234"
+            agent_code = form.cleaned_data.get("agent_code") or "1234"
+            assign_agent(user, agent_code)
+
             login(request, user)
+            messages.success(request, f"Welcome {user.username}, your account has been created successfully.")
             return redirect('sports')
         else:
-            messages.error(request, 'Username or password does not exist')
+            messages.error(request, 'An error occurred during registration')
+            return redirect('register')
 
-    context = {'page':page}
+    context = {'form': form}
     return render(request, 'register_login.html', context)
 
 
@@ -693,38 +731,45 @@ def index(request):
 def deposit(request):
     if request.method == "POST":
         try:
-            user = request.user  # Get logged-in user
+            user = request.user
             confirmation_code = request.POST.get("confirmation_code", "").strip().upper().replace(".", "")
 
             if not confirmation_code:
                 return JsonResponse({"status": "error", "message": "Reference code required"}, status=400)
 
-            # Check if reference code exists in transactions
             transaction = Transactions.objects.filter(confirmation_code=confirmation_code).first()
 
             if not transaction:
                 messages.error(request, 'Confirmation code not found, try again.')
             else:
-                # Check if the transaction is already approved
                 if transaction.status == "approved":
                     messages.error(request, "Confirmation code already used")
-
+                elif transaction.transaction_type != "deposit":
+                    messages.error(request, "Transaction not available for deposit.")
+                elif transaction.currency != user.currency:
+                    messages.error(request, f"You cannot deposit {transaction.currency} into the {user.currency} account.")
                 else:
-                    # Check if transaction is still pending and type is deposit
-                    if transaction.transaction_type != "deposit":
-                        messages.error(request, "Transaction not available for deposit.")
-                    elif transaction.currency != user.currency:
-                        messages.error(request, f"You cannot deposit {transaction.currency} into the {user.currency} account.")
+                    # First deposit bonus check
+                    is_first_deposit = not Transactions.objects.filter(user=user, transaction_type="deposit").exists()
+                    deposit_amount = transaction.amount
+
+                    if is_first_deposit:
+                        bonus = deposit_amount * Decimal("0.5")  # 50% bonus
+                        total_credit = deposit_amount + bonus
+                        messages.success(request, f'First deposit bonus applied! You deposited ${deposit_amount} and received ${bonus} bonus. Total credited: ${total_credit:.2f}')
                     else:
-                        # Proceed with deposit
-                        user.balance += transaction.amount
-                        user.save()
+                        total_credit = deposit_amount
+                        messages.success(request, f'Your deposit of ${deposit_amount} was successful! Your balance is now {user.balance + total_credit:.2f}')
 
-                        transaction.status = "approved"
-                        transaction.user = user
-                        transaction.save()
+                    # Update user balance
+                    user.balance += total_credit
+                    user.save()
 
-                        messages.success(request, f'Your deposit of ${transaction.amount} was successful! Your balance is now {user.balance:.2f}')
+                    # Mark transaction as approved
+                    transaction.status = "approved"
+                    transaction.user = user
+                    transaction.save()
+
         except Exception as e:
             messages.error(request, f"Error encountered: {str(e)}")
 

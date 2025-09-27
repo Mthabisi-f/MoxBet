@@ -1,6 +1,6 @@
 import logging
 from .base import SettlementHandler
-from MoxBet.models import MoneyBack
+from MoxBet.models import MoneyBack, WinBoost
 from asgiref.sync import async_to_sync
 from decimal import Decimal
 from django.utils import timezone
@@ -21,37 +21,63 @@ class SportsSettlementHandler(SettlementHandler):
 
         for selection in selections:
             result = self._get_match_result(selection, finished_results)
+
+            # If no result, leave pending
             if not result:
-                # Match not finished, leave selection pending
+                selection["status"] = "Pending"
                 continue
 
-            # Match has finished → settle this selection
+            # Settle normally
             outcome = self._settle_selection(selection, result)
             selection["status"] = outcome["status"]
+
+            # Set match_odds to 1 if cancelled/postponed inside _settle_selection
+            if selection["status"] in ["Cancelled", "Postponed"]:
+                selection["match_odds"] = 1
+
             selection["results"] = result
             results.append(outcome)
 
         # Save updated selections back to ticket
         self.ticket.selections = selections
 
-        # --- Final ticket settlement ---
-        statuses = [sel["status"] for sel in selections]
-        total_selections = len(selections)
+        # Only consider active selections for lost_count and win calculations
+        active_selections = [sel for sel in selections if sel["status"] not in ["Cancelled", "Postponed"]]
+        statuses = [sel["status"] for sel in active_selections]
+        total_selections = len(active_selections)
         lost_count = statuses.count("Lost")
-        odds = [Decimal(str(sel.get("match_odds", 0))) for sel in selections]
 
-        odds_meet = lambda min_odd: all(o >= min_odd for o in odds if o)
+        # Recalculate total_odds after dividing by cancelled/postponed odds (which are 1)
+        total_odds = Decimal("1")
+        for sel in selections:
+            total_odds *= Decimal(str(sel.get("match_odds", 1)))
 
-        if all(status == "Won" for status in statuses):
+        # Calculate win_boost percentage
+        if total_selections > 21:
+            win_boost_percentage = Decimal("0.5")
+        else:
+            boost = WinBoost.objects.filter(number_of_selections=total_selections).first()
+            win_boost_percentage = Decimal(boost.win_boost_percentage / 100) if boost else Decimal("0")
+
+        # Calculate potential win
+        potential_win = self.ticket.stake * total_odds * (1 + win_boost_percentage)
+
+        # Final ticket status logic
+        if all(status == "Won" for status in statuses) and total_selections > 0:
             self.ticket.status = "Won"
-            self.ticket.user.balance += self.ticket.potential_win
+            self.ticket.potential_win = potential_win
+            self.ticket.user.balance += potential_win
             self.ticket.user.save()
 
         elif lost_count > 1:
             self.ticket.status = "Lost"
+            self.ticket.potential_win = Decimal("0")
 
         elif lost_count == 1:
             refund = None
+            odds_list = [Decimal(str(sel.get("match_odds", 1))) for sel in selections if sel["status"] not in ["Cancelled", "Postponed"]]
+            odds_meet = lambda min_odd: all(o >= min_odd for o in odds_list)
+
             if 6 <= total_selections <= 10 and odds_meet(Decimal("1.5")):
                 refund = self.ticket.stake
             elif 11 <= total_selections <= 15 and odds_meet(Decimal("1.3")):
@@ -71,22 +97,28 @@ class SportsSettlementHandler(SettlementHandler):
                     user=self.ticket.user,
                     ticket_id=self.ticket.id,
                     ticket_type=self.ticket.type,
-                    minimum_odds=min(odds),
+                    minimum_odds=min(odds_list, default=0),
                     amount_returned=refund,
                 )
             else:
                 self.ticket.status = "Lost"
+                self.ticket.potential_win = Decimal("0")
 
         elif any(status == "Pending" for status in statuses):
             self.ticket.status = "Pending"
+            self.ticket.potential_win = Decimal("0")
+
         else:
             self.ticket.status = "Void"
+            self.ticket.potential_win = Decimal("0")
 
+        self.ticket.total_odds = total_odds
+        self.ticket.win_boost = win_boost_percentage
         self.ticket.settled_at = timezone.now()
         self.ticket.save()
 
-        # **Return the ticket object so the command can use it**
         return self.ticket
+
 
     def _settle_selection(self, selection, result):
         if selection.get("status") not in [None, "Pending", "ERROR"]:
@@ -105,7 +137,13 @@ class SportsSettlementHandler(SettlementHandler):
                 str(match.get("match_id")) == str(selection.get("match_id"))
                 and str(match.get("league_id")) == str(selection.get("league_id"))
             ):
-                return match.get("extras", {})
+                status_short = match.get("status", "").upper()
+                if status_short in ["CANC", "POST"]:
+                    selection["status"] = "Cancelled" if status_short == "CANC" else "Postponed"
+                    selection["match_odds"] = 1
+                    selection["results"] = match.get("extras", {})
+                    return None  # skip settlement for this selection
+                return match.get("extras", {})  # normal finished match
         return None
 
 

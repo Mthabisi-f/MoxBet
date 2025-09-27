@@ -100,10 +100,9 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
 
         # Expiry rules
         status = nf["fixture"]["status"]["short"]
-        expiry = 60 * 60 * 3
+        expiry = 60 * 3
 
         cache_key = f"match:{fixture_id}"
-
          
         if status in FINISHED_STATUSES:
             expiry = 60 * 60 * 24 * 7
@@ -162,7 +161,7 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
                         market_type, market_obj = build_market_object(bet)
                         fixture_odds.setdefault(market_type, {}).update(market_obj)
             else:
-                expiry = 60 * 2
+                expiry = 30
                 for bet in odds_entry.get("odds", []):
                     market_type, market_obj = build_market_object(bet)
                     fixture_odds[market_type] = market_obj
@@ -247,10 +246,7 @@ async def run_all():
             
             # fixtures upcoming (new)
             jobs.append(asyncio.create_task(periodic(lambda c=client   , s=sport, h=host: fetch_matches_and_odds_bulk(c, s, h), INTERVALS["fixtures_upcoming"])))
-            
-            # auto settletickets
-            # jobs.append(asyncio.create_task(periodic(auto_settle_tickets, INTERVALS["auto_settle_tickets"])))
- 
+        
            
         await asyncio.gather(*jobs)
 
