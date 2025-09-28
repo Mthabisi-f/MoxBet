@@ -18,7 +18,7 @@ from django.utils.timezone import localtime, now
 from decimal import Decimal
 from rest_framework.response import Response
 from rapidfuzz import process
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from dateutil import parser
 import string
 import asyncio
@@ -408,6 +408,16 @@ async def fetch_games(request):
     }, safe=False)
 
 
+# Define per-sport live window time limits
+LIVE_WINDOWS = {
+    "football": timedelta(hours=2),
+    "basketball": timedelta(hours=2),
+    "tennis": timedelta(hours=1.5),
+    # Add more sports as needed
+}
+
+# Statuses that indicate a match is live
+LIVE_STATUSES = {"LIVE", "1H", "BT", "2H", "HT", "ET", "PEN"}
 
 # Fetches all live games for chosen sport
 async def fetch_live_games(request):
@@ -415,19 +425,19 @@ async def fetch_live_games(request):
     page = int(request.GET.get("page", 1))
     page_size = 100
 
-   
-    # Fetch all live fixture keys for this sport
+    # Use sport-specific live window or fallback to 2.5 hours
+    LIVE_WINDOW = LIVE_WINDOWS.get(sport, timedelta(hours=2.5))
+
     try:
         keys = await redis_client.smembers(f"live:{sport}")
         print(f"Found {len(keys)} live matches for {sport}")
-
     except Exception as e:
         print(f"Redis error: {e}")
         keys = set()
 
     key_list = list(keys)
 
-    # Async fetch matches
+    # Fetch each match asynchronously
     async def fetch_match(k):
         value = await redis_client.get(k)
         if value:
@@ -436,19 +446,19 @@ async def fetch_live_games(request):
 
     tasks = [fetch_match(k) for k in key_list]
     all_matches = await asyncio.gather(*tasks) if tasks else []
-    print(f"all Live matches fetched: {len(all_matches)}")
+    print(f"All matches fetched: {len(all_matches)}")
 
     matches = [m for m in all_matches if m]
-    print(f"Live matches fetched: {len(matches)}")
+    print(f"Valid matches: {len(matches)}")
 
-    # Filter live matches (ensure they are still in-play)
+    # Filter by live status and live time window
+    now = datetime.utcnow()
     filtered_matches = []
-    live_statuses = ["LIVE", "1H", "BT" "2H", "HT", "ET", "PEN"]  # ✅ only allow these
 
     for match in matches:
-        status = match.get("status", {}).get("short")  # safely get status.short
-        if not status or status not in live_statuses:
-            continue  # ❌ skip matches that are not live
+        status = match.get("status", {}).get("short")
+        if status not in LIVE_STATUSES:
+            continue
 
         match_datetime_str = match.get("datetime")
         if not match_datetime_str:
@@ -460,32 +470,29 @@ async def fetch_live_games(request):
             print(f"Skipping match due to invalid datetime: {e}")
             continue
 
-        # ✅ keep live match
+        if match_datetime + LIVE_WINDOW < now:
+            print(f"Skipping stale match {match.get('match_id')} - started at {match_datetime}")
+            continue
+
         match["datetime_obj"] = match_datetime
         filtered_matches.append(match)
 
     # Sort by datetime
     filtered_matches.sort(key=lambda m: m["datetime_obj"])
 
+    # Paginate
     total_matches = len(filtered_matches)
-
-    # Pagination
     start_idx = (page - 1) * page_size
     end_idx = start_idx + page_size
     paginated_matches = filtered_matches[start_idx:end_idx]
 
-    if not filtered_matches:
-        return JsonResponse({
-            "games": [],
-            "total_matches": 0
-        }, safe=False)
-
+    # Prepare response
     response = JsonResponse({
         "games": paginated_matches,
         "total_matches": total_matches
     }, safe=False)
 
-    #Prevent browser/proxy caching
+    # Prevent browser/proxy caching
     response["Cache-Control"] = "no-cache, no-store, must-revalidate"
     response["Pragma"] = "no-cache"
     response["Expires"] = "0"
