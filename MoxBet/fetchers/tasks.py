@@ -95,15 +95,34 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
     for nf in fixtures_data:
         fixture_id = nf["fixture"]["id"]
         league_id = nf["league"]["id"]
+        timestamp = nf["timestamp"]
         league_name = nf["league"]["name"]
         country = nf["league"]["country"]
 
         # Expiry rules
         status = nf["fixture"]["status"]["short"]
         expiry = 60 * 3
-
         cache_key = f"match:{fixture_id}"
-         
+        timestamp_key = f"match:{fixture_id}:timestamp"
+
+        # Check if this timestamp is newer than stored
+        try:
+            existing_ts_raw = await redis_client.get(timestamp_key)
+            existing_ts = int(existing_ts_raw) if existing_ts_raw else 0
+        except Exception as e:
+            print(f"Redis error reading timestamp for {fixture_id}: {e}")
+            existing_ts = 0
+
+        if timestamp <= existing_ts:
+            print(f"[SKIPPED] {sport} fixture {fixture_id} - outdated timestamp ({timestamp} <= {existing_ts})")
+            continue  # Skip this fixture
+
+        # Proceed since the timestamp is newer
+        try:
+            await redis_client.set(timestamp_key, timestamp)
+        except Exception as e:
+            print(f"Redis error setting timestamp for {fixture_id}: {e}")
+
         if status in FINISHED_STATUSES:
             expiry = 60 * 60 * 24 * 7
             payload = {
@@ -114,25 +133,23 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
                 "league_id": league_id,
                 "datetime": nf["fixture"]["date"],
                 "status": status,
+                "timestamp": timestamp,
                 "extras": {k: v for k, v in nf.items() if k not in ["league", "fixture", "id"]},
                 "odds": {}
             }
-      
+
             try:
-                # Store finished match with a dedicated key pattern
                 finished_key = f"finished:{fixture_id}"
                 await redis_client.set(finished_key, json.dumps(payload), ex=expiry)
                 print(f"[CACHED] {sport} finished game {fixture_id} ({status})")
             except Exception as e:
                 print(f"Redis error caching finished match {fixture_id}: {e}")
 
-
         else:
             odds_entry = odds_map.get(fixture_id)
             if not odds_entry:
                 continue
 
-            # Build odds dict
             fixture_odds = {}
 
             def build_market_object(bet):
@@ -174,17 +191,15 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
                 "venue": nf["fixture"]["venue"],
                 "datetime": nf["fixture"]["date"],
                 "status": nf["fixture"]["status"],
+                "timestamp": timestamp,
                 "extras": {k: v for k, v in nf.items() if k not in ["league", "fixture", "id"]},
                 "odds": {} if status in FINISHED_STATUSES else fixture_odds
             }
 
-       
-            # --- Redis caching ---
             try:
                 await redis_client.set(cache_key, json.dumps(payload), ex=expiry)
                 channel_layer = get_channel_layer()
 
-                # Broadcast to a "live odds" group (per sport or global)
                 await channel_layer.group_send(
                     f"live_odds_{sport.lower()}",
                     {
@@ -193,7 +208,6 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
                     }
                 )
 
-                # league that will be used in frontend
                 league_info = {
                     "id": league_id,
                     "name": league_name,
@@ -202,22 +216,19 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
                 }
                 await redis_client.set(f"league:{sport.lower()}:{league_id}:info", json.dumps(league_info))
 
-                # Register league under its country
                 await redis_client.sadd(f"country:{sport.lower()}:{country}:leagues", league_id)
-
-                # Register unique country for this sport
                 await redis_client.sadd(f"countries:{sport.lower()}", country)
-
-                # Keep your same match groupings
                 await redis_client.sadd(f"sport:{sport.lower()}", cache_key)
                 await redis_client.sadd(f"league:{sport.lower()}:{league_id}", cache_key)
                 await redis_client.sadd(f"country:{sport.lower()}:{country}", cache_key)
+
                 match_date = nf["fixture"]["date"][:10]
                 await redis_client.sadd(f"time:{sport}:{match_date}", cache_key)
+
                 if status in ["1H", "2H", "HT", "ET", "P", "BT", "LIVE"]:
                     await redis_client.sadd(f"live:{sport.lower()}", cache_key)
-                    await redis_client.sadd(f"live:{sport.lower()}", expiry)
-                
+                    await redis_client.expire(f"live:{sport.lower()}", expiry)
+
                 print(f"[CACHED] {sport} fixture {fixture_id} ({status})")
 
             except Exception as e:
