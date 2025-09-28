@@ -1005,8 +1005,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
             gamesDisplayLive.appendChild(spinner);
     
-            let url = `/fetch-live-games/?sport=${sport}&page=${page}`;
-    
+            let cacheBuster = Date.now();  // or use Math.random()
+            let url = `/fetch-live-games/?sport=${sport}&page=${page}&_=${cacheBuster}`;
+
             let functionName = `${sport}MatchElementInnerHTML`;
             let dropDownName = `${sport}OddsDropdowns`;  
             let oddsDescName = `${sport}OddsDescription`;  

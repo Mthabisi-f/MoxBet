@@ -417,7 +417,7 @@ LIVE_WINDOWS = {
 }
 
 # Statuses that indicate a match is live
-LIVE_STATUSES = {"LIVE", "1H", "BT", "2H", "HT", "ET", "PEN"}
+LIVE_STATUSES = {"LIVE", "1H", "BT", "2H", "HT", "ET"}
 
 # Fetches all live games for chosen sport
 async def fetch_live_games(request):
