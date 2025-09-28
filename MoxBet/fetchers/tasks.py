@@ -1,7 +1,6 @@
 import os
 import asyncio
-import json
-import re
+import json, time  
 from django.core.cache import cache
 from datetime import date, timedelta
 from django.core.cache import cache
@@ -92,12 +91,15 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
 
     odds_map = {entry["fixture"]["id"]: entry for entry in all_odds}
 
+
     for nf in fixtures_data:
         fixture_id = nf["fixture"]["id"]
         league_id = nf["league"]["id"]
-        timestamp = nf["timestamp"]
         league_name = nf["league"]["name"]
         country = nf["league"]["country"]
+
+        # Use current time as dynamic timestamp
+        timestamp = int(time.time())
 
         # Expiry rules
         status = nf["fixture"]["status"]["short"]
@@ -105,7 +107,7 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
         cache_key = f"match:{fixture_id}"
         timestamp_key = f"match:{fixture_id}:timestamp"
 
-        # Check if this timestamp is newer than stored
+        # Check if this fetch is newer than last one
         try:
             existing_ts_raw = await redis_client.get(timestamp_key)
             existing_ts = int(existing_ts_raw) if existing_ts_raw else 0
@@ -115,9 +117,8 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
 
         if timestamp <= existing_ts:
             print(f"[SKIPPED] {sport} fixture {fixture_id} - outdated timestamp ({timestamp} <= {existing_ts})")
-            continue  # Skip this fixture
+            continue
 
-        # Proceed since the timestamp is newer
         try:
             await redis_client.set(timestamp_key, timestamp)
         except Exception as e:
@@ -233,6 +234,7 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
 
             except Exception as e:
                 print(f"Redis error caching {fixture_id}: {e}")
+
 
 
 # generic periodic wrapper

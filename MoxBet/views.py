@@ -484,7 +484,7 @@ async def fetch_live_games(request):
         "games": paginated_matches,
         "total_matches": total_matches
     }, safe=False)
-    
+
     #Prevent browser/proxy caching
     response["Cache-Control"] = "no-cache, no-store, must-revalidate"
     response["Pragma"] = "no-cache"
@@ -581,45 +581,64 @@ async def fetch_games_by_leagues(request):
 
 
 
-@csrf_exempt 
+@csrf_exempt
 def receive_sms(request):
     if request.method == "POST":
         try:
-            # Get raw data
             data = request.POST.dict()
             if not data:
                 data = json.loads(request.body.decode("utf-8"))
 
-            # Extract actual message
+            # Extract message
+            message = ""
             if "msg" in data:
                 message = data.get("msg", "").strip()
             elif "key" in data:
-                message = data["key"].split("\n")[-1].strip()  # Extract message part
-            else:
-                message = ""
+                message = data["key"].split("\n")[-1].strip()
 
             if not message:
                 return JsonResponse({"status": "error", "message": "No message received"}, status=400)
 
-            # Extract currency (USD, ZIG, ZAR, etc.)
-            currency_match = re.search(r'\b(USD|ZIG|ZAR)\b', message)
-            currency = currency_match.group(1) if currency_match else "Unknown"
+            # 1. Extract currency: USD, ZIG, ZAR, etc. (first occurrence)
+            currency_match = re.search(r'\b(USD|ZIG|ZAR)\b', message, re.IGNORECASE)
+            currency = currency_match.group(1).upper() if currency_match else "Unknown"
 
-            # Extract amount
-            amount_match = re.search(rf'{currency}\s*(\d+(?:\.\d+)?)', message)
-            amount = float(amount_match.group(1)) if amount_match else 0.0
+            # 2. Extract amount
+            amount = 0.0
 
-            # Extract confirmation code from Txn ID (e.g., CI250917.1139.K74051 → CI2509171139K74051)
+            # Pattern 1: Currency immediately followed by amount, e.g. USD57, ZIG54
+            amount_match = re.search(rf'\b{currency}(\d+(?:\.\d+)?)\b', message)
+            if amount_match:
+                amount = float(amount_match.group(1))
+            else:
+                # Pattern 2: 'Received Amt: 4.93'
+                received_amt_match = re.search(r'Received Amt:\s*(\d+(?:\.\d+)?)', message, re.IGNORECASE)
+                if received_amt_match:
+                    amount = float(received_amt_match.group(1))
+                else:
+                    # Pattern 3: 'USD 2', 'ZIG 5.02', etc.
+                    spaced_currency_match = re.search(rf'\b{currency}\s+(\d+(?:\.\d+)?)', message)
+                    if spaced_currency_match:
+                        amount = float(spaced_currency_match.group(1))
+
+            # 3. Extract confirmation code (Txn ID or Approval/Aproval code)
+            confirmation_code = "Unknown"
+
             txn_match = re.search(r'Txn ID:\s*([A-Z0-9.]+)', message, re.IGNORECASE)
-            confirmation_code = txn_match.group(1).replace(".", "") if txn_match else "Unknown"
+            if txn_match:
+                confirmation_code = txn_match.group(1).replace(".", "")
+            else:
+                approval_match = re.search(r'(Approval|Aproval) code:\s*([A-Z0-9.]+)', message, re.IGNORECASE)
+                if approval_match:
+                    confirmation_code = approval_match.group(2).replace(".", "")
 
-            # Save transaction to database
+            # 4. Save transaction to DB
             transaction = Transactions.objects.create(
                 message=message,
                 amount=amount,
                 currency=currency,
                 confirmation_code=confirmation_code,
-                transaction_type="deposit",  # Assuming these are all deposits
+                transaction_type="deposit",  # Assuming all are deposits
                 status="pending"
             )
             transaction.save()
@@ -655,7 +674,7 @@ def registerPage(request):
             login(request, user)
             return redirect('sports')
         else:
-            messages.error(request, 'An error occuerd during registration')
+            messages.error(request, 'An error occuerd during registration, make sure your passwords match and each has atleast 8 characters')
             return redirect('register')
         
     context = {'form':form}

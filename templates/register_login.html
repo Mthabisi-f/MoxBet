@@ -39,11 +39,16 @@
             <form action="{% url 'register' %}" method="POST" class="container-fluid my-5 p-3 rounded-3 border-aqua">
                 {% csrf_token %}
                 <span class="text-center">
-                        {% for field, errors in form.errors.items %}
-                            {% for error in errors %}
-                                <li class="text-danger list-unstyled">{{ message }}</li>
-                            {% endfor %}
-                        {% endfor %}                                
+                    <p class="text-center text-danger">
+                        {% for message in messages %}
+                        {{message}}
+                        {% endfor %}
+                    </p>
+                    {% for field, errors in form.errors.items %}
+                        {% for error in errors %}
+                            <li class="text-danger list-unstyled">{{ message }}</li>
+                        {% endfor %}
+                    {% endfor %}                                
                 </span>
                 <p class= "text-center text-yellow">Create an account</p>
                 <hr>
