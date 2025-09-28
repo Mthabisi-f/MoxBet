@@ -443,7 +443,7 @@ async def fetch_live_games(request):
 
     # Filter live matches (ensure they are still in-play)
     filtered_matches = []
-    live_statuses = ["LIVE", "1H", "2H", "HT", "ET", "PEN"]  # ✅ only allow these
+    live_statuses = ["LIVE", "1H", "BT" "2H", "HT", "ET", "PEN"]  # ✅ only allow these
 
     for match in matches:
         status = match.get("status", {}).get("short")  # safely get status.short
@@ -480,10 +480,17 @@ async def fetch_live_games(request):
             "total_matches": 0
         }, safe=False)
 
-    return JsonResponse({
+    response = JsonResponse({
         "games": paginated_matches,
         "total_matches": total_matches
     }, safe=False)
+    
+    #Prevent browser/proxy caching
+    response["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response["Pragma"] = "no-cache"
+    response["Expires"] = "0"
+
+    return response
 
 
 # Fetch all odds for a certain fixture

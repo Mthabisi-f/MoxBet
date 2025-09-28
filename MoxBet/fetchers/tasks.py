@@ -117,8 +117,7 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
                 "extras": {k: v for k, v in nf.items() if k not in ["league", "fixture", "id"]},
                 "odds": {}
             }
-
-                    
+      
             try:
                 # Store finished match with a dedicated key pattern
                 finished_key = f"finished:{fixture_id}"
@@ -217,6 +216,7 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
                 await redis_client.sadd(f"time:{sport}:{match_date}", cache_key)
                 if status in ["1H", "2H", "HT", "ET", "P", "BT", "LIVE"]:
                     await redis_client.sadd(f"live:{sport.lower()}", cache_key)
+                    await redis_client.sadd(f"live:{sport.lower()}", expiry)
                 
                 print(f"[CACHED] {sport} fixture {fixture_id} ({status})")
 
