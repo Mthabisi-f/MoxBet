@@ -619,6 +619,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }) 
         
       
+
         betslipForm.addEventListener("submit", async function (event) {
             event.preventDefault();
 
@@ -951,7 +952,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateLiveOddsOnPage(matchPayload, liveIds) {
         // Remove any non-live matches from the DOM  this works only in gamesDisplayLive
-        removeNonLiveMatches(liveIds);
+        if (window.pathname.includes('/live/')){ 
+            removeNonLiveMatches(liveIds);
+        }
 
         const FINISHED_STATUSES = ["FT", "AET", "PEN", "CANC", "PST"];
         const matchId = matchPayload.match_id;
