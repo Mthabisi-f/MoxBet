@@ -6,6 +6,7 @@ urlpatterns = [
     path('', views.sports, name='index'),
     path('sports/', views.sports,  name='sports'),
     
+    path('api/live-ids/<str:sport>/', views.get_live_ids, name='live_ids'),
     path('api/fetch-games/', views.fetch_games, name='fetch_games'),
     path('api/fetch-leagues/', views.fetch_games_by_leagues, name='fetch_leagues'),
     path('api/fetch-more-odds/', views.fetch_more_odds, name='fetch_more_odds'),

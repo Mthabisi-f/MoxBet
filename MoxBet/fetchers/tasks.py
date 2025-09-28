@@ -91,7 +91,7 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
 
     odds_map = {entry["fixture"]["id"]: entry for entry in all_odds}
 
-
+    live_match_ids = []
     for nf in fixtures_data:
         fixture_id = nf["fixture"]["id"]
         league_id = nf["league"]["id"]
@@ -99,7 +99,8 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
         country = nf["league"]["country"]
 
         # Use current time as dynamic timestamp
-        timestamp = int(time.time())
+        timestamp = int(time.time() * 1000)
+
 
         # Expiry rules
         status = nf["fixture"]["status"]["short"]
@@ -124,8 +125,10 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
         except Exception as e:
             print(f"Redis error setting timestamp for {fixture_id}: {e}")
 
+
         if status in FINISHED_STATUSES:
-            expiry = 60 * 60 * 24 * 7
+            expiry = 60 * 60 * 24 * 7  # keep finished games for 7 days
+
             payload = {
                 "match_id": fixture_id,
                 "sport": sport,
@@ -140,11 +143,22 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
             }
 
             try:
+                # save under finished:*
                 finished_key = f"finished:{fixture_id}"
                 await redis_client.set(finished_key, json.dumps(payload), ex=expiry)
-                print(f"[CACHED] {sport} finished game {fixture_id} ({status})")
+
+                # cleanup old live keys
+                match_key = f"match:{fixture_id}"
+                live_set_key = f"live:{sport.lower()}"
+
+                await redis_client.delete(match_key)                          # remove match:* key
+                await redis_client.srem(live_set_key, match_key)              # remove from live:{sport}
+                
+                print(f"[CACHED] {sport} finished game {fixture_id} ({status}) → cleaned from live & match")
+
             except Exception as e:
                 print(f"Redis error caching finished match {fixture_id}: {e}")
+
 
         else:
             odds_entry = odds_map.get(fixture_id)
@@ -229,11 +243,16 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
                 if status in ["1H", "2H", "HT", "ET", "P", "BT", "LIVE"]:
                     await redis_client.sadd(f"live:{sport.lower()}", cache_key)
                     await redis_client.expire(f"live:{sport.lower()}", expiry)
+                    live_match_ids.append(fixture_id)
+                    live_set_key = f"live:{sport.lower()}"
 
                 print(f"[CACHED] {sport} fixture {fixture_id} ({status})")
 
             except Exception as e:
                 print(f"Redis error caching {fixture_id}: {e}")
+
+    # after loop, save to Redis as a list
+    await redis_client.set(f"live_ids_cache:{sport.lower()}", json.dumps(live_match_ids))
 
 
 

@@ -937,19 +937,39 @@ document.addEventListener('DOMContentLoaded', function() {
     initLiveOddsWebSocket(`${currentSport}`);
 
 
+    function removeNonLiveMatches(liveIds) {
+        // Convert liveIds to a Set for fast lookup
+        const liveSet = new Set(liveIds.map(id => parseInt(id)));
 
-    function updateLiveOddsOnPage(matchPayload) {
+        gamesDisplayLive.querySelectorAll('.match-link').forEach(matchEl => {
+            const matchId = parseInt(matchEl.dataset.matchId);
+            if (!liveSet.has(matchId)) {
+                matchEl.remove();
+            }
+        });
+    }
+
+
+    function updateLiveOddsOnPage(matchPayload, liveIds) {
+        // Remove any non-live matches from the DOM  this works only in gamesDisplayLive
+        removeNonLiveMatches(liveIds);
+
+        const FINISHED_STATUSES = ["FT", "AET", "PEN", "CANC", "PST"];
         const matchId = matchPayload.match_id;
         const matchEl = document.querySelector(`[data-match-id="${matchId}"]`);
-        const FINISHED_STATUSES = ["FT","AET", "PEN", "CANC", "PST"]
-
         if (!matchEl) return;
 
-        // If match is finished remove it in DOM
-        if (FINISHED_STATUSES.includes(matchPayload.status["short"])){
+        // --- Handle finished matches ---
+        if (FINISHED_STATUSES.includes(matchPayload.status["short"])) {
             matchEl.remove();
             return;
         }
+
+        // --- Elapsed time check ---
+        const prevElapsed = parseInt(matchEl.dataset.elapsed || "0");
+        const newElapsed = parseInt(matchPayload.status?.elapsed || "0");
+        if (newElapsed < prevElapsed) return;
+        matchEl.dataset.elapsed = newElapsed;
 
         // --- Update scores ---
         const homeScoreEl = matchEl.querySelector("[data-home-score]");
@@ -960,12 +980,11 @@ document.addEventListener('DOMContentLoaded', function() {
         // --- Update time/status ---
         const timeEl = matchEl.querySelector("[data-match-time]");
         const dateEl = matchEl.querySelector("[data-match-date]");
-    
         if (timeEl && dateEl) {
             if (matchPayload.status?.elapsed) {
                 dateEl.textContent = `Live ${matchPayload.status.short}`;
-                timeEl.textContent = matchPayload.status.elapsed;
-            } 
+                timeEl.textContent = newElapsed;
+            }
         }
 
         // --- Update odds ---
@@ -980,7 +999,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     const oddsInfo = newOdds[marketType]?.[prediction];
                     if (!oddsInfo) return;
 
-                    // Support both formats (nested .odds-value or plain text)
                     const oddsValueEl = btn.querySelector(".odds-value");
                     const displayTarget = oddsValueEl || btn;
 
@@ -999,79 +1017,80 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
-      async function fetchLiveGamesBySport(sport, page = 1) {
-            const oddsDescription = livePage.querySelector('#odds-description');
-            const sportsRaw = livePage.querySelector('#sports-row');
-    
-            gamesDisplayLive.appendChild(spinner);
-    
-            let cacheBuster = Date.now();  // or use Math.random()
-            let url = `/fetch-live-games/?sport=${sport}&page=${page}&_=${cacheBuster}`;
 
-            let functionName = `${sport}MatchElementInnerHTML`;
-            let dropDownName = `${sport}OddsDropdowns`;  
-            let oddsDescName = `${sport}OddsDescription`;  
+    async function fetchLiveGamesBySport(sport, page = 1) {
+        const oddsDescription = livePage.querySelector('#odds-description');
+        const sportsRaw = livePage.querySelector('#sports-row');
+
+        gamesDisplayLive.appendChild(spinner);
+
+        let cacheBuster = Date.now();  // or use Math.random()
+        let url = `/fetch-live-games/?sport=${sport}&page=${page}&_=${cacheBuster}`;
+
+        let functionName = `${sport}MatchElementInnerHTML`;
+        let dropDownName = `${sport}OddsDropdowns`;  
+        let oddsDescName = `${sport}OddsDescription`;  
+        
+        try {
+            let response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
             
-            try {
-                let response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                let Data = await response.json();
-    
-                data = Data.games;
-                
-                // Update games display live
-                if(gamesDisplayLive){
-                    if (data && data.length > 0) {
-                        Array.from(gamesDisplayLive.children).forEach(child=>{
-                            if(child != oddsDescription && child != sportsRaw){
-                                child.remove();
-                            }
-                        })
-    
-                        // display OddsDiscription for the current sport
-                        if(typeof window[oddsDescName] === "function"){
-                            window[oddsDescName](oddsDescription);
+            let Data = await response.json();
+
+            data = Data.games;
+            
+            // Update games display live
+            if(gamesDisplayLive){
+                if (data && data.length > 0) {
+                    Array.from(gamesDisplayLive.children).forEach(child=>{
+                        if(child != oddsDescription && child != sportsRaw){
+                            child.remove();
+                        }
+                    })
+
+                    // display OddsDiscription for the current sport
+                    if(typeof window[oddsDescName] === "function"){
+                        window[oddsDescName](oddsDescription);
+                    }
+                    else{
+                        oddsDescription.innerHTML = '';
+                    }
+
+                    filterGames();
+
+                    data.forEach(game => { 
+                        if(typeof window[functionName] === "function"){
+                            window[functionName](game, `${sport}`, gamesDisplayLive);
                         }
                         else{
-                            oddsDescription.innerHTML = '';
+                            console.log(`${functionName} does not exist`);
                         }
-    
-                        filterGames();
-    
-                        data.forEach(game => { 
-                            if(typeof window[functionName] === "function"){
-                                window[functionName](game, `${sport}`, gamesDisplayLive);
-                            }
-                            else{
-                                console.log(`${functionName} does not exist`);
-                            }
-                        });
-                        
-                        if(typeof window[dropDownName] === "function"){
-                            window[dropDownName](data, [gamesDisplayLive]);
-                        }
-    
+                    });
+                    
+                    if(typeof window[dropDownName] === "function"){
+                        window[dropDownName](data, [gamesDisplayLive]);
                     }
-                    else {
-                        Array.from(gamesDisplayLive.children).forEach(child =>{
-                            if(child != oddsDescription && child != sportsRaw){
-                                child.remove();
-                            }
-                        });
-                        oddsDescription.innerHTML = '';
-                        const message = document.createElement('div');
-                        message.innerHTML = `<p class="text-center text-aqua py-5">No live ${sport} games found.</p>`;
-                        gamesDisplayLive.appendChild(message);
-                    }  
-                }   
-            }
-            catch (error) {
-                console.error("Error fetching games:", error);
-            }
+
+                }
+                else {
+                    Array.from(gamesDisplayLive.children).forEach(child =>{
+                        if(child != oddsDescription && child != sportsRaw){
+                            child.remove();
+                        }
+                    });
+                    oddsDescription.innerHTML = '';
+                    const message = document.createElement('div');
+                    message.innerHTML = `<p class="text-center text-aqua py-5">No live ${sport} games found.</p>`;
+                    gamesDisplayLive.appendChild(message);
+                }  
+            }   
         }
+        catch (error) {
+            console.error("Error fetching games:", error);
+        }
+    }
 
 
     function filterGames(data){
@@ -2210,6 +2229,7 @@ document.addEventListener('DOMContentLoaded', function() {
         matchElement.href = `/more-odds/?sport=${sport}&match_id=${match_id}`;
         matchElement.classList.add('text-decoration-none', 'match-link', 'text-whitesmoke', 'mb-2');
         matchElement.dataset.matchId = `${match_id}`;
+        matchElement.dataset.elapsed = `${status.elapsed ?  `${status.elapsed}` : `0`}`;
         matchElement.innerHTML = `
             <div data-sport="${sport}" data-league-id="${league_id}" data-datetime="${datetime}" class="match-container bb-white pt-1 pb-1">
                 <div class="row g-0">

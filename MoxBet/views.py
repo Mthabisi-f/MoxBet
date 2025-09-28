@@ -408,16 +408,19 @@ async def fetch_games(request):
     }, safe=False)
 
 
-# Define per-sport live window time limits
+
+# Live window config
 LIVE_WINDOWS = {
     "football": timedelta(hours=2),
     "basketball": timedelta(hours=2),
     "tennis": timedelta(hours=1.5),
-    # Add more sports as needed
+    # default handled below
 }
 
-# Statuses that indicate a match is live
-LIVE_STATUSES = {"LIVE", "1H", "BT", "2H", "HT", "ET"}
+# Status sets
+LIVE_STATUSES = {"LIVE", "1H", "BT", "2H", "HT", "ET"} 
+FINISHED_STATUSES = {"FT", "AET", "PEN", "CANC", "PST" , "P"}
+
 
 # Fetches all live games for chosen sport
 async def fetch_live_games(request):
@@ -425,68 +428,75 @@ async def fetch_live_games(request):
     page = int(request.GET.get("page", 1))
     page_size = 100
 
-    # Use sport-specific live window or fallback to 2.5 hours
+    # Pick sport-specific live window, fallback to 2.5h
     LIVE_WINDOW = LIVE_WINDOWS.get(sport, timedelta(hours=2.5))
 
     try:
         keys = await redis_client.smembers(f"live:{sport}")
-        print(f"Found {len(keys)} live matches for {sport}")
+        print(f"Found {len(keys)} live match keys for {sport}")
     except Exception as e:
         print(f"Redis error: {e}")
         keys = set()
 
     key_list = list(keys)
 
-    # Fetch each match asynchronously
+    # Fetch matches from Redis
     async def fetch_match(k):
-        value = await redis_client.get(k)
-        if value:
-            return json.loads(value)
-        return None
+        try:
+            value = await redis_client.get(k)
+            return json.loads(value) if value else None
+        except Exception as e:
+            print(f"Error reading {k}: {e}")
+            return None
 
     tasks = [fetch_match(k) for k in key_list]
     all_matches = await asyncio.gather(*tasks) if tasks else []
-    print(f"All matches fetched: {len(all_matches)}")
-
     matches = [m for m in all_matches if m]
-    print(f"Valid matches: {len(matches)}")
-
-    # Filter by live status and live time window
-    now = datetime.utcnow()
+    
+    now = datetime.now(timezone.utc)
     filtered_matches = []
 
     for match in matches:
         status = match.get("status", {}).get("short")
+        if not status:
+            continue
+
+        # 🚫 skip finished
+        if status in FINISHED_STATUSES:
+            continue
+
+        # 🚫 skip non-live
         if status not in LIVE_STATUSES:
             continue
 
+        # Parse kickoff datetime
         match_datetime_str = match.get("datetime")
         if not match_datetime_str:
             continue
-
         try:
             match_datetime = parser.parse(match_datetime_str)
         except Exception as e:
-            print(f"Skipping match due to invalid datetime: {e}")
+            print(f"Skipping match {match.get('match_id')} due to invalid datetime: {e}")
             continue
 
+        # 🚫 skip if match started outside live window
         if match_datetime + LIVE_WINDOW < now:
-            print(f"Skipping stale match {match.get('match_id')} - started at {match_datetime}")
+            print(f"Skipping stale match {match.get('match_id')} - started {match_datetime}")
             continue
 
         match["datetime_obj"] = match_datetime
         filtered_matches.append(match)
 
-    # Sort by datetime
+    # Sort by kickoff datetime
     filtered_matches.sort(key=lambda m: m["datetime_obj"])
 
-    # Paginate
+    # Pagination
     total_matches = len(filtered_matches)
     start_idx = (page - 1) * page_size
     end_idx = start_idx + page_size
     paginated_matches = filtered_matches[start_idx:end_idx]
 
-    # Prepare response
+    # Response
     response = JsonResponse({
         "games": paginated_matches,
         "total_matches": total_matches
@@ -499,6 +509,15 @@ async def fetch_live_games(request):
 
     return response
 
+
+async def get_live_ids(request, sport):
+    """Return live match IDs for a given sport."""
+    try:
+        raw = await redis_client.get(f"live_ids_cache:{sport.lower()}")
+        live_ids = json.loads(raw) if raw else []
+    except Exception:
+        live_ids = []
+    return JsonResponse({"live_ids": live_ids})
 
 # Fetch all odds for a certain fixture
 async def fetch_more_odds(request):
