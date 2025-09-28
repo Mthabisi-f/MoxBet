@@ -618,8 +618,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }) 
         
-        
-        
+      
         betslipForm.addEventListener("submit", async function (event) {
             event.preventDefault();
 
