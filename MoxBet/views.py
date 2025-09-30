@@ -701,15 +701,16 @@ def receive_sms(request):
             amount = 0.0
 
             if currency_match:
-                # --- 2. Try to extract amount right after currency (attached or with space) ---
-                match_amount = re.search(rf'{currency_raw}\s*(\d+(?:\.\d+)?)', message, re.IGNORECASE)
-                if match_amount:
-                    amount = float(match_amount.group(1))
+                # --- 2. Fallback: look for "Received Amt: X.XX" ---
+                match_amt = re.search(r'Received Amt[: ]\s*(\d+(?:\.\d+)?)', message, re.IGNORECASE)
+                if match_amt:
+                    amount = float(match_amt.group(1))
                 else:
-                    # --- 3. Fallback: look for "Received Amt: X.XX" ---
-                    match_amt = re.search(r'Received Amt[: ]\s*(\d+(?:\.\d+)?)', message, re.IGNORECASE)
-                    if match_amt:
-                        amount = float(match_amt.group(1))
+                    # --- 3. Try to extract amount right after currency (attached or with space) ---
+                    match_amount = re.search(rf'{currency_raw}\s*(\d+(?:\.\d+)?)', message, re.IGNORECASE)
+                    if match_amount:
+                        amount = float(match_amount.group(1))
+                    
 
             # --- 4. Extract confirmation code ---
             confirmation_code = "UNKNOWN"
