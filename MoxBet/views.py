@@ -675,6 +675,7 @@ async def fetch_games_by_leagues(request):
     }, safe=False)
 
 
+
 @csrf_exempt
 def receive_sms(request):
     if request.method == "POST":
@@ -693,35 +694,25 @@ def receive_sms(request):
             if not message:
                 return JsonResponse({"status": "error", "message": "No message received"}, status=400)
 
-            # --- 1. Extract currency ---
-            currency_match = re.search(r'\b(USD|ZWG|ZIG|ZAR)\b', message, re.IGNORECASE)
-            currency = currency_match.group(1).upper() if currency_match else "UNKNOWN"
+            # --- 1. Detect currency (even if attached to a number) ---
+            currency_match = re.search(r'(USD|ZWG|ZAR|ZIG)', message, re.IGNORECASE)
+            currency_raw = currency_match.group(1).upper() if currency_match else "UNKNOWN"
 
-            # Convert ZWG → ZIG
-            if currency == "ZWG":
-                currency = "ZIG"
-
-            # --- 2. Extract amount ---
             amount = 0.0
 
-            # Pattern A: "USD5" / "USD2.57" / "ZWG2" (currency stuck to amount)
-            match_a = re.search(rf'\b{currency}\s*(\d+(?:\.\d+)?)\b', message, re.IGNORECASE)
-            if match_a:
-                amount = float(match_a.group(1))
-            else:
-                # Pattern B: "Received Amt: 4.93"
-                match_b = re.search(r'Received Amt[: ]\s*(\d+(?:\.\d+)?)', message, re.IGNORECASE)
-                if match_b:
-                    amount = float(match_b.group(1))
+            if currency_match:
+                # --- 2. Try to extract amount right after currency (attached or with space) ---
+                match_amount = re.search(rf'{currency_raw}\s*(\d+(?:\.\d+)?)', message, re.IGNORECASE)
+                if match_amount:
+                    amount = float(match_amount.group(1))
                 else:
-                    # Pattern C: "USD 2", "ZIG 5.02" (with space)
-                    match_c = re.search(rf'\b{currency}\s+(\d+(?:\.\d+)?)', message, re.IGNORECASE)
-                    if match_c:
-                        amount = float(match_c.group(1))
+                    # --- 3. Fallback: look for "Received Amt: X.XX" ---
+                    match_amt = re.search(r'Received Amt[: ]\s*(\d+(?:\.\d+)?)', message, re.IGNORECASE)
+                    if match_amt:
+                        amount = float(match_amt.group(1))
 
-            # --- 3. Extract confirmation code ---
+            # --- 4. Extract confirmation code ---
             confirmation_code = "UNKNOWN"
-
             txn_match = re.search(r'Txn ID[: ]\s*([A-Z0-9.]+)', message, re.IGNORECASE)
             if txn_match:
                 confirmation_code = txn_match.group(1).replace(".", "")
@@ -730,7 +721,13 @@ def receive_sms(request):
                 if approval_match:
                     confirmation_code = approval_match.group(2).replace(".", "")
 
-            # --- 4. Save transaction ---
+            # --- 5. Normalize currency (ZWG → ZIG) ---
+            if currency_raw == "ZWG":
+                currency = "ZIG"
+            else:
+                currency = currency_raw
+
+            # --- 6. Save transaction ---
             transaction = Transactions.objects.create(
                 message=message,
                 amount=amount,
@@ -748,6 +745,7 @@ def receive_sms(request):
             return JsonResponse({"status": "error", "message": str(e)}, status=400)
 
     return JsonResponse({"status": "error", "message": "SMS not received"}, status=400)
+
 
 
 def sports(request):    

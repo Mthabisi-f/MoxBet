@@ -99,11 +99,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-    if(gamesInATicket && gamesInATicket.innerHTML == ''){
-        if(!someGamesSelected.classList.contains('d-none')){
-            someGamesSelected.classList.add('d-none');
-            noGamesSelected.classList.remove('d-none');
-        }
+    if(gamesInATicket){
+        document.addEventListener('click', function(){
+            if( !(betslipSelections.length>=1) && !someGamesSelected.classList.contains('d-none')){
+                someGamesSelected.classList.add('d-none');
+                noGamesSelected.classList.remove('d-none');
+            }
+        })
     }
 
 
