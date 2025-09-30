@@ -2,136 +2,138 @@
 
 {% block content %}
 
-{% if page == 'login' %}
-<div class="container-fluid max-width-600">
+{% if not request.user.is_authenticated %}
+    {% if page == 'login' %}
+    <div class="container-fluid max-width-600">
+            <div class="row-g-0">
+                <div class="col-12 p-3 rounded-bottom-3">
+                    
+                    <form action="{% url 'login' %}" method="POST" class="container-fluid my-5 p-3 rounded-3 border-aqua">
+                        {% csrf_token %}
+                        <p class="text-center text-danger">
+                            {% for message in messages %}
+                            {{message}}
+                            {% endfor %}
+                        </p>
+                        <p class="text-center text-yellow">Log in to your account</p>
+                        <hr>
+                        <input type="text" name="username" placeholder="username" class="form-control mb-2">
+                        <input type="password" name="password" placeholder="Password" class="form-control mb-2">
+
+                        <div class="mt-4 text-center">
+                            <button class="btn btn-yellow px-5 py-1" type="submit">Login</button>
+                        </div>
+
+                        <div class="text-center pt-2">
+                            <p>Don't have an account? <a href="{% url 'register' %}" class="text-yellow text-decoration-none">Register</a></p>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+    </div>  
+    {% else %}
+    <div class="container-fluid max-width-1000">
         <div class="row-g-0">
             <div class="col-12 p-3 rounded-bottom-3">
                 
-                <form action="{% url 'login' %}" method="POST" class="container-fluid my-5 p-3 rounded-3 border-aqua">
+                <form action="{% url 'register' %}" method="POST" class="container-fluid my-5 p-3 rounded-3 border-aqua">
                     {% csrf_token %}
-                    <p class="text-center text-danger">
-                        {% for message in messages %}
-                        {{message}}
-                        {% endfor %}
-                    </p>
-                    <p class="text-center text-yellow">Log in to your account</p>
-                    <hr>
-                    <input type="text" name="username" placeholder="username" class="form-control mb-2">
-                    <input type="password" name="password" placeholder="Password" class="form-control mb-2">
+                    
+                    <span class="text-center">
+                        <!-- Messages framework errors (like from messages.error in your view) -->
+                        <p class="text-center text-danger">
+                            {% for message in messages %}
+                                {{ message }}
+                            {% endfor %}
+                        </p>
 
-                    <div class="mt-4 text-center">
-                        <button class="btn btn-yellow px-5 py-1" type="submit">Login</button>
+                        <!-- Form validation errors -->
+                        {% if form.errors %}
+                            <ul class="text-center list-unstyled">
+                                {% for field, errors in form.errors.items %}
+                                    {% for error in errors %}
+                                        <li class="text-danger">{{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </span>
+
+                    <p class= "text-center text-yellow">Create an account</p>
+                    <hr>
+                    <div class="row g-2">
+                        <div class="col-12 col-md-6">
+                            <input type="text" name="first_name" placeholder="First name" class="form-control" required>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <input type="text" name="last_name" placeholder="Last name" class="form-control">
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <input type="text" name="username" placeholder="Username" class="form-control" required>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <input type="email" name="email" placeholder="Email" class="form-control" required>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <input type="id-number" name="id_number" placeholder="ID e.g 08-207276L72" class="form-control">
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <select name="country" name="country" placeholder="Country" class="form-select" required>
+                                <option value="" selected disabled>Country</option>
+                                <option value="zimbabwe">Zimbabwe</option>
+                                <option value="south-africa">South Africa</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <select name="currency" name="currency" placeholder="Currency" class="form-select" required>
+                                <option value="" selected disabled>Currency</option>
+                                <option value="USD">USD</option>
+                                <option value="ZAR">ZAR</option>
+                                <option value="ZIG">ZIG</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <input type="number" name="phone_number" min="0" placeholder="Phone number e.g 0778241826" class="form-control" required>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <select  name="agent_code" placeholder="Agent Code" class="form-select">
+                                <option value="" selected disabled>Agent code</option>
+                                <option value="1234">1234</option>
+                                <option value="1111">1111</option>
+                                <option value="2222">2222</option>
+                                <option value="3333">3333</option>
+                                <option value="4444">4444</option>
+                                <option value="5555">5555</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <input type="password" name="password1" placeholder="Password" class="form-control" required>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <input type="password" name="password2" placeholder="Confirm Password" class="form-control" required>
+                        </div>
+                    </div>  
+                    
+                    <div class="form-check mb-3">
+                        <input type="radio" class="form-check-input" id="FormCheck1" name="radio-stacked" required>
+                        <label class="form-check-label" for="FormCheck1">I admit that i have read and understood the <a href="#" class="text-decoration-none text-yellow">Terms & conditions</a> of MOXBET.</label>
+                        <div class="invalid-feedback">More example invalid feedback text</div>
                     </div>
 
-                    <div class="text-center pt-2">
-                        <p>Don't have an account? <a href="{% url 'register' %}" class="text-yellow text-decoration-none">Register</a></p>
+                    <div class="mt-4 text-center">
+                        <button class="btn btn-yellow px-5 py-1" type="submit">Register</button>
+                    </div>
+
+                    <div class="text-center">
+                        <p>Already a member? <a href="{% url 'login' %}" class="text-yellow text-decoration-none">Login</a></p>
                     </div>
 
                 </form>
             </div>
         </div>
-</div>  
-{% else %}
-<div class="container-fluid max-width-1000">
-    <div class="row-g-0">
-        <div class="col-12 p-3 rounded-bottom-3">
-            
-            <form action="{% url 'register' %}" method="POST" class="container-fluid my-5 p-3 rounded-3 border-aqua">
-                {% csrf_token %}
-                
-                <span class="text-center">
-                    <!-- Messages framework errors (like from messages.error in your view) -->
-                    <p class="text-center text-danger">
-                        {% for message in messages %}
-                            {{ message }}
-                        {% endfor %}
-                    </p>
-
-                    <!-- Form validation errors -->
-                    {% if form.errors %}
-                        <ul class="text-center list-unstyled">
-                            {% for field, errors in form.errors.items %}
-                                {% for error in errors %}
-                                    <li class="text-danger">{{ error }}</li>
-                                {% endfor %}
-                            {% endfor %}
-                        </ul>
-                    {% endif %}
-                </span>
-
-                <p class= "text-center text-yellow">Create an account</p>
-                <hr>
-                <div class="row g-2">
-                    <div class="col-12 col-md-6">
-                        <input type="text" name="first_name" placeholder="First name" class="form-control" required>
-                    </div>
-                    <div class="col-12 col-md-6">
-                        <input type="text" name="last_name" placeholder="Last name" class="form-control">
-                    </div>
-                    <div class="col-12 col-md-6">
-                        <input type="text" name="username" placeholder="Username" class="form-control" required>
-                    </div>
-                    <div class="col-12 col-md-6">
-                        <input type="email" name="email" placeholder="Email" class="form-control" required>
-                    </div>
-                    <div class="col-12 col-md-6">
-                        <input type="id-number" name="id_number" placeholder="ID e.g 08-207276L72" class="form-control">
-                    </div>
-                    <div class="col-12 col-md-6">
-                        <select name="country" name="country" placeholder="Country" class="form-select" required>
-                            <option value="" selected disabled>Country</option>
-                            <option value="zimbabwe">Zimbabwe</option>
-                            <option value="south-africa">South Africa</option>
-                        </select>
-                    </div>
-                    <div class="col-12 col-md-6">
-                        <select name="currency" name="currency" placeholder="Currency" class="form-select" required>
-                            <option value="" selected disabled>Currency</option>
-                            <option value="USD">USD</option>
-                            <option value="ZAR">ZAR</option>
-                            <option value="ZIG">ZIG</option>
-                        </select>
-                    </div>
-                    <div class="col-12 col-md-6">
-                        <input type="number" name="phone_number" min="0" placeholder="Phone number e.g 0778241826" class="form-control" required>
-                    </div>
-                    <div class="col-12 col-md-6">
-                        <select  name="agent_code" placeholder="Agent Code" class="form-select">
-                            <option value="" selected disabled>Agent code</option>
-                            <option value="1234">1234</option>
-                            <option value="1111">1111</option>
-                            <option value="2222">2222</option>
-                            <option value="3333">3333</option>
-                            <option value="4444">4444</option>
-                            <option value="5555">5555</option>
-                        </select>
-                    </div>
-                    <div class="col-12 col-md-6">
-                        <input type="password" name="password1" placeholder="Password" class="form-control" required>
-                    </div>
-                    <div class="col-12 col-md-6">
-                        <input type="password" name="password2" placeholder="Confirm Password" class="form-control" required>
-                    </div>
-                </div>  
-                
-                <div class="form-check mb-3">
-                    <input type="radio" class="form-check-input" id="FormCheck1" name="radio-stacked" required>
-                    <label class="form-check-label" for="FormCheck1">I admit that i have read and understood the <a href="#" class="text-decoration-none text-yellow">Terms & conditions</a> of MOXBET.</label>
-                    <div class="invalid-feedback">More example invalid feedback text</div>
-                </div>
-
-                <div class="mt-4 text-center">
-                    <button class="btn btn-yellow px-5 py-1" type="submit">Register</button>
-                </div>
-
-                <div class="text-center">
-                    <p>Already a member? <a href="{% url 'login' %}" class="text-yellow text-decoration-none">Login</a></p>
-                </div>
-
-            </form>
-        </div>
-    </div>
-</div>        
+    </div>  
+    {% endif %}      
 {% endif %}
 
 {% endblock content %}

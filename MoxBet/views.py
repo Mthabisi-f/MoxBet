@@ -675,7 +675,6 @@ async def fetch_games_by_leagues(request):
     }, safe=False)
 
 
-
 @csrf_exempt
 def receive_sms(request):
     if request.method == "POST":
@@ -694,46 +693,50 @@ def receive_sms(request):
             if not message:
                 return JsonResponse({"status": "error", "message": "No message received"}, status=400)
 
-            # 1. Extract currency: USD, ZIG, ZAR, etc. (first occurrence)
-            currency_match = re.search(r'\b(USD|ZIG|ZAR)\b', message, re.IGNORECASE)
-            currency = currency_match.group(1).upper() if currency_match else "Unknown"
+            # --- 1. Extract currency ---
+            currency_match = re.search(r'\b(USD|ZWG|ZIG|ZAR)\b', message, re.IGNORECASE)
+            currency = currency_match.group(1).upper() if currency_match else "UNKNOWN"
 
-            # 2. Extract amount
+            # Convert ZWG → ZIG
+            if currency == "ZWG":
+                currency = "ZIG"
+
+            # --- 2. Extract amount ---
             amount = 0.0
 
-            # Pattern 1: Currency immediately followed by amount, e.g. USD57, ZIG54
-            amount_match = re.search(rf'\b{currency}(\d+(?:\.\d+)?)\b', message)
-            if amount_match:
-                amount = float(amount_match.group(1))
+            # Pattern A: "USD5" / "USD2.57" / "ZWG2" (currency stuck to amount)
+            match_a = re.search(rf'\b{currency}\s*(\d+(?:\.\d+)?)\b', message, re.IGNORECASE)
+            if match_a:
+                amount = float(match_a.group(1))
             else:
-                # Pattern 2: 'Received Amt: 4.93'
-                received_amt_match = re.search(r'Received Amt:\s*(\d+(?:\.\d+)?)', message, re.IGNORECASE)
-                if received_amt_match:
-                    amount = float(received_amt_match.group(1))
+                # Pattern B: "Received Amt: 4.93"
+                match_b = re.search(r'Received Amt[: ]\s*(\d+(?:\.\d+)?)', message, re.IGNORECASE)
+                if match_b:
+                    amount = float(match_b.group(1))
                 else:
-                    # Pattern 3: 'USD 2', 'ZIG 5.02', etc.
-                    spaced_currency_match = re.search(rf'\b{currency}\s+(\d+(?:\.\d+)?)', message)
-                    if spaced_currency_match:
-                        amount = float(spaced_currency_match.group(1))
+                    # Pattern C: "USD 2", "ZIG 5.02" (with space)
+                    match_c = re.search(rf'\b{currency}\s+(\d+(?:\.\d+)?)', message, re.IGNORECASE)
+                    if match_c:
+                        amount = float(match_c.group(1))
 
-            # 3. Extract confirmation code (Txn ID or Approval/Aproval code)
-            confirmation_code = "Unknown"
+            # --- 3. Extract confirmation code ---
+            confirmation_code = "UNKNOWN"
 
-            txn_match = re.search(r'Txn ID:\s*([A-Z0-9.]+)', message, re.IGNORECASE)
+            txn_match = re.search(r'Txn ID[: ]\s*([A-Z0-9.]+)', message, re.IGNORECASE)
             if txn_match:
                 confirmation_code = txn_match.group(1).replace(".", "")
             else:
-                approval_match = re.search(r'(Approval|Aproval) code:\s*([A-Z0-9.]+)', message, re.IGNORECASE)
+                approval_match = re.search(r'(Approval|Aproval)\s*Code[: ]\s*([A-Z0-9.]+)', message, re.IGNORECASE)
                 if approval_match:
                     confirmation_code = approval_match.group(2).replace(".", "")
 
-            # 4. Save transaction to DB
+            # --- 4. Save transaction ---
             transaction = Transactions.objects.create(
                 message=message,
                 amount=amount,
                 currency=currency,
                 confirmation_code=confirmation_code,
-                transaction_type="deposit",  # Assuming all are deposits
+                transaction_type="deposit",  # Assuming deposits
                 status="pending"
             )
             transaction.save()
