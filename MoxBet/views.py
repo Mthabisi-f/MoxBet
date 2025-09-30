@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.http import HttpRequest, JsonResponse, HttpResponseRedirect
-from .models import User, Transactions, WinBoost, Tickets, Limits, Bookings
+from .models import User, Transactions, WinBoost, Tickets, Limits, Bookings, Agents
 from .forms import UserRegistrationForm
 from .redis_client import redis_client
 from django.contrib.auth import authenticate, login, logout
@@ -775,11 +775,6 @@ def registerPage(request):
     context = {'form':form}
     return render(request, 'register_login.html', context)
 
-
-from django.contrib import messages
-from django.contrib.auth import login
-from .models import Agents
-from .forms import UserRegistrationForm
 
 
 @login_required

@@ -38,7 +38,15 @@
             
             <form action="{% url 'register' %}" method="POST" class="container-fluid my-5 p-3 rounded-3 border-aqua">
                 {% csrf_token %}
+                
                 <span class="text-center">
+                    <!-- Messages framework errors (like from messages.error in your view) -->
+                    <p class="text-center text-danger">
+                        {% for message in messages %}
+                            {{ message }}
+                        {% endfor %}
+                    </p>
+
                     <!-- Form validation errors -->
                     {% if form.errors %}
                         <ul class="text-center list-unstyled">
@@ -48,8 +56,9 @@
                                 {% endfor %}
                             {% endfor %}
                         </ul>
-                    {% endif %}                              
+                    {% endif %}
                 </span>
+
                 <p class= "text-center text-yellow">Create an account</p>
                 <hr>
                 <div class="row g-2">
