@@ -1,8 +1,9 @@
 from django.contrib import admin
-from .models import User, Transactions, Limits, Tickets, WinBoost, Bookings
+from .models import User, Transactions, Limits, Tickets, WinBoost, Bookings, Agents
 
 # Register your models here.
 admin.site.register(User)
+admin.site.register(Agents)
 admin.site.register(Transactions)
 admin.site.register(Limits)
 admin.site.register(Tickets)

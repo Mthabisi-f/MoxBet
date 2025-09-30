@@ -39,22 +39,25 @@
             <form action="{% url 'register' %}" method="POST" class="container-fluid my-5 p-3 rounded-3 border-aqua">
                 {% csrf_token %}
                 <span class="text-center">
-                    <p class="text-center text-danger">
-                        {% for message in messages %}
-                        {{message}}
-                        {% endfor %}
-                    </p>
-                    {% for field, errors in form.errors.items %}
-                        {% for error in errors %}
-                            <li class="text-danger list-unstyled">{{ message }}</li>
-                        {% endfor %}
-                    {% endfor %}                                
+                    <!-- Form validation errors -->
+                    {% if form.errors %}
+                        <ul class="text-center list-unstyled">
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}
+                                    <li class="text-danger">{{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                        </ul>
+                    {% endif %}                              
                 </span>
                 <p class= "text-center text-yellow">Create an account</p>
                 <hr>
                 <div class="row g-2">
                     <div class="col-12 col-md-6">
                         <input type="text" name="first_name" placeholder="First name" class="form-control" required>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <input type="text" name="last_name" placeholder="Last name" class="form-control">
                     </div>
                     <div class="col-12 col-md-6">
                         <input type="text" name="username" placeholder="Username" class="form-control" required>

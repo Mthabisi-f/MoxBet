@@ -209,13 +209,66 @@ async def get_booking(request):
 
 
 # Get latest odds from redis
+# @csrf_exempt
+# async def get_latest_odds(request):
+#     if request.method == "POST":
+#         data = json.loads(request.body)
+#         selections = data.get("selections", [])
+
+#         updated_selections = []
+
+#         for selection in selections:
+#             try:
+#                 # Fetch single match from Redis
+#                 value = await redis_client.get(f"match:{selection['match_id']}")
+#                 match_data = json.loads(value) if value else None
+#             except Exception as e:
+#                 print(f"Redis error: {e}")
+#                 match_data = None
+
+#             if not match_data:
+#                 # Skip this selection completely if match not in Redis
+#                 continue
+
+#             market_type = selection["market_type"]
+#             prediction = selection["prediction"]
+
+#             # Get current odd in Redis
+#             current_odd = (
+#                 match_data.get("odds", {})
+#                 .get(market_type, {})
+#                 .get(prediction, {})
+#                 .get("odd")
+#             )
+
+#             if current_odd and str(current_odd) != str(selection["match_odds"]):
+#                 # Update only the odds field
+#                 selection["match_odds"] = current_odd
+
+#             # Append (always with all its keys)
+#             updated_selections.append(selection)
+
+#         # If no valid selections → return empty list
+#         if not updated_selections:
+#             return JsonResponse({
+#                 "success": False,
+#                 "message": "No valid selections found."
+#             }, status=400)
+
+#         return JsonResponse({
+#             "success": True,
+#             "updated_selections": updated_selections
+#         })
+
+
 @csrf_exempt
 async def get_latest_odds(request):
     if request.method == "POST":
         data = json.loads(request.body)
         selections = data.get("selections", [])
-
         updated_selections = []
+
+        now = datetime.now(timezone.utc)
 
         for selection in selections:
             try:
@@ -227,13 +280,31 @@ async def get_latest_odds(request):
                 match_data = None
 
             if not match_data:
-                # Skip this selection completely if match not in Redis
                 continue
 
+            # Get sport and its live window
+            sport = match_data.get("sport", "football").lower()
+            LIVE_WINDOW = LIVE_WINDOWS.get(sport, timedelta(hours=2))
+
+            # ⏳ Parse match datetime
+            match_datetime_str = match_data.get("datetime")
+            if not match_datetime_str:
+                continue
+            try:
+                match_datetime = parser.parse(match_datetime_str)
+            except Exception as e:
+                print(f"Skipping selection {selection['match_id']} due to invalid datetime: {e}")
+                continue
+
+            # 🚫 skip if match started outside live window
+            if match_datetime + LIVE_WINDOW < now:
+                print(f"Removing stale selection {selection['match_id']} ({sport}) - started {match_datetime}")
+                continue
+
+            # ✅ Update odds if different
             market_type = selection["market_type"]
             prediction = selection["prediction"]
 
-            # Get current odd in Redis
             current_odd = (
                 match_data.get("odds", {})
                 .get(market_type, {})
@@ -242,13 +313,11 @@ async def get_latest_odds(request):
             )
 
             if current_odd and str(current_odd) != str(selection["match_odds"]):
-                # Update only the odds field
                 selection["match_odds"] = current_odd
 
-            # Append (always with all its keys)
             updated_selections.append(selection)
 
-        # If no valid selections → return empty list
+        # Response
         if not updated_selections:
             return JsonResponse({
                 "success": False,
@@ -429,7 +498,7 @@ async def fetch_live_games(request):
     page_size = 100
 
     # Pick sport-specific live window, fallback to 2.5h
-    LIVE_WINDOW = LIVE_WINDOWS.get(sport, timedelta(hours=2.5))
+    LIVE_WINDOW = LIVE_WINDOWS.get(sport, timedelta(hours=2))
 
     try:
         keys = await redis_client.smembers(f"live:{sport}")

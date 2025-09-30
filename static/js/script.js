@@ -901,33 +901,63 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
 
+    // function initLiveOddsWebSocket(currentSport) {
+    //     const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    //     const socketUrl = `${wsProtocol}://${window.location.host}/ws/live/${currentSport}/`;
+    //     const socket = new WebSocket(socketUrl);
+
+    //     let liveMatchIds = [];
+
+    //     // --- Fetch live IDs from backend ---
+    //     async function fetchLiveIds() {
+    //         try {
+    //             const resp = await fetch(`/api/live-ids/${currentSport}/`);
+    //             if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    //             const data = await resp.json();
+    //             liveMatchIds = data.live_ids || [];
+
+    //             // Clean up DOM matches that are no longer live
+    //             removeNonLiveMatches(liveMatchIds);
+    //         } catch (err) {
+    //             console.error("Failed to fetch live IDs:", err);
+    //         }
+    //     }
+
+    //     // Initial fetch on load
+    //     fetchLiveIds();
+
+    //     // Refresh every 10 seconds
+    //     setInterval(fetchLiveIds, 10000);
+
+    //     socket.onopen = () => {
+    //         console.log(`Connected to live odds WebSocket for ${currentSport}`);
+    //     };
+
+    //     socket.onmessage = (event) => {
+    //         const data = JSON.parse(event.data);
+    //         const liveStatuses = ["LIVE", "1H", "2H", "HT", "ET", "BT", "PEN"];
+
+    //         if (liveStatuses.includes(data.status.short)) {
+    //             updateLiveOddsOnPage(data, liveMatchIds);
+    //         }
+    //     };
+
+    //     socket.onclose = () => {
+    //         console.log(`Disconnected from live odds WebSocket for ${currentSport}`);
+    //         // Optional: try to reconnect
+    //         setTimeout(() => initLiveOddsWebSocket(currentSport), 5000);
+    //     };
+
+    //     socket.onerror = (error) => {
+    //         console.error(`WebSocket error:`, error);
+    //     };
+    // }
+
+
     function initLiveOddsWebSocket(currentSport) {
         const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
         const socketUrl = `${wsProtocol}://${window.location.host}/ws/live/${currentSport}/`;
         const socket = new WebSocket(socketUrl);
-
-        let liveMatchIds = [];
-
-        // --- Fetch live IDs from backend ---
-        async function fetchLiveIds() {
-            try {
-                const resp = await fetch(`/api/live-ids/${currentSport}/`);
-                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-                const data = await resp.json();
-                liveMatchIds = data.live_ids || [];
-
-                // Clean up DOM matches that are no longer live
-                removeNonLiveMatches(liveMatchIds);
-            } catch (err) {
-                console.error("Failed to fetch live IDs:", err);
-            }
-        }
-
-        // Initial fetch on load
-        fetchLiveIds();
-
-        // Refresh every 10 seconds
-        setInterval(fetchLiveIds, 10000);
 
         socket.onopen = () => {
             console.log(`Connected to live odds WebSocket for ${currentSport}`);
@@ -935,10 +965,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         socket.onmessage = (event) => {
             const data = JSON.parse(event.data);
+            // data will be the payload from Redis task
             const liveStatuses = ["LIVE", "1H", "2H", "HT", "ET", "BT", "PEN"];
 
             if (liveStatuses.includes(data.status.short)) {
-                updateLiveOddsOnPage(data, liveMatchIds);
+                updateLiveOddsOnPage(data);
             }
         };
 
@@ -953,24 +984,26 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
 
+
+
     initLiveOddsWebSocket(currentSport);
 
-    function removeNonLiveMatches(liveIds) {
-        const liveSet = new Set(liveIds.map(id => parseInt(id)));
-        gamesDisplayLive.querySelectorAll('.match-link').forEach(matchEl => {
-            const matchId = parseInt(matchEl.dataset.matchId);
-            if (!liveSet.has(matchId)) {
-                matchEl.remove();
-            }
-        });
-    }
+    // function removeNonLiveMatches(liveIds) {
+    //     const liveSet = new Set(liveIds.map(id => parseInt(id)));
+    //     gamesDisplayLive.querySelectorAll('.match-link').forEach(matchEl => {
+    //         const matchId = parseInt(matchEl.dataset.matchId);
+    //         if (!liveSet.has(matchId)) {
+    //             matchEl.remove();
+    //         }
+    //     });
+    // }
 
 
-    function updateLiveOddsOnPage(matchPayload, liveIds) {
+    function updateLiveOddsOnPage(matchPayload) {
         // Remove any non-live matches from the DOM  this works only in gamesDisplayLive
-        if (window.pathname.includes('/live/')){ 
-            removeNonLiveMatches(liveIds);
-        }
+        // if (window.pathname.includes('/live/')){ 
+        //     removeNonLiveMatches(liveIds);
+        // }
 
         const FINISHED_STATUSES = ["FT", "AET", "PEN", "CANC", "PST"];
         const matchId = matchPayload.match_id;
