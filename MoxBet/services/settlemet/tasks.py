@@ -31,7 +31,7 @@ async def get_finished_fixtures():
             value = await redis_client.get(k)
             return json.loads(value) if value else None
         except Exception as e:
-            print(f"[REDIS] Error fetching key {k}: {e}")
+            print(f"Error fetching key {k}: {e}")
         return None
 
 
