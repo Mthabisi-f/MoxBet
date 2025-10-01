@@ -42,11 +42,14 @@
                     
                     <span class="text-center">
                         <!-- Tell user the exact error -->
-                        <p class="text-center {% if message.tags %}text-{{ message.tags }}{% else %}text-danger{% endif %}">
-                            {% for message in messages %}
-                                {{ message }}
-                            {% endfor %}
-                        </p>
+                       {% for message in messages %}
+                            {% if message.tags == "error" %}
+                                <p class="text-center text-danger">{{ message }}</p>
+                            {% else %}
+                                <p class="text-center text-{{ message.tags }}">{{ message }}</p>
+                            {% endif %}
+                        {% endfor %}
+
                     </span>
 
                     <p class= "text-center text-yellow">Create an account</p>
