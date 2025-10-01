@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class SportsSettlementHandler(SettlementHandler):
     def settle(self):
         try:
-            finished_results = async_to_sync(get_finished_fixtures_async)()
+            finished_results = get_finished_fixtures_async()
         except Exception as e:
             logger.error(f"[SETTLEMENT] Error fetching finished fixtures: {e}")
             finished_results = []

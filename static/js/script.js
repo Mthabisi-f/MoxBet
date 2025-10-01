@@ -2064,7 +2064,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if(tickets.length > 0 && document.getElementById('tickets-display')){
                     ticketsDisplay.innerHTML = '';
                     tickets.forEach(ticket =>{
-                        const {id, status, win_boost, results, created_at, total_odds, stake, potential_win} = ticket;
+                        const {id, status, win_boost, created_at, total_odds, stake, potential_win} = ticket;
 
                         const selections = ticket.selections;
                     
@@ -2087,7 +2087,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                                 <div class="row g-0">
                                                                     <div class="text-truncate mb-5px">${selection.country} - ${selection.league}</div>
                                                                     <div class="text-truncate mb-5px">${selection.home_team} - ${selection.away_team}</div>
-                                                                    <div class="col-9 fw-bold text-truncate mb-5px">${selection.market_type} - ${selection.prediction}</div><div class="col-3 text-truncate text-end mb-5px">${selection.results ? `<span>${results?.score?.fulltime?.home}-${results?.score?.fulltime?.home} </span>` : ''}</div> 
+                                                                    <div class="col-9 fw-bold text-truncate mb-5px">${selection.market_type} - ${selection.prediction}</div><div class="col-3 text-truncate text-end mb-5px">${selection.results ? `<span>${selection.results?.score?.fulltime?.home}-${selection.results?.score?.fulltime?.away} </span>` : ''}</div> 
                                                                     <div class="text-small">${new Date(selection.date_time).toLocaleTimeString("en-GB", {hour: "2-digit", minute: "2-digit"})}&nbsp;&nbsp;${new Date(selection.date_time).toLocaleDateString("en-GB")}</div>
                                                                 </div>
                                                             </div>`).join("")}
