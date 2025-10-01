@@ -3,9 +3,11 @@ import asyncio
 import json
 from MoxBet.redis_client import redis_client
 
+def get_finished_fixtures_sync():
+    return asyncio.run(get_finished_fixtures_async())
 
 # async version
-async def get_finished_fixtures_sync():
+async def get_finished_fixtures_async():
     finished_keys = await redis_client.keys("finished:*")
     sem = asyncio.Semaphore(50)
 
