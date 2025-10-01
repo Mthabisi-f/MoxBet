@@ -20,6 +20,10 @@ class SportsSettlementHandler(SettlementHandler):
         results = []
 
         for selection in selections:
+            # Only settle selections that are still Pending
+            if selection.get("status") != "Pending":
+                continue
+
             result = self._get_match_result(selection, finished_results)
 
             # If no result, leave pending
