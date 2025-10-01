@@ -2,11 +2,14 @@ import os
 import asyncio
 import json
 from MoxBet.redis_client import redis_client
-from asgiref.sync import async_to_sync
 
+
+
+loop = asyncio.new_event_loop()
+asyncio.set_event_loop(loop)
 
 def get_finished_fixtures_sync():
-    return async_to_sync(get_finished_fixtures_async)()
+    return loop.run_until_complete(get_finished_fixtures_async())
 
 # async version
 async def get_finished_fixtures_async():
