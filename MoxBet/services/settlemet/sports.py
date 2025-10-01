@@ -4,14 +4,14 @@ from MoxBet.models import MoneyBack, WinBoost
 from asgiref.sync import async_to_sync
 from decimal import Decimal
 from django.utils import timezone
-from MoxBet.services.settlemet.tasks import get_finished_fixtures_async
+from MoxBet.services.settlemet.tasks import get_finished_fixtures_sync
 
 logger = logging.getLogger(__name__)
 
 class SportsSettlementHandler(SettlementHandler):
     def settle(self):
         try:
-            finished_results = get_finished_fixtures_async()
+            finished_results = get_finished_fixtures_sync()
         except Exception as e:
             logger.error(f"[SETTLEMENT] Error fetching finished fixtures: {e}")
             finished_results = []
