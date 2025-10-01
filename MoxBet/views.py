@@ -834,13 +834,32 @@ def registerPage(request):
 
     if request.method == 'POST':
         form = UserRegistrationForm(request.POST)
+
+        # Trim spaces from key fields
+        if 'username' in form.data:
+            form.data = form.data.copy()
+            form.data['username'] = form.data['username'].strip()
+        if 'email' in form.data:
+            form.data = form.data.copy()
+            form.data['email'] = form.data['email'].strip()
+        if 'phone_number' in form.data:
+            form.data = form.data.copy()
+            form.data['phone_number'] = form.data['phone_number'].strip()
+        if 'first_name' in form.data:
+            form.data = form.data.copy()
+            form.data['first_name'] = form.data['first_name'].strip()
+        if 'last_name' in form.data:
+            form.data = form.data.copy()
+            form.data['last_name'] = form.data['last_name'].strip()
+
         if form.is_valid():
             user = form.save(commit=False)
-            user.username = user.username.strip().capitalize()
-            user.first_name = user.first_name.strip().capitalize()
+            # Ensure capitalization
+            user.username = user.username.capitalize()
+            user.first_name = user.first_name.capitalize()
             user.save()
 
-            # Assign agent if agent_code was provided, otherwise default "1234"
+            # Assign agent if agent_code provided, otherwise default "1234"
             agent_code = form.cleaned_data.get("agent_code") or "1234"
             assign_agent(user, agent_code)
 
@@ -848,12 +867,20 @@ def registerPage(request):
             messages.success(request, f"Welcome {user.username}, your account has been created successfully.")
             return redirect('sports')
         else:
-            messages.error(request, 'An error occurred during registration')
+            # Collect detailed errors
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field.replace('_', ' ').capitalize()}: {error}")
+
+            # Extra validation: phone number at least 10 digits
+            phone = form.cleaned_data.get('phone_number', '')
+            if phone and len(str(phone)) < 10:
+                messages.error(request, "Phone number must be at least 10 digits.")
+
             return redirect('register')
 
     context = {'form': form}
     return render(request, 'register_login.html', context)
-
 
 
 def loginPage(request):
