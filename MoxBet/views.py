@@ -759,24 +759,30 @@ def more_odds(request):
     return render(request, 'more-odds.html', context)
 
 
+
+
 def registerPage(request):
-    form =  UserRegistrationForm()
+    form = UserRegistrationForm()
+    
     if request.method == 'POST':
-        form =  UserRegistrationForm(request.POST)
+        form = UserRegistrationForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
             user.username = user.username.strip().capitalize()
             user.first_name = user.first_name.strip().capitalize()
             user.save()
             login(request, user)
+            messages.success(request, f"Welcome {user.first_name}! Your account has been created.")
             return redirect('sports')
         else:
-            messages.error(request, 'An error occuerd during registration, make sure your passwords match and each has atleast 8 characters')
+            # Collect detailed errors
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field.replace('_', ' ').capitalize()}: {error}")
             return redirect('register')
-        
-    context = {'form':form}
+    
+    context = {'form': form}
     return render(request, 'register_login.html', context)
-
 
 
 @login_required

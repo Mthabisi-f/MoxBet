@@ -126,9 +126,42 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
             print(f"Redis error setting timestamp for {fixture_id}: {e}")
 
 
-        if status in FINISHED_STATUSES:
-            expiry = 60 * 60 * 24 * 7  # keep finished games for 7 days
+        # if status in FINISHED_STATUSES:
+        #     expiry = 60 * 60 * 24 * 7  # keep finished games for 7 days
 
+        #     payload = {
+        #         "match_id": fixture_id,
+        #         "sport": sport,
+        #         "country": country,
+        #         "league": nf["league"],
+        #         "league_id": league_id,
+        #         "datetime": nf["fixture"]["date"],
+        #         "status": status,
+        #         "timestamp": timestamp,
+        #         "extras": {k: v for k, v in nf.items() if k not in ["league", "fixture", "id"]},
+        #         "odds": {}
+        #     }
+
+        #     try:
+        #         # save under finished:*
+        #         finished_key = f"finished:{fixture_id}"
+        #         await redis_client.set(finished_key, json.dumps(payload), ex=expiry)
+
+        #         # cleanup old live keys
+        #         match_key = f"match:{fixture_id}"
+        #         live_set_key = f"live:{sport.lower()}"
+
+        #         await redis_client.delete(match_key)                          # remove match:* key
+        #         await redis_client.srem(live_set_key, match_key)              # remove from live:{sport}
+                
+        #         print(f"[CACHED] {sport} finished game {fixture_id} ({status}) → cleaned from live & match")
+
+        #     except Exception as e:
+        #         print(f"Redis error caching finished match {fixture_id}: {e}")
+
+          
+        if status in FINISHED_STATUSES:
+            expiry = 60 * 60 * 24 * 7
             payload = {
                 "match_id": fixture_id,
                 "sport": sport,
@@ -137,25 +170,15 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
                 "league_id": league_id,
                 "datetime": nf["fixture"]["date"],
                 "status": status,
-                "timestamp": timestamp,
                 "extras": {k: v for k, v in nf.items() if k not in ["league", "fixture", "id"]},
                 "odds": {}
             }
-
+             
             try:
-                # save under finished:*
+                # Store finished match with a dedicated key pattern
                 finished_key = f"finished:{fixture_id}"
                 await redis_client.set(finished_key, json.dumps(payload), ex=expiry)
-
-                # cleanup old live keys
-                match_key = f"match:{fixture_id}"
-                live_set_key = f"live:{sport.lower()}"
-
-                await redis_client.delete(match_key)                          # remove match:* key
-                await redis_client.srem(live_set_key, match_key)              # remove from live:{sport}
-                
-                print(f"[CACHED] {sport} finished game {fixture_id} ({status}) → cleaned from live & match")
-
+                print(f"[CACHED] {sport} finished game {fixture_id} ({status})")
             except Exception as e:
                 print(f"Redis error caching finished match {fixture_id}: {e}")
 

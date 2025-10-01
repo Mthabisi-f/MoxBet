@@ -41,23 +41,12 @@
                     {% csrf_token %}
                     
                     <span class="text-center">
-                        <!-- Messages framework errors (like from messages.error in your view) -->
-                        <p class="text-center text-danger">
+                        <!-- Tell user the exact error -->
+                        <p class="text-center {% if message.tags %}text-{{ message.tags }}{% else %}text-danger{% endif %}">
                             {% for message in messages %}
                                 {{ message }}
                             {% endfor %}
                         </p>
-
-                        <!-- Form validation errors -->
-                        {% if form.errors %}
-                            <ul class="text-center list-unstyled">
-                                {% for field, errors in form.errors.items %}
-                                    {% for error in errors %}
-                                        <li class="text-danger">{{ error }}</li>
-                                    {% endfor %}
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
                     </span>
 
                     <p class= "text-center text-yellow">Create an account</p>
