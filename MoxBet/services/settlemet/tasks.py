@@ -4,15 +4,9 @@ import json
 from MoxBet.redis_client import redis_client
 
 
-# sync wrapper
-def get_finished_fixtures_sync():
-    return asyncio.run(get_finished_fixtures_async())
-
-# async function
+# async version
 async def get_finished_fixtures_async():
     finished_keys = await redis_client.keys("finished:*")
-    matches = []
-
     sem = asyncio.Semaphore(50)
 
     async def fetch_match(k):
@@ -24,11 +18,9 @@ async def get_finished_fixtures_async():
                 print(f"Error fetching key {k}: {e}")
             return None
 
-    # batch tasks safely
     tasks = [fetch_match(k) for k in finished_keys]
     results = await asyncio.gather(*tasks)
-    matches = [m for m in results if m]
-    return matches
+    return [m for m in results if m]
 
 
 # @shared_task
