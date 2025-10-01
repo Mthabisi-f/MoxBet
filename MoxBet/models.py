@@ -14,7 +14,7 @@ class User(AbstractUser):
     currency =  models.CharField(max_length=5, unique=False, default="USD")
     balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     agent_code = models.CharField(max_length=10, default="1234")
-    phone_number = models.CharField(max_length=15, blank=False)
+    phone_number = models.CharField(max_length=15, blank=False, unique=True)
     password = models.CharField(max_length=255, blank=False)
     date_joined = models.DateTimeField(default=timezone.now)
 

@@ -760,6 +760,8 @@ def more_odds(request):
 
 
 
+from django.contrib import messages
+from django.contrib.auth import login
 
 def registerPage(request):
     form = UserRegistrationForm()
@@ -775,14 +777,25 @@ def registerPage(request):
             messages.success(request, f"Welcome {user.first_name}! Your account has been created.")
             return redirect('sports')
         else:
-            # Collect detailed errors
+            # Clear previous messages
+            storage = messages.get_messages(request)
+            for _ in storage:
+                pass
+
+            # Combine all errors into one HTML list
+            all_errors = []
             for field, errors in form.errors.items():
                 for error in errors:
-                    messages.error(request, f"{field.replace('_', ' ').capitalize()}: {error}")
+                    all_errors.append(f"{field.replace('_', ' ').capitalize()}: {error}")
+
+            if all_errors:
+                messages.error(request, ", ".join(all_errors))
+            
             return redirect('register')
     
     context = {'form': form}
     return render(request, 'register_login.html', context)
+
 
 
 @login_required
