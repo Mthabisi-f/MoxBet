@@ -4,11 +4,15 @@ import json
 from MoxBet.redis_client import redis_client
 
 
-loop = asyncio.new_event_loop()
-asyncio.set_event_loop(loop)
+# loop = asyncio.new_event_loop()
+# asyncio.set_event_loop(loop)
 
+# def get_finished_fixtures_sync():
+#     return loop.run_until_complete(get_finished_fixtures_async())
+
+# sync wrapper
 def get_finished_fixtures_sync():
-    return loop.run_until_complete(get_finished_fixtures_async())
+    return asyncio.run(get_finished_fixtures_async())
 
 # async version
 async def get_finished_fixtures_async():
