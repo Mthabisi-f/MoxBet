@@ -15,7 +15,7 @@ from .normalizers import SPORTS, INTERVALS, FINISHED_STATUSES
 
 
 async def fetch_matches_and_odds_bulk(client, sport, host):
-    start_date = date.today()
+    start_date = date.today() - timedelta(days=2)
     end_date = start_date + timedelta(weeks=1)
     current = start_date
 
