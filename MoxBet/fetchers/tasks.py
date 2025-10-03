@@ -253,6 +253,7 @@ async def auto_settle_tickets():
     try:
         # run management command inside async wrapper
         await asyncio.to_thread(call_command, "settle_pending_tickets")
+        print(f"Settled pending tickets provided match has finished")
     except Exception as e:
         print(f"[AUTO-SETTLE] Error: {e}")
 
