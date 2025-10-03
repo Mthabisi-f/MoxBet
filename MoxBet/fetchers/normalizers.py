@@ -22,6 +22,7 @@ SPORTS = {
 INTERVALS = {
     "fixtures_live":  15,
     "fixtures_upcoming": 60,
+    "settle_pending_tickets": 60
 }
 
 

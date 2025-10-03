@@ -12,6 +12,8 @@ from MoxBet.services.settlemet.sports import SportsSettlementHandler
 from channels.layers import get_channel_layer
 from .normalizers import (normalize_market, normalize_prediction, special_normalize_prediction)
 from .normalizers import SPORTS, INTERVALS, FINISHED_STATUSES
+from django.core.management import call_command
+
 
 
 async def fetch_matches_and_odds_bulk(client, sport, host):
@@ -247,6 +249,14 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
     await redis_client.set(f"live_ids_cache:{sport.lower()}", json.dumps(live_match_ids))
 
 
+async def auto_settle_tickets():
+    try:
+        # run management command inside async wrapper
+        await asyncio.to_thread(call_command, "settle_pending_tickets")
+    except Exception as e:
+        print(f"[AUTO-SETTLE] Error: {e}")
+
+
 
 # generic periodic wrapper
 async def periodic(task_coro, every_seconds):
@@ -271,6 +281,8 @@ async def run_all():
             # fixtures upcoming (new)
             jobs.append(asyncio.create_task(periodic(lambda c=client   , s=sport, h=host: fetch_matches_and_odds_bulk(c, s, h), INTERVALS["fixtures_upcoming"])))
         
+        # ✅ auto-settle pending tickets every minute
+        jobs.append(asyncio.create_task(periodic(auto_settle_tickets, INTERVALS["settle_pending_tickets"])))
            
         await asyncio.gather(*jobs)
 
