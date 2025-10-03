@@ -10,9 +10,11 @@ from MoxBet.redis_client import redis_client
 # def get_finished_fixtures_sync():
 #     return loop.run_until_complete(get_finished_fixtures_async())
 
-# sync wrapper
-def get_finished_fixtures_sync():
-    return asyncio.run(get_finished_fixtures_async())
+# def get_finished_fixtures_sync():
+#     """Sync wrapper that creates its own loop each call"""
+#     return asyncio.run(get_finished_fixtures_async())
+
+
 
 # async version
 async def get_finished_fixtures_async():

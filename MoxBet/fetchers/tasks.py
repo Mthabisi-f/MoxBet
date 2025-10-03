@@ -249,6 +249,8 @@ async def process_day(fixtures_data, all_odds, sport, live=False):
     await redis_client.set(f"live_ids_cache:{sport.lower()}", json.dumps(live_match_ids))
 
 
+
+
 async def auto_settle_tickets():
     try:
         # run management command inside async wrapper
@@ -256,6 +258,7 @@ async def auto_settle_tickets():
         print(f"Settled pending tickets provided match has finished")
     except Exception as e:
         print(f"[AUTO-SETTLE] Error: {e}")
+
 
 
 
